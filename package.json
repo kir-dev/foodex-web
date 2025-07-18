@@ -18,12 +18,12 @@
     "format:check": "prettier --check apps"
   },
   "devDependencies": {
+    "@eslint/eslintrc": "^3.3.1",
+    "@eslint/js": "^9.23.0",
     "@typescript-eslint/eslint-plugin": "^8.28.0",
     "@typescript-eslint/parser": "^8.28.0",
     "concurrently": "^9.1.2",
     "eslint": "^9.23.0",
-    "@eslint/eslintrc": "^3.3.1",
-    "@eslint/js": "^9.23.0",
     "eslint-config-prettier": "^10.1.1",
     "eslint-plugin-prettier": "5.2.5",
     "eslint-plugin-simple-import-sort": "^12.1.1",
@@ -33,5 +33,8 @@
     "wrap-ansi": "7.0.0",
     "string-width": "4.1.0"
   },
-  "packageManager": "pnpm@10.7.0+sha256.35cab26953bf90847e798839db58c9a2a82d526b7af179fd2a103c18242cadc6"
+  "packageManager": "pnpm@10.7.0+sha256.35cab26953bf90847e798839db58c9a2a82d526b7af179fd2a103c18242cadc6",
+  "dependencies": {
+    "next-nest-template": "file:"
+  }
 }
