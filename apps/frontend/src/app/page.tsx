@@ -1,9 +1,5 @@
-import { HelloWorld } from '@/components/hello-world';
+import { redirect } from 'next/navigation';
 
-export default function Home() {
-  return (
-    <main className='flex items-center justify-center'>
-      <HelloWorld className='mt-10' />
-    </main>
-  );
+export default function RootRedirect() {
+  redirect('/home');
 }
