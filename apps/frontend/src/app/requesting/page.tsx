@@ -1,62 +1,60 @@
 'use client';
-import {
-  boxContainer,
-  inputFullWidth,
-  inputLarge,
-  inputMedium,
-  inputSmall,
-  labelStyle,
-  sectionLabel,
-} from '@/app/requesting/requestingStyles';
+
 import Button from '@/components/button';
+import { StyledInput } from '@/components/styledInput';
+import { StyledLabel } from '@/components/styledLabel';
 
 export default function RequestingPage() {
   return (
     <div className='px-[80px] py-8 flex flex-col items-center'>
-      <div className='w-full max-w-[1200px] space-y-5'>
+      <div className='w-full max-w-[1280px] border-2 border-[#2f2173] rounded-2xl p-8'>
         {/* Kör neve + Nyitás */}
-        <div className='flex flex-col md:flex-row gap-6'>
-          <div className={`${boxContainer} w-full md:w-1/3`}>
-            <label className={sectionLabel}>Kör neve</label>
-            <input type='text' placeholder='pl. Pizzásch, Vödör, Kakas...' className={inputFullWidth} />
+        <div className='flex flex-col md:flex-row gap-6 pb-5'>
+          {/* Kör neve */}
+          <div className='bg-[#2f2173] text-white p-4 rounded-2xl border-2 border-[#ff9860] w-full md:w-1/3'>
+            <StyledLabel>Kör neve</StyledLabel>
+            <StyledInput type='text' placeholder='pl. Pizzásch, Vödör, Kakas...' size='full' />
           </div>
 
-          <div className={`${boxContainer} flex-1`}>
-            <label className={sectionLabel}>Nyitás</label>
+          {/* Nyitás */}
+          <div className='bg-[#2f2173] text-white p-4 rounded-2xl border-2 border-[#ff9860] flex-1'>
+            <StyledLabel>Nyitás</StyledLabel>
             <div className='flex flex-wrap gap-6 items-center'>
               <div className='flex items-center gap-3.5'>
-                <label className={labelStyle}>Napja:</label>
-                <input type='date' className={inputLarge} />
+                <StyledLabel>Napja:</StyledLabel>
+                <StyledInput type='date' size='large' />
               </div>
+
               <div className='flex items-center gap-3.5'>
-                <label className={labelStyle}>Ideje:</label>
-                <input type='text' placeholder='pl. 7:30-10' className={inputSmall} />
+                <StyledLabel>Ideje:</StyledLabel>
+                <StyledInput type='text' placeholder='pl. 7:30-10' size='small' />
               </div>
+
               <div className='flex items-center gap-3.5'>
-                <label className={labelStyle}>Helye:</label>
-                <input type='text' placeholder='pl. 13. konyha' className={inputMedium} />
+                <StyledLabel>Helye:</StyledLabel>
+                <StyledInput type='text' placeholder='pl. 13. konyha' size='medium' />
               </div>
             </div>
           </div>
         </div>
 
         {/* Megjegyzés */}
-        <div className={boxContainer}>
-          <label className={sectionLabel}>Megjegyzés</label>
+        <div className='bg-[#2f2173] text-white p-4 rounded-2xl border-2 border-[#ff9860] mb-5'>
+          <StyledLabel>Megjegyzés</StyledLabel>
           <textarea
             placeholder='pl. különleges nyitás, szokásosnál több foodexes kell, stb... (max 200 karakter lehet)'
             maxLength={200}
-            className='bg-white w-full p-3 rounded-2xl text-black text-xl h-32'
+            className='bg-white w-full p-3 rounded-2xl text-black text-xl h-32 mt-4'
           />
         </div>
 
         {/* Gombok */}
         <div className='flex justify-between items-center'>
           <div className='flex gap-4'>
-            <Button label='Adatok betöltése' />
-            <Button label='Adatok mentése' />
+            <Button label='Adatok betöltése' variant='secondary' />
+            <Button label='Adatok mentése' variant='secondary' />
           </div>
-          <Button label='Kérés leadása' />
+          <Button label='Kérés leadása' variant='primary' />
         </div>
       </div>
     </div>
