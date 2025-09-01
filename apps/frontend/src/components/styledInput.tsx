@@ -20,7 +20,7 @@ export function StyledInput({ type, placeholder, size = 'full' }: StyledInputPro
     <input
       type={type}
       placeholder={placeholder}
-      className={`bg-white p-2 rounded-2xl text-black text-xl mt-3 ${sizeClasses[size]}`}
+      className={`bg-white p-2 rounded-2xl text-black text-xl mt-2 ${sizeClasses[size]}`}
     />
   );
 }
