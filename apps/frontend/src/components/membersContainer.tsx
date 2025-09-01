@@ -9,8 +9,8 @@ type Props = {
 
 export function MembersContainer({ members }: Props) {
   return (
-    <div className='w-full max-w-6xl rounded-xl p-2 mb-4'>
-      <div className='flex flex-col gap-2 max-h-32 overflow-y-auto pr-1'>
+    <div className='w-full max-w-5xl rounded-xl p-3'>
+      <div className='flex flex-col gap-2 max-h-44 overflow-y-auto pr-1'>
         {members.map((member) => (
           <div
             key={member.name}
