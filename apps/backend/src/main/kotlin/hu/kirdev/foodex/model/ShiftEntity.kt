@@ -26,10 +26,12 @@ data class ShiftEntity(
     @Column(length = 30)
     var place: String,
 
-    @Column
+    @Column(columnDefinition = "json")
+    @Convert(converter = LongListConverter::class)
     var members: List<Long>,
 
-    @Column
+    @Column(columnDefinition = "json")
+    @Convert(converter = LongListConverter::class)
     var newbies: List<Long>,
 
     @Column(length = 255)
