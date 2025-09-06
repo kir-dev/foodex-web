@@ -58,4 +58,14 @@ class UserService(private val userRepository: UserRepository) {
         )
         return userRepository.save(user)
     }
+
+    @Transactional(readOnly = false)
+    fun updateUser(user: UserEntity) : UserEntity {
+        return userRepository.save(user)
+    }
+
+    @Transactional(readOnly = false)
+    fun deleteUser(user: UserEntity) {
+        userRepository.delete(user)
+    }
 }

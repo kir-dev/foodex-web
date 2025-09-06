@@ -12,13 +12,13 @@ data class FoodEx_RequestEntity(
     val id: Long = 0,
 
     @Column
-    val cookingClubId: Long,
-
-    @Column
     var isAccepted: Boolean = false,
 
     @Column
     val userId: Long,
+
+    @Column
+    val cookingClubId: Long,
 
     @Column
     val opening: LocalDateTime,
