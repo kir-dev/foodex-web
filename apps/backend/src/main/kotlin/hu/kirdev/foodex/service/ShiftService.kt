@@ -1,5 +1,6 @@
 package hu.kirdev.foodex.service
 
+import hu.kirdev.foodex.model.FoodEx_RequestEntity
 import hu.kirdev.foodex.model.ShiftEntity
 import hu.kirdev.foodex.model.UserEntity
 import hu.kirdev.foodex.repository.ShiftRepository
@@ -20,8 +21,8 @@ class ShiftService(
     }
 
     @Transactional(readOnly = true)
-    fun getActiveShifts() : List<ShiftEntity> {
-        return shiftRepository.findActiveShifts()
+    fun getUpcomingShifts() : List<ShiftEntity> {
+        return shiftRepository.findUpcomingShifts()
     }
 
     @Transactional(readOnly = true)
@@ -35,8 +36,20 @@ class ShiftService(
     }
 
     @Transactional(readOnly = true)
-    fun getActiveShiftsByUserId(userId: Long) : List<ShiftEntity> {
-        return shiftRepository.findActiveShiftsByUserId(userId)
+    fun getActiveShifts(): List<ShiftEntity> {
+        val upcomingShifts = shiftRepository.findUpcomingShifts()
+        return upcomingShifts.filter { it.members.size < it.maxMembers }
+    }
+
+    @Transactional(readOnly = true)
+    fun getFullShifts(): List<ShiftEntity> {
+        val upcomingShifts = shiftRepository.findUpcomingShifts()
+        return upcomingShifts.filter { it.members.size >= it.maxMembers }
+    }
+
+    @Transactional(readOnly = true)
+    fun getUpcomingShiftsByUserId(userId: Long) : List<ShiftEntity> {
+        return shiftRepository.findUpcomingShiftsByUserId(userId)
     }
 
     @Transactional(readOnly = true)
@@ -45,8 +58,8 @@ class ShiftService(
     }
 
     @Transactional(readOnly = true)
-    fun getActiveShiftsByCookingClubId(cookingClubId : Long) : List<ShiftEntity> {
-        return shiftRepository.findActiveShiftsByCookingClubId(cookingClubId)
+    fun getUpcomingShiftsByCookingClubId(cookingClubId : Long) : List<ShiftEntity> {
+        return shiftRepository.findUpcomingShiftsByCookingClubId(cookingClubId)
     }
 
     @Transactional(readOnly = true)
@@ -136,5 +149,16 @@ class ShiftService(
     @Transactional(readOnly = false)
     fun deleteShift(shiftId: Long) {
         shiftRepository.deleteById(shiftId)
+    }
+
+    @Transactional(readOnly = false)
+    fun createShiftFromFoodExRequest(request: FoodEx_RequestEntity) : ShiftEntity {
+        val shift = ShiftEntity(
+            cookingClubId = request.cookingClubId,
+            opening = request.opening,
+            closing = request.closing,
+            place = request.place
+        )
+        return shiftRepository.save(shift)
     }
 }

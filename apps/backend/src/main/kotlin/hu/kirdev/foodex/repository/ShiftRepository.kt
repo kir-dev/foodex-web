@@ -12,11 +12,11 @@ interface ShiftRepository : JpaRepository<ShiftEntity, Long> {
     fun findAllByUserId(userId: Long): List<ShiftEntity>
 
     @Query("SELECT sh FROM ShiftEntity sh WHERE (:userId IN (sh.members, sh.newbies)) AND sh.closing > CURRENT_TIMESTAMP")
-    fun findActiveShiftsByUserId(userId: Long): List<ShiftEntity>
+    fun findUpcomingShiftsByUserId(userId: Long): List<ShiftEntity>
 
     @Query("SELECT sh from ShiftEntity sh WHERE sh.cookingClubId = :cookingClubId AND sh.closing > CURRENT_TIMESTAMP")
-    fun findActiveShiftsByCookingClubId(cookingClubId: Long): List<ShiftEntity>
+    fun findUpcomingShiftsByCookingClubId(cookingClubId: Long): List<ShiftEntity>
 
     @Query("SELECT sh FROM ShiftEntity sh WHERE sh.closing > CURRENT_TIMESTAMP")
-    fun findActiveShifts(): List<ShiftEntity>
+    fun findUpcomingShifts(): List<ShiftEntity>
 }
