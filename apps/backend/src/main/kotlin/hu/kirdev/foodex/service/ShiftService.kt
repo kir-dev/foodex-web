@@ -51,13 +51,15 @@ class ShiftService(
 
     @Transactional(readOnly = true)
     fun getMembersByShiftId(shiftId : Long) : List<UserEntity> {
-        val shift = shiftRepository.findShiftEntityById(shiftId) ?: return emptyList()
+        val shift = shiftRepository.findShiftEntityById(shiftId)
+            ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
         return userRepository.findAllById(shift.members).toList()
     }
 
     @Transactional(readOnly = true)
     fun getNewbiesByShiftId(shiftId : Long) : List<UserEntity> {
-        val shift = shiftRepository.findShiftEntityById(shiftId) ?: return emptyList()
+        val shift = shiftRepository.findShiftEntityById(shiftId)
+            ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
         return userRepository.findAllById(shift.newbies).toList()
     }
 
@@ -69,7 +71,7 @@ class ShiftService(
             ?: throw IllegalArgumentException("User with ID $userId not found")
 
         if (shift.members.contains(userId)) {
-            throw IllegalStateException("User with ID $userId is already a member of shift $shiftId")
+            throw IllegalStateException("User with ID $userId is already a member of the shift $shiftId")
         }
         if (shift.members.size >= shift.maxMembers) {
             throw IllegalStateException("Shift with ID $shiftId has reached maximum member capacity")
@@ -88,7 +90,7 @@ class ShiftService(
             ?: throw IllegalArgumentException("User with ID $userId not found")
 
         if (shift.newbies.contains(userId)) {
-            throw IllegalStateException("User with ID $userId is already a member of shift $shiftId")
+            throw IllegalStateException("User with ID $userId is already a member of the shift $shiftId")
         }
         if (shift.newbies.size >= shift.members.size) {
             throw IllegalStateException("Shift with ID $shiftId does not have enough members for newbies to join")

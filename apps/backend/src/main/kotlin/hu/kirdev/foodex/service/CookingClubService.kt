@@ -3,7 +3,9 @@ package hu.kirdev.foodex.service
 import hu.kirdev.foodex.model.CookingClubEntity
 import hu.kirdev.foodex.model.UserEntity
 import hu.kirdev.foodex.repository.CookingClubRepository
+import hu.kirdev.foodex.repository.ShiftRepository
 import hu.kirdev.foodex.repository.UserRepository
+import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
@@ -22,14 +24,61 @@ class CookingClubService(
         return cookingClubRepository.findCookingClubEntityById(cookingClubId)
     }
 
-//    @Transactional(readOnly = true)
-//    fun getLeadersByClubId(cookingClubId: Long) : List<UserEntity> {
-//
-//    }
-//    fun createCookingClub(club: CookingClubEntity) {}
-//    fun deleteCookingClub(clubId: Long) {}
-//    fun updateCookingClub(clubId: Long, club: CookingClubEntity) {}
-//    fun addLeaderToCookingClub(clubId: Long, leaderId: Long) {}
-//    fun removeLeaderToCookingClub(clubId: Long) {}
+    @Transactional(readOnly = true)
+    fun getLeadersByClubId(cookingClubId: Long) : List<UserEntity> {
+        val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
+            ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
+        return userRepository.findAllById(cookingClub.leaders).toList()
+    }
+
+    @Transactional(readOnly = false)
+    fun createCookingClub(name: String) : CookingClubEntity {
+        if (name.length > 30) throw IllegalArgumentException("Name cannot be more than 30 characters")
+        val cookingClub = CookingClubEntity(
+            name = name,
+            leaders = emptyList()
+        )
+        return cookingClubRepository.save(cookingClub)
+    }
+
+    fun deleteCookingClub(cookingClubId: Long) {
+        val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
+            ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
+        cookingClubRepository.delete(cookingClub)
+    }
+
+    fun updateCookingClub(cookingClub: CookingClubEntity) {
+        cookingClubRepository.save(cookingClub)
+    }
+
+    fun addLeaderToCookingClub(cookingClubId: Long, leaderId: Long) : CookingClubEntity {
+        val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
+            ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
+        val leader = userRepository.findByIdOrNull(leaderId)
+            ?: throw IllegalArgumentException("Leader with id $leaderId not found")
+
+        if (cookingClub.leaders.contains(leaderId)) {
+            throw IllegalArgumentException("Leader with id $leaderId is already a leader of the club")
+        }
+
+        val updatesLeaders = cookingClub.leaders.toMutableList().apply { add(leaderId) }
+        cookingClub.leaders = updatesLeaders
+        return cookingClubRepository.save(cookingClub)
+    }
+
+    fun removeLeaderToCookingClub(cookingClubId: Long, leaderId: Long) : CookingClubEntity {
+        val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
+            ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
+        val leader = userRepository.findByIdOrNull(leaderId)
+            ?: throw IllegalArgumentException("Leader with id $leaderId not found")
+
+        if (!cookingClub.leaders.contains(leaderId)) {
+            throw IllegalArgumentException("Leader with id $leaderId is not a leader of the club")
+        }
+
+        val updatesLeaders = cookingClub.leaders.toMutableList().apply { remove(leaderId) }
+        cookingClub.leaders = updatesLeaders
+        return cookingClubRepository.save(cookingClub)
+    }
 
 }

@@ -31,12 +31,12 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = true)
-    fun getAllActiveUsers(): List<UserEntity> {
+    fun getActiveUsers(): List<UserEntity> {
         return userRepository.findUserEntitiesByIsActiveTrue()
     }
 
     @Transactional(readOnly = true)
-    fun getAllUnactiveUsers(): List<UserEntity> {
+    fun getUnactiveUsers(): List<UserEntity> {
         return userRepository.findUserEntitiesByIsActiveFalse()
     }
 
@@ -65,7 +65,17 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = false)
-    fun deleteUser(user: UserEntity) {
+    fun deleteUser(userId: Long) {
+        val user = userRepository.findByIdOrNull(userId)
+            ?: throw RuntimeException("User with id $userId not found")
         userRepository.delete(user)
+    }
+
+    @Transactional(readOnly = false)
+    fun updateRole(userId: Long, role: Role): UserEntity {
+        val user = userRepository.findByIdOrNull(userId)
+            ?: throw IllegalArgumentException("User with ID $userId not found")
+        user.role = role
+        return userRepository.save(user)
     }
 }
