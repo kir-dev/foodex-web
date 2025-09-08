@@ -61,8 +61,8 @@ class CookingClubService(
             throw IllegalArgumentException("Leader with id $leaderId is already a leader of the club")
         }
 
-        val updatesLeaders = cookingClub.leaders.toMutableList().apply { add(leaderId) }
-        cookingClub.leaders = updatesLeaders
+        val updatedLeaders = cookingClub.leaders.toMutableList().apply { add(leaderId) }
+        cookingClub.leaders = updatedLeaders
         return cookingClubRepository.save(cookingClub)
     }
 
@@ -76,8 +76,8 @@ class CookingClubService(
             throw IllegalArgumentException("Leader with id $leaderId is not a leader of the club")
         }
 
-        val updatesLeaders = cookingClub.leaders.toMutableList().apply { remove(leaderId) }
-        cookingClub.leaders = updatesLeaders
+        val updatedLeaders = cookingClub.leaders.toMutableList().apply { remove(leaderId) }
+        cookingClub.leaders = updatedLeaders
         return cookingClubRepository.save(cookingClub)
     }
 

@@ -78,4 +78,20 @@ class UserService(private val userRepository: UserRepository) {
         user.role = role
         return userRepository.save(user)
     }
+
+    @Transactional(readOnly = false)
+    fun activateUser(userId: Long) {
+        val user = userRepository.findByIdOrNull(userId)
+            ?: throw RuntimeException("User with id $userId not found")
+        user.isActive = true
+        userRepository.save(user)
+    }
+
+    @Transactional(readOnly = false)
+    fun deactivateUser(userId: Long) {
+        val user = userRepository.findByIdOrNull(userId)
+            ?: throw RuntimeException("User with id $userId not found")
+        user.isActive = false
+        userRepository.save(user)
+    }
 }
