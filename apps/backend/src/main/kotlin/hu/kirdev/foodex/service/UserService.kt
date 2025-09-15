@@ -36,7 +36,7 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = true)
-    fun getUnactiveUsers(): List<UserEntity> {
+    fun getInactiveUsers(): List<UserEntity> {
         return userRepository.findUserEntitiesByIsActiveFalse()
     }
 
@@ -45,7 +45,7 @@ class UserService(private val userRepository: UserRepository) {
         name: String,
         email: String,
         role: Role = Role.GUEST,
-        nickname: String = name,
+        nickname: String,
         isActive: Boolean = false
         ): UserEntity {
 
@@ -74,7 +74,7 @@ class UserService(private val userRepository: UserRepository) {
     @Transactional(readOnly = false)
     fun updateRole(userId: Long, role: Role): UserEntity {
         val user = userRepository.findByIdOrNull(userId)
-            ?: throw IllegalArgumentException("User with ID $userId not found")
+        requireNotNull(user) { "User with id $userId not found" }
         user.role = role
         return userRepository.save(user)
     }

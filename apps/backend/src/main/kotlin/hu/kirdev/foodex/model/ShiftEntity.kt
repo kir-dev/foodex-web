@@ -1,5 +1,6 @@
 package hu.kirdev.foodex.model
 
+import hu.kirdev.foodex.converter.LongListConverter
 import jakarta.persistence.*
 import java.time.LocalDateTime
 

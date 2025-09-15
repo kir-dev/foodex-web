@@ -1,8 +1,10 @@
 package hu.kirdev.foodex.service
 
-import hu.kirdev.foodex.model.FoodEx_RequestEntity
+import hu.kirdev.foodex.dto.ShiftDTO
+import hu.kirdev.foodex.model.FoodExRequestEntity
 import hu.kirdev.foodex.model.ShiftEntity
 import hu.kirdev.foodex.model.UserEntity
+import hu.kirdev.foodex.repository.ConfigurationRepository
 import hu.kirdev.foodex.repository.ShiftRepository
 import hu.kirdev.foodex.repository.UserRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -12,12 +14,20 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class ShiftService(
     private val shiftRepository: ShiftRepository,
-    private val userRepository: UserRepository
+    private val userRepository: UserRepository,
+    private val configurationService: ConfigurationService
 ) {
 
     @Transactional(readOnly = true)
     fun getAllShifts() : List<ShiftEntity> {
         return shiftRepository.findAll()
+    }
+
+    @Transactional(readOnly = true)
+    fun getAllShiftsInSemester(): List<ShiftEntity> {
+        return shiftRepository.findAll().filter {
+            configurationService.get().startOfSemester < it.closing && it.opening < configurationService.get().startOfSemester
+        }
     }
 
     @Transactional(readOnly = true)
@@ -152,13 +162,26 @@ class ShiftService(
     }
 
     @Transactional(readOnly = false)
-    fun createShiftFromFoodExRequest(request: FoodEx_RequestEntity) : ShiftEntity {
-        val shift = ShiftEntity(
-            cookingClubId = request.cookingClubId,
-            opening = request.opening,
-            closing = request.closing,
-            place = request.place
-        )
-        return shiftRepository.save(shift)
+    fun createShiftFromFoodExRequest(request: ShiftDTO) : List<ShiftEntity> {
+        val foodExRequest = FoodExRequestService.getFoodExRequestById(request.foodExRequestId)
+            ?: error handling
+
+        val lengthOfEachShift = (foodExRequest.closing - foodExRequest.opening) / request.numberOfShifts
+
+        var shifts = mutableListOf<ShiftEntity>()
+
+        for (i: Int = 0; i < request.numberOfShifts; ++i) {
+            val shift = ShiftEntity(
+                cookingClubId = foodExRequest.cookingClubId,
+                opening = foodExRequest.opening,
+                closing = foodExRequest.closing,
+                place = foodExRequest.place
+                    ...
+
+            )
+            shiftRepository.save(shift)
+            shifts.add(shift)
+        }
+        return shifts
     }
 }

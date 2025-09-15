@@ -3,7 +3,7 @@ package hu.kirdev.foodex.dto
 import jakarta.validation.constraints.*
 import java.time.LocalDateTime
 
-data class FoodEx_RequestDTO(
+data class FoodExRequestDTO(
     @field:NotNull
     val userId: Long,
 

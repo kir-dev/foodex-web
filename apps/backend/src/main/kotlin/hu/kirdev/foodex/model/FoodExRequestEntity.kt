@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 
 @Entity
 @Table(name = "foodEx_requests")
-data class FoodEx_RequestEntity(
+data class FoodExRequestEntity(
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)

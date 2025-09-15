@@ -17,14 +17,14 @@ data class UserEntity(
     val id: Long = 0,
 
     @Enumerated(EnumType.STRING) // Store enum as string in the database
-    @Column(columnDefinition = "text", nullable = false)
+    @Column(columnDefinition = "varchar(32)", nullable = false)
     var role: Role = Role.GUEST,
 
     @Column(nullable = false)
     var name: String,
 
     @Column
-    var nickname: String = name,
+    var nickname: String = "",
 
     @Column
     @Email
@@ -36,6 +36,6 @@ data class UserEntity(
     @Column
     var isActive: Boolean = false,
 
-    @Column
+    @Column(columnDefinition = "text")
     var profilePicture: String? = null // URL to picture
 )
