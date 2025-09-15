@@ -162,6 +162,11 @@ class ShiftService(
     }
 
     @Transactional(readOnly = false)
+    fun updateShift(shift: ShiftEntity): ShiftEntity {
+        return shiftRepository.save(shift)
+    }
+
+    @Transactional(readOnly = false)
     fun createShiftFromFoodExRequest(request: CreateShiftFromRequestDTO) : List<ShiftEntity> {
         val foodExRequest = foodExService.getFoodExRequestsById(request.foodExRequestId)
             ?: throw RuntimeException("Food Ex Request with ID ${request.foodExRequestId} not found")

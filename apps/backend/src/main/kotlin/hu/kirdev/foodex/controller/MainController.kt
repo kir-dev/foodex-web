@@ -2,9 +2,11 @@ package hu.kirdev.foodex.controller
 
 import hu.kirdev.foodex.dto.FoodExRequestDTO
 import hu.kirdev.foodex.dto.HomePageResponseDTO
+import hu.kirdev.foodex.dto.OrdersResponseDTO
 import hu.kirdev.foodex.dto.ProfilesResponseDTO
 import hu.kirdev.foodex.dto.ShiftsResponseDTO
 import hu.kirdev.foodex.model.FoodExRequestEntity
+import hu.kirdev.foodex.model.ShiftEntity
 import hu.kirdev.foodex.model.UserEntity
 import hu.kirdev.foodex.service.ConfigurationService
 import hu.kirdev.foodex.service.FoodExRequestService
@@ -38,10 +40,12 @@ class MainController(
         return homePage
     }
 
+
     @PostMapping("/request")
     fun createFoodExRequest(@Valid @RequestBody request: FoodExRequestDTO) : FoodExRequestEntity {
         return foodExRequestService.createFoodExRequest(request)
     }
+
 
     @GetMapping("/shifts")
     fun getShifts() : ShiftsResponseDTO {
@@ -54,6 +58,7 @@ class MainController(
     //@PostMapping("/shifts")
     //fun applyForShift()
     // + jelentkezes leadas
+
 
     @GetMapping("/user/{userId}")
     fun getUser(@PathVariable userId: Long) : ProfilesResponseDTO {
@@ -74,6 +79,30 @@ class MainController(
         )
         return data
     }
-    // + modify user
+
+    @PostMapping("/user/{userId}")
+    fun updateUser(@Valid @RequestBody user: UserEntity) : UserEntity {
+        return userService.updateUser(user)
+    }
+
+
+    @GetMapping("/incoming_requests")
+    fun getOrders() : OrdersResponseDTO {
+        return OrdersResponseDTO(
+            incomingFoodExRequests = foodExRequestService.getFoodExRequestsByIsAcceptedFalse(),
+            acceptedShifts = shiftService.getActiveShifts()
+        )
+    }
+
+
+    @GetMapping("/openings")
+    fun getOpenings() : List<ShiftEntity> {
+        return shiftService.getAllShiftsInSemester()
+    }
+
+    @PostMapping("/openings")
+    fun updateShift(@Valid @RequestBody shift: ShiftEntity) : ShiftEntity {
+        return shiftService.updateShift(shift)
+    }
 
 }
