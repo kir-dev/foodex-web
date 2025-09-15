@@ -1,10 +1,8 @@
 package hu.kirdev.foodex.service
 
-import hu.kirdev.foodex.dto.ShiftDTO
-import hu.kirdev.foodex.model.FoodExRequestEntity
+import hu.kirdev.foodex.dto.CreateShiftFromRequestDTO
 import hu.kirdev.foodex.model.ShiftEntity
 import hu.kirdev.foodex.model.UserEntity
-import hu.kirdev.foodex.repository.ConfigurationRepository
 import hu.kirdev.foodex.repository.ShiftRepository
 import hu.kirdev.foodex.repository.UserRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -162,7 +160,7 @@ class ShiftService(
     }
 
     @Transactional(readOnly = false)
-    fun createShiftFromFoodExRequest(request: ShiftDTO) : List<ShiftEntity> {
+    fun createShiftFromFoodExRequest(request: CreateShiftFromRequestDTO) : List<ShiftEntity> {
         val foodExRequest = FoodExRequestService.getFoodExRequestById(request.foodExRequestId)
             ?: error handling
 

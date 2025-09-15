@@ -4,14 +4,16 @@ import jakarta.validation.constraints.*
 import java.time.LocalDateTime
 
 data class FoodExRequestDTO(
-    @field:NotNull
+    @field:NotBlank
     val userId: Long,
 
-    @field:NotNull
+    @field:NotBlank
     val cookingClubId: Long,
 
+    @field:NotBlank
     val opening: LocalDateTime,
 
+    @field:NotBlank
     val closing: LocalDateTime,
 
     @field:NotBlank
