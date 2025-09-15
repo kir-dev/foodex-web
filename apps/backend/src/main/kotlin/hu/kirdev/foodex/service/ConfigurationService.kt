@@ -23,7 +23,7 @@ class ConfigurationService (private val configurationRepository: ConfigurationRe
         return configurationRepository.findAll().first()
     }
 
-    @Transactional(readOnly = false)
+    @Transactional(readOnly = true)
     fun updateConfiguration(config: ConfigurationEntity) : ConfigurationEntity {
         if (config.id != 0L) {
             throw IllegalArgumentException("ConfigurationId ${config.id} must be zero")
