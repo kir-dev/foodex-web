@@ -8,12 +8,14 @@ import hu.kirdev.foodex.repository.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 
 @Service
 class ShiftService(
     private val shiftRepository: ShiftRepository,
     private val userRepository: UserRepository,
-    private val configurationService: ConfigurationService
+    private val configurationService: ConfigurationService,
+    private val foodExService: FoodExRequestService
 ) {
 
     @Transactional(readOnly = true)
@@ -161,25 +163,31 @@ class ShiftService(
 
     @Transactional(readOnly = false)
     fun createShiftFromFoodExRequest(request: CreateShiftFromRequestDTO) : List<ShiftEntity> {
-        val foodExRequest = FoodExRequestService.getFoodExRequestById(request.foodExRequestId)
-            ?: error handling
+        val foodExRequest = foodExService.getFoodExRequestsById(request.foodExRequestId)
+            ?: throw RuntimeException("Food Ex Request with ID ${request.foodExRequestId} not found")
 
-        val lengthOfEachShift = (foodExRequest.closing - foodExRequest.opening) / request.numberOfShifts
+        if (foodExRequest.opening >= foodExRequest.closing) {
+            throw IllegalArgumentException("Food Ex Request with ID ${request.foodExRequestId} start is after opening error")
+        }
 
-        var shifts = mutableListOf<ShiftEntity>()
+        val shifts = mutableListOf<ShiftEntity>()
 
-        for (i: Int = 0; i < request.numberOfShifts; ++i) {
+        val lengthOfEachShift: Duration = Duration.between(foodExRequest.opening, foodExRequest.closing).dividedBy(request.numberOfShifts.toLong())
+
+        for (i in 0..<request.numberOfShifts) {
             val shift = ShiftEntity(
                 cookingClubId = foodExRequest.cookingClubId,
-                opening = foodExRequest.opening,
-                closing = foodExRequest.closing,
+                maxMembers = request.maxMembers,
+                opening = foodExRequest.opening.plus(lengthOfEachShift.multipliedBy(i.toLong())),
+                closing = foodExRequest.opening.plus(lengthOfEachShift.multipliedBy((i + 1).toLong())),
                 place = foodExRequest.place
-                    ...
-
             )
             shiftRepository.save(shift)
             shifts.add(shift)
         }
+
+        foodExService.acceptFoodExRequest(request.foodExRequestId)
+
         return shifts
     }
 }
