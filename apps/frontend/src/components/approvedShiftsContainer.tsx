@@ -25,7 +25,7 @@ export function ApprovedShiftsContainer({ shifts }: ShiftsProps) {
             <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full'>{shift.time}</span>
             <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full'>{shift.location}</span>
             <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full'>{shift.date}</span>
-            <span className='px-2 py-2 w-full'></span>
+            <span className='px-2 py-2 w-full' />
 
             <div className='flex justify-end gap-2 px-2 py-1 w-full'>
               <button className='bg-white text-[#332C81] font-bold px-3 py-1 rounded-xl w-fit'>Módosítás</button>
