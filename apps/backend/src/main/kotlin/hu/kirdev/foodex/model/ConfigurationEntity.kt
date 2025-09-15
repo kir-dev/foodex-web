@@ -16,11 +16,11 @@ data class ConfigurationEntity (
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Long = 0,
 
-    val feelingOfTheWeek: String,
+    var feelingOfTheWeek: String,
 
-    val foodExLogo: String,
+    var foodExLogo: String,
 
-    val startOfSemester: LocalDateTime,
+    var startOfSemester: LocalDateTime,
 
-    val endOfSemester: LocalDateTime
+    var endOfSemester: LocalDateTime
 )

@@ -1,5 +1,7 @@
 package hu.kirdev.foodex.controller
 
+import hu.kirdev.foodex.dto.ApplyForShiftDTO
+import hu.kirdev.foodex.dto.CreateShiftFromRequestDTO
 import hu.kirdev.foodex.dto.FoodExRequestDTO
 import hu.kirdev.foodex.dto.HomePageResponseDTO
 import hu.kirdev.foodex.dto.OrdersResponseDTO
@@ -55,9 +57,37 @@ class MainController(
         )
     }
 
-    //@PostMapping("/shifts")
-    //fun applyForShift()
-    // + jelentkezes leadas
+    @PutMapping("/shifts")
+    fun addMemberToShift(application: ApplyForShiftDTO) : ShiftEntity{
+        return shiftService.addMemberToShift(
+            userId = application.userId,
+            shiftId = application.shiftId
+        )
+    }
+
+    @PutMapping("/shifts")
+    fun addNewbieToShift(application: ApplyForShiftDTO) : ShiftEntity{
+        return shiftService.addNewbieToShift(
+            userId = application.userId,
+            shiftId = application.shiftId
+        )
+    }
+
+    @PutMapping("/shifts")
+    fun removeMemberToShift(application: ApplyForShiftDTO) : ShiftEntity{
+        return shiftService.removeMemberFromShift(
+            userId = application.userId,
+            shiftId = application.shiftId
+        )
+    }
+
+    @PutMapping("/shifts")
+    fun removeNewbieToShift(application: ApplyForShiftDTO) : ShiftEntity{
+        return shiftService.removeNewbieFromShift(
+            userId = application.userId,
+            shiftId = application.shiftId
+        )
+    }
 
 
     @GetMapping("/user/{userId}")
@@ -80,7 +110,7 @@ class MainController(
         return data
     }
 
-    @PostMapping("/user/{userId}")
+    @PutMapping("/user")
     fun updateUser(@Valid @RequestBody user: UserEntity) : UserEntity {
         return userService.updateUser(user)
     }
@@ -94,13 +124,18 @@ class MainController(
         )
     }
 
+    @PostMapping("/incoming_requests")
+    fun createShiftsFromRequest(@Valid @RequestBody request: CreateShiftFromRequestDTO) : List<ShiftEntity> {
+        return shiftService.createShiftFromFoodExRequest(request)
+    }
+
 
     @GetMapping("/openings")
     fun getOpenings() : List<ShiftEntity> {
         return shiftService.getAllShiftsInSemester()
     }
 
-    @PostMapping("/openings")
+    @PutMapping("/openings")
     fun updateShift(@Valid @RequestBody shift: ShiftEntity) : ShiftEntity {
         return shiftService.updateShift(shift)
     }

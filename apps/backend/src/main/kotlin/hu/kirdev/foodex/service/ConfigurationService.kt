@@ -10,7 +10,9 @@ import java.time.LocalDateTime
 class ConfigurationService (private val configurationRepository: ConfigurationRepository) {
     @Transactional(readOnly = false)
     fun get() : ConfigurationEntity {
-        if (configurationRepository.findAll().isEmpty()) {
+        val config = configurationRepository.findTop1()
+
+        if (config == null) {
             val configuration = ConfigurationEntity(
                 id = 0L,
                 feelingOfTheWeek = "Feeling of the week :)",
@@ -20,14 +22,17 @@ class ConfigurationService (private val configurationRepository: ConfigurationRe
             )
             return configurationRepository.save(configuration)
         }
-        return configurationRepository.findAll().first()
+        return config
     }
 
     @Transactional(readOnly = true)
     fun updateConfiguration(config: ConfigurationEntity) : ConfigurationEntity {
-        if (config.id != 0L) {
-            throw IllegalArgumentException("ConfigurationId ${config.id} must be zero")
-        }
-        return configurationRepository.save(config)
+        val configuration = get()
+        configuration.startOfSemester = config.startOfSemester
+        configuration.endOfSemester = config.endOfSemester
+        configuration.foodExLogo  = config.foodExLogo
+        configuration.feelingOfTheWeek = config.feelingOfTheWeek
+
+        return configurationRepository.save(configuration)
     }
 }
