@@ -57,38 +57,28 @@ class MainController(
         )
     }
 
-    @PutMapping("/shifts")
-    fun addMemberToShift(application: ApplyForShiftDTO) : ShiftEntity{
-        return shiftService.addMemberToShift(
-            userId = application.userId,
-            shiftId = application.shiftId
-        )
+    @PostMapping("/shifts")
+    fun modifyShifts(@Valid @RequestBody application: ApplyForShiftDTO) : ShiftEntity {
+        return when (application.action) {
+            "add_member" -> shiftService.addMemberToShift(
+                userId = application.userId,
+                shiftId = application.shiftId
+            )
+            "add_newbie" -> shiftService.addNewbieToShift(
+                userId = application.userId,
+                shiftId = application.shiftId
+            )
+            "remove_member" -> shiftService.removeMemberFromShift(
+                userId = application.userId,
+                shiftId = application.shiftId
+            )
+            "remove_newbie" -> shiftService.removeNewbieFromShift(
+                userId = application.userId,
+                shiftId = application.shiftId
+            )
+            else -> throw IllegalArgumentException("Invalid action: ${application.action}")
+        }
     }
-
-    @PutMapping("/shifts")
-    fun addNewbieToShift(application: ApplyForShiftDTO) : ShiftEntity{
-        return shiftService.addNewbieToShift(
-            userId = application.userId,
-            shiftId = application.shiftId
-        )
-    }
-
-    @PutMapping("/shifts")
-    fun removeMemberToShift(application: ApplyForShiftDTO) : ShiftEntity{
-        return shiftService.removeMemberFromShift(
-            userId = application.userId,
-            shiftId = application.shiftId
-        )
-    }
-
-    @PutMapping("/shifts")
-    fun removeNewbieToShift(application: ApplyForShiftDTO) : ShiftEntity{
-        return shiftService.removeNewbieFromShift(
-            userId = application.userId,
-            shiftId = application.shiftId
-        )
-    }
-
 
     @GetMapping("/user/{userId}")
     fun getUser(@PathVariable userId: Long) : ProfilesResponseDTO {

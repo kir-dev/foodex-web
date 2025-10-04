@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 class ConfigurationService (private val configurationRepository: ConfigurationRepository) {
     @Transactional(readOnly = false)
     fun get() : ConfigurationEntity {
-        val config = configurationRepository.findTop1()
+        val config = configurationRepository.findTopByOrderByIdDesc()
 
         if (config == null) {
             val configuration = ConfigurationEntity(
@@ -25,7 +25,7 @@ class ConfigurationService (private val configurationRepository: ConfigurationRe
         return config
     }
 
-    @Transactional(readOnly = true)
+    @Transactional(readOnly = false)
     fun updateConfiguration(config: ConfigurationEntity) : ConfigurationEntity {
         val configuration = get()
         configuration.startOfSemester = config.startOfSemester

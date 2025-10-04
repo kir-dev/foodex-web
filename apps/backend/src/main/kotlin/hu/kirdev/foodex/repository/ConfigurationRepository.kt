@@ -4,5 +4,5 @@ import hu.kirdev.foodex.model.ConfigurationEntity
 import org.springframework.data.jpa.repository.JpaRepository
 
 interface ConfigurationRepository : JpaRepository<ConfigurationEntity, Long> {
-    fun findTop1(): ConfigurationEntity?
+    fun findTopByOrderByIdDesc(): ConfigurationEntity?
 }
