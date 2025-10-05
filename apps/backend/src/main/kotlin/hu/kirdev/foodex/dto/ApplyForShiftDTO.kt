@@ -3,6 +3,5 @@ import jakarta.validation.constraints.NotBlank
 
 data class ApplyForShiftDTO(
     @field:NotBlank val userId: Long,
-    @field:NotBlank val shiftId: Long,
-    @field:NotBlank val action: String
+    @field:NotBlank val shiftId: Long
 )

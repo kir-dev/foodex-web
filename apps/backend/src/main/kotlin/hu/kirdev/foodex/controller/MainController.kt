@@ -29,6 +29,7 @@ class MainController(
     private val userService: UserService,
     private val foodExRequestService: FoodExRequestService
 ) {
+    /********** HOME ***********************************************************************************/
     @GetMapping("/home")
     fun getHomePage() : HomePageResponseDTO {
         val config = configurationService.get()
@@ -42,13 +43,13 @@ class MainController(
         return homePage
     }
 
-
+    /********** REQUEST ********************************************************************************/
     @PostMapping("/request")
     fun createFoodExRequest(@Valid @RequestBody request: FoodExRequestDTO) : FoodExRequestEntity {
         return foodExRequestService.createFoodExRequest(request)
     }
 
-
+    /********** SHIFTS *********************************************************************************/
     @GetMapping("/shifts")
     fun getShifts() : ShiftsResponseDTO {
         return ShiftsResponseDTO(
@@ -57,29 +58,39 @@ class MainController(
         )
     }
 
-    @PostMapping("/shifts")
-    fun modifyShifts(@Valid @RequestBody application: ApplyForShiftDTO) : ShiftEntity {
-        return when (application.action) {
-            "add_member" -> shiftService.addMemberToShift(
-                userId = application.userId,
-                shiftId = application.shiftId
-            )
-            "add_newbie" -> shiftService.addNewbieToShift(
-                userId = application.userId,
-                shiftId = application.shiftId
-            )
-            "remove_member" -> shiftService.removeMemberFromShift(
-                userId = application.userId,
-                shiftId = application.shiftId
-            )
-            "remove_newbie" -> shiftService.removeNewbieFromShift(
-                userId = application.userId,
-                shiftId = application.shiftId
-            )
-            else -> throw IllegalArgumentException("Invalid action: ${application.action}")
-        }
+    @PostMapping("/shifts/member")
+    fun addMemberToShift(@Valid @RequestBody application: ApplyForShiftDTO) : ShiftEntity {
+        return shiftService.addMemberToShift(
+            userId = application.userId,
+            shiftId = application.shiftId
+        )
     }
 
+    @PostMapping("/shifts/newbie")
+    fun addNewbieToShift(@Valid @RequestBody application: ApplyForShiftDTO) : ShiftEntity {
+        return shiftService.addNewbieToShift(
+            userId = application.userId,
+            shiftId = application.shiftId
+        )
+    }
+
+    @DeleteMapping("/shifts/member")
+    fun removeMemberFromShift(@Valid @RequestBody application: ApplyForShiftDTO) : ShiftEntity {
+        return shiftService.removeMemberFromShift(
+            userId = application.userId,
+            shiftId = application.shiftId
+        )
+    }
+
+    @DeleteMapping("/shifts/newbie")
+    fun removeNewbieFromShift(@Valid @RequestBody application: ApplyForShiftDTO) : ShiftEntity {
+        return shiftService.removeNewbieFromShift(
+            userId = application.userId,
+            shiftId = application.shiftId
+        )
+    }
+
+    /********** USER ***********************************************************************************/
     @GetMapping("/user/{userId}")
     fun getUser(@PathVariable userId: Long) : ProfilesResponseDTO {
         val user = userService.getUserById(userId)
@@ -105,8 +116,8 @@ class MainController(
         return userService.updateUser(user)
     }
 
-
-    @GetMapping("/incoming_requests")
+    /********** INCOMING-REQUESTS **********************************************************************/
+    @GetMapping("/incoming-requests")
     fun getOrders() : OrdersResponseDTO {
         return OrdersResponseDTO(
             incomingFoodExRequests = foodExRequestService.getFoodExRequestsByIsAcceptedFalse(),
@@ -114,12 +125,12 @@ class MainController(
         )
     }
 
-    @PostMapping("/incoming_requests")
+    @PostMapping("/incoming-requests")
     fun createShiftsFromRequest(@Valid @RequestBody request: CreateShiftFromRequestDTO) : List<ShiftEntity> {
         return shiftService.createShiftFromFoodExRequest(request)
     }
 
-
+    /********** OPENINGS *******************************************************************************/
     @GetMapping("/openings")
     fun getOpenings() : List<ShiftEntity> {
         return shiftService.getAllShiftsInSemester()
