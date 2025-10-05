@@ -22,7 +22,7 @@ class WebSecurityConfig {
                 requests
                     .requestMatchers(
                         "/",
-                        "/home",
+                        "/api/**",
                         "/v3/api-docs",
                         "/swagger-ui/*",
                         "/v3/api-docs/swagger-config").permitAll()
