@@ -1,6 +1,5 @@
 package hu.kirdev.foodex.model
 
-import hu.kirdev.foodex.converter.IntListConverter
 import jakarta.persistence.*
 import jakarta.validation.constraints.*
 
@@ -16,7 +15,11 @@ data class CookingClubEntity(
     @field:Size(max = 30)
     val name: String,
 
-    @Convert(converter = IntListConverter::class)
-    @Column(columnDefinition = "TEXT")
+    @ElementCollection
+    @CollectionTable(
+        name = "cooking_club_leaders",
+        joinColumns = [JoinColumn(name = "cooking_club_id")]
+    )
+    @Column(name = "leader_id")
     var leaders: List<Int> = emptyList()
 )

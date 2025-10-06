@@ -21,7 +21,7 @@ class CookingClubService(
 
     @Transactional(readOnly = true)
     fun getCookingClub(cookingClubId: Int) : CookingClubEntity? {
-        return cookingClubRepository.findCookingClubEntityById(cookingClubId)
+        return cookingClubRepository.findByIdOrNull(cookingClubId)
     }
 
     @Transactional(readOnly = true)
@@ -66,7 +66,7 @@ class CookingClubService(
         return cookingClubRepository.save(cookingClub)
     }
 
-    fun removeLeaderToCookingClub(cookingClubId: Int, leaderId: Int) : CookingClubEntity {
+    fun removeLeaderFromCookingClub(cookingClubId: Int, leaderId: Int) : CookingClubEntity {
         val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
             ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
         val leader = userRepository.findByIdOrNull(leaderId)

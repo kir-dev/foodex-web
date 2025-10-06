@@ -22,12 +22,12 @@ class UserService(private val userRepository: UserRepository) {
 
     @Transactional(readOnly = true)
     fun searchUserByNameOrNickname(nameOrNickname: String): UserEntity? {
-        return userRepository.findUserEntityByNameOrNickname(nameOrNickname, nameOrNickname)
+        return userRepository.findUserEntityByNameOrNicknameIgnoreCase(nameOrNickname, nameOrNickname)
     }
 
     @Transactional(readOnly = true)
     fun searchUsersByNameOrNickname(nameOrNickname: String): List<UserEntity> {
-        return userRepository.findUserEntitiesByNameOrNickname(nameOrNickname, nameOrNickname)
+        return userRepository.findUserEntitiesByNameOrNicknameIgnoreCase(nameOrNickname, nameOrNickname)
     }
 
     @Transactional(readOnly = true)

@@ -1,6 +1,5 @@
 package hu.kirdev.foodex.model
 
-import hu.kirdev.foodex.converter.IntListConverter
 import jakarta.persistence.*
 import java.time.LocalDateTime
 
@@ -27,12 +26,20 @@ data class ShiftEntity(
     @Column(length = 30)
     var place: String,
 
-    @Convert(converter = IntListConverter::class)
-    @Column(columnDefinition = "TEXT")
+    @ElementCollection
+    @CollectionTable(
+        name = "shift_members",
+        joinColumns = [JoinColumn(name = "shift_id")]
+    )
+    @Column(name = "member_id")
     var members: List<Int> = emptyList(),
 
-    @Convert(converter = IntListConverter::class)
-    @Column(columnDefinition = "TEXT")
+    @ElementCollection
+    @CollectionTable(
+        name = "shift_newbies",
+        joinColumns = [JoinColumn(name = "shift_id")]
+    )
+    @Column(name = "newbie_id")
     var newbies: List<Int> = emptyList(),
 
     @Column(length = 255)
