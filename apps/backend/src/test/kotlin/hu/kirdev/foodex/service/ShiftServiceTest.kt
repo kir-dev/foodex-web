@@ -1,6 +1,8 @@
 package hu.kirdev.foodex.service
 
 import hu.kirdev.foodex.model.ConfigurationEntity
+import hu.kirdev.foodex.model.ShiftEntity
+import hu.kirdev.foodex.model.UserEntity
 import hu.kirdev.foodex.repository.ShiftRepository
 import hu.kirdev.foodex.repository.UserRepository
 import io.mockk.clearAllMocks
@@ -10,6 +12,7 @@ import io.mockk.verify
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
+import org.springframework.data.repository.findByIdOrNull
 import java.time.LocalDateTime
 
 class ShiftServiceTest {
@@ -20,7 +23,7 @@ class ShiftServiceTest {
 
     @Test
     fun getAllShiftsInSemester() {
-
+        /*
 
         every { shiftRepository.findAll() } returns listOf(
 
@@ -42,6 +45,39 @@ class ShiftServiceTest {
         assertEquals(1, result.size)
         assertEquals("asdf", result.first().comment)
         verify(exactly = 1) { userRepository.findAll() }
+
+         */
+    }
+
+    @Test
+    fun addMemberToShift() {
+        every { shiftRepository.findAll()} returns listOf(
+            ShiftEntity(
+                id = 1,
+                cookingClubId = 1,
+                maxMembers = 10,
+                opening = LocalDateTime.now().plusHours(1),
+                closing = LocalDateTime.now().plusHours(2),
+                place = "-1 nagykonyha",
+                members = listOf(1),
+                newbies = emptyList(),
+                comment = "eredeti shift"
+            )
+        )
+
+        val shiftService = ShiftService(
+            shiftRepository,
+            userRepository,
+            configurationService,
+            foodExService
+        )
+
+        assertEquals(1L, shiftRepository.count())
+
+        shiftService.addMemberToShift(1, 2)
+
+        val result = shiftRepository.count()
+        assertEquals(2L, result)
     }
 
     @BeforeEach

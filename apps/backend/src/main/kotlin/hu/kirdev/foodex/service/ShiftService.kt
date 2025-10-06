@@ -1,6 +1,7 @@
 package hu.kirdev.foodex.service
 
 import hu.kirdev.foodex.dto.CreateShiftFromRequestDTO
+import hu.kirdev.foodex.model.Role
 import hu.kirdev.foodex.model.ShiftEntity
 import hu.kirdev.foodex.model.UserEntity
 import hu.kirdev.foodex.repository.ShiftRepository
@@ -99,6 +100,10 @@ class ShiftService(
         val user = userRepository.findByIdOrNull(userId)
             ?: throw IllegalArgumentException("User with ID $userId not found")
 
+        if (user.role != Role.MEMBER || user.role != Role.ADMIN) {
+            throw IllegalArgumentException("User with ID $userId not a member or admin")
+        }
+
         if (shift.members.contains(userId)) {
             throw IllegalStateException("User with ID $userId is already a member of the shift $shiftId")
         }
@@ -117,6 +122,10 @@ class ShiftService(
             ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
         val user = userRepository.findByIdOrNull(userId)
             ?: throw IllegalArgumentException("User with ID $userId not found")
+
+        if (user.role != Role.NEWBIE || user.role != Role.ADMIN) {
+            throw IllegalArgumentException("User with ID $userId not newbie")
+        }
 
         if (shift.newbies.contains(userId)) {
             throw IllegalStateException("User with ID $userId is already a member of the shift $shiftId")
@@ -137,6 +146,10 @@ class ShiftService(
         val user = userRepository.findByIdOrNull(userId)
             ?: throw IllegalArgumentException("User with ID $userId not found")
 
+        if (user.role != Role.MEMBER || user.role != Role.ADMIN) {
+            throw IllegalArgumentException("User with ID $userId not a member or admin")
+        }
+
         if (!shift.members.contains(userId)) {
             throw IllegalStateException("User with ID $userId is not a member of shift $shiftId")
         }
@@ -152,6 +165,10 @@ class ShiftService(
             ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
         val user = userRepository.findByIdOrNull(userId)
             ?: throw IllegalArgumentException("User with ID $userId not found")
+
+        if (user.role != Role.NEWBIE || user.role != Role.ADMIN) {
+            throw IllegalArgumentException("User with ID $userId not newbie")
+        }
 
         if (!shift.newbies.contains(userId)) {
             throw IllegalStateException("User with ID $userId is not a member of shift $shiftId")
