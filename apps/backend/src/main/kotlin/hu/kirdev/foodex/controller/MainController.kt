@@ -49,6 +49,31 @@ class MainController(
         return foodExRequestService.createFoodExRequest(request)
     }
 
+    /********** INCOMING-REQUESTS **********************************************************************/
+    @GetMapping("/incoming-requests")
+    fun getOrders() : OrdersResponseDTO {
+        return OrdersResponseDTO(
+            incomingFoodExRequests = foodExRequestService.getFoodExRequestsByIsAcceptedFalse(),
+            acceptedShifts = shiftService.getActiveShifts()
+        )
+    }
+
+    @PostMapping("/incoming-requests")
+    fun createShiftsFromRequest(@Valid @RequestBody request: CreateShiftFromRequestDTO) : List<ShiftEntity> {
+        return shiftService.createShiftFromFoodExRequest(request)
+    }
+
+    /********** OPENINGS *******************************************************************************/
+    @GetMapping("/openings")
+    fun getOpenings() : List<ShiftEntity> {
+        return shiftService.getAllShiftsInSemester()
+    }
+
+    @PutMapping("/openings")
+    fun updateShift(@Valid @RequestBody shift: ShiftEntity) : ShiftEntity {
+        return shiftService.updateShift(shift)
+    }
+
     /********** SHIFTS *********************************************************************************/
     @GetMapping("/shifts")
     fun getShifts() : ShiftsResponseDTO {
@@ -115,30 +140,4 @@ class MainController(
     fun updateUser(@Valid @RequestBody user: UserEntity) : UserEntity {
         return userService.updateUser(user)
     }
-
-    /********** INCOMING-REQUESTS **********************************************************************/
-    @GetMapping("/incoming-requests")
-    fun getOrders() : OrdersResponseDTO {
-        return OrdersResponseDTO(
-            incomingFoodExRequests = foodExRequestService.getFoodExRequestsByIsAcceptedFalse(),
-            acceptedShifts = shiftService.getActiveShifts()
-        )
-    }
-
-    @PostMapping("/incoming-requests")
-    fun createShiftsFromRequest(@Valid @RequestBody request: CreateShiftFromRequestDTO) : List<ShiftEntity> {
-        return shiftService.createShiftFromFoodExRequest(request)
-    }
-
-    /********** OPENINGS *******************************************************************************/
-    @GetMapping("/openings")
-    fun getOpenings() : List<ShiftEntity> {
-        return shiftService.getAllShiftsInSemester()
-    }
-
-    @PutMapping("/openings")
-    fun updateShift(@Valid @RequestBody shift: ShiftEntity) : ShiftEntity {
-        return shiftService.updateShift(shift)
-    }
-
 }

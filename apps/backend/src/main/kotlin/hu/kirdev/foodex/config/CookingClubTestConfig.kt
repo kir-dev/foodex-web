@@ -15,14 +15,26 @@ class CookingClubTestConfig {
         return CommandLineRunner {
             val club1 = cookingClubRepository.save(
                 CookingClubEntity(
-                    name = "Americano-0",
-                    leaders = listOf(0)
+                    name = "Americano-1",
+                    leaders = listOf(1, 4)
                 )
             )
             val club2 = cookingClubRepository.save(
                 CookingClubEntity(
-                    name = "Langosch-1",
-                    leaders = listOf(0, 1)
+                    name = "Langosch-2",
+                    leaders = listOf(1, 3, 5)
+                )
+            )
+            val club3 = cookingClubRepository.save(
+                CookingClubEntity(
+                    name = "Pizzasch-3",
+                    leaders = listOf(1)
+                )
+            )
+            val club4 = cookingClubRepository.save(
+                CookingClubEntity(
+                    name = "Paschta-4",
+                    leaders = listOf(1, 3)
                 )
             )
         }

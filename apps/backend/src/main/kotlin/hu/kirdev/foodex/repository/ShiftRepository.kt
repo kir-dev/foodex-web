@@ -16,7 +16,4 @@ interface ShiftRepository : JpaRepository<ShiftEntity, Int> {
 
     @Query("SELECT sh from ShiftEntity sh WHERE sh.cookingClubId = :cookingClubId AND sh.closing > CURRENT_TIMESTAMP")
     fun findUpcomingShiftsByCookingClubId(cookingClubId: Int): List<ShiftEntity>
-
-    @Query("SELECT sh FROM ShiftEntity sh WHERE sh.closing > CURRENT_TIMESTAMP")
-    fun findUpcomingShifts(): List<ShiftEntity>
 }

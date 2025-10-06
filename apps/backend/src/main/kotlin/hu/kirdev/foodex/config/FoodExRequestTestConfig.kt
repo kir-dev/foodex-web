@@ -14,24 +14,44 @@ class FoodExRequestTestConfig {
     @Bean
     fun initFoodExRequestRepository(foodExRequestRepository: FoodExRequestRepository): CommandLineRunner {
         return CommandLineRunner {
-            val request1 = foodExRequestRepository.save(
+            val request0 = foodExRequestRepository.save(
                 FoodExRequestEntity(
-                    userId = 0,
+                    userId = 3,
                     cookingClubId = 0,
                     opening = LocalDateTime.now().plusDays(1),
                     closing = LocalDateTime.now().plusDays(1).plusHours(4),
                     place = "10. konyha",
-                    description = "ez egy leiras"
+                    description = "ez egy leiras americano"
                 )
             )
-            val request2 = foodExRequestRepository.save(
+            val request1 = foodExRequestRepository.save(
                 FoodExRequestEntity(
-                    userId = 1,
+                    userId = 4,
                     cookingClubId = 1,
                     opening = LocalDateTime.now().plusDays(2),
                     closing = LocalDateTime.now().plusDays(2).plusHours(2),
                     place = "11. konyha",
-                    description = "ez is egy leiras"
+                    description = "ez is egy leiras langosch"
+                )
+            )
+            val request2 = foodExRequestRepository.save(
+                FoodExRequestEntity(
+                    userId = 0,
+                    cookingClubId = 2,
+                    opening = LocalDateTime.now().minusYears(1),
+                    closing = LocalDateTime.now().minusYears(1).plusHours(2),
+                    place = "18. konyha",
+                    description = "1 evel ezelottrol request, pizzasch"
+                )
+            )
+            val request3 = foodExRequestRepository.save(
+                FoodExRequestEntity(
+                    userId = 4,
+                    cookingClubId = 1,
+                    opening = LocalDateTime.now().minusHours(1),
+                    closing = LocalDateTime.now().plusHours(2),
+                    place = "11. konyha",
+                    description = "mar elkezdodott langosch"
                 )
             )
         }

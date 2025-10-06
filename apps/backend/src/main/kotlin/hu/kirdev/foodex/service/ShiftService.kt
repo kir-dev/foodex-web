@@ -9,6 +9,8 @@ import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import java.time.Duration
+import java.time.LocalDateTime
+import kotlin.collections.filter
 
 @Service
 class ShiftService(
@@ -25,14 +27,16 @@ class ShiftService(
 
     @Transactional(readOnly = true)
     fun getAllShiftsInSemester(): List<ShiftEntity> {
+        val config = configurationService.get()
         return shiftRepository.findAll().filter {
-            configurationService.get().startOfSemester < it.closing && it.opening < configurationService.get().startOfSemester
+            config.startOfSemester < it.closing && it.opening < config.endOfSemester
         }
     }
 
     @Transactional(readOnly = true)
     fun getUpcomingShifts() : List<ShiftEntity> {
-        return shiftRepository.findUpcomingShifts()
+        val now = LocalDateTime.now()
+        return shiftRepository.findAll().filter { it.closing > now }
     }
 
     @Transactional(readOnly = true)
@@ -47,13 +51,13 @@ class ShiftService(
 
     @Transactional(readOnly = true)
     fun getActiveShifts(): List<ShiftEntity> {
-        val upcomingShifts = shiftRepository.findUpcomingShifts()
+        val upcomingShifts = getUpcomingShifts()
         return upcomingShifts.filter { it.members.size < it.maxMembers }
     }
 
     @Transactional(readOnly = true)
     fun getFullShifts(): List<ShiftEntity> {
-        val upcomingShifts = shiftRepository.findUpcomingShifts()
+        val upcomingShifts = getUpcomingShifts()
         return upcomingShifts.filter { it.members.size >= it.maxMembers }
     }
 
