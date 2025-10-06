@@ -4,7 +4,7 @@ import jakarta.validation.constraints.*
 
 data class CreateShiftFromRequestDTO(
     @field:NotBlank
-    val foodExRequestId: Long,
+    val foodExRequestId: Int,
 
     @field:NotBlank
     @field:Min(1)

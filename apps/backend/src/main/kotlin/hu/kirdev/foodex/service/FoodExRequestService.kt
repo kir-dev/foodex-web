@@ -16,17 +16,17 @@ class FoodExRequestService(private val foodExRequestRepository: FoodExRequestRep
     }
 
     @Transactional(readOnly = true)
-    fun getFoodExRequestsById(id: Long) : FoodExRequestEntity? {
+    fun getFoodExRequestsById(id: Int) : FoodExRequestEntity? {
         return foodExRequestRepository.findByIdOrNull(id)
     }
 
     @Transactional(readOnly = true)
-    fun getFoodExRequestsByUserId(userId: Long) : List<FoodExRequestEntity> {
+    fun getFoodExRequestsByUserId(userId: Int) : List<FoodExRequestEntity> {
         return foodExRequestRepository.findAllByUserId(userId)
     }
 
     @Transactional(readOnly = true)
-    fun getFoodExRequestsByCookingClubId(cookingClubId: Long) : List<FoodExRequestEntity> {
+    fun getFoodExRequestsByCookingClubId(cookingClubId: Int) : List<FoodExRequestEntity> {
         return foodExRequestRepository.findAllByCookingClubId(cookingClubId)
     }
 
@@ -54,7 +54,7 @@ class FoodExRequestService(private val foodExRequestRepository: FoodExRequestRep
     }
 
     @Transactional(readOnly = false)
-    fun acceptFoodExRequest(id: Long) : FoodExRequestEntity? {
+    fun acceptFoodExRequest(id: Int) : FoodExRequestEntity? {
         return foodExRequestRepository.findByIdOrNull(id)?.also {
             it.isAccepted = true
             foodExRequestRepository.save(it)
@@ -62,7 +62,7 @@ class FoodExRequestService(private val foodExRequestRepository: FoodExRequestRep
     }
 
     @Transactional(readOnly = false)
-    fun deleteFoodExRequest(id: Long) {
+    fun deleteFoodExRequest(id: Int) {
         foodExRequestRepository.deleteById(id)
     }
 }

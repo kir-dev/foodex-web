@@ -16,7 +16,7 @@ class ShiftTestConfig {
         return CommandLineRunner {
             val shift1 = shiftRepository.save(
                 ShiftEntity(
-                    cookingClubId = 0L,
+                    cookingClubId = 0,
                     maxMembers = 20,
                     opening = LocalDateTime.now().minusHours(1),
                     closing = LocalDateTime.now().plusDays(1),
@@ -28,7 +28,7 @@ class ShiftTestConfig {
             )
             val shift2 = shiftRepository.save(
                 ShiftEntity(
-                    cookingClubId = 1L,
+                    cookingClubId = 1,
                     maxMembers = 10,
                     opening = LocalDateTime.of(2025, 9, 3, 8, 0, 0, 0),
                     closing = LocalDateTime.of(2025, 9, 3, 20, 0, 0, 0),

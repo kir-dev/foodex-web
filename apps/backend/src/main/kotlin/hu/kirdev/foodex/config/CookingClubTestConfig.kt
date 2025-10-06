@@ -16,13 +16,13 @@ class CookingClubTestConfig {
             val club1 = cookingClubRepository.save(
                 CookingClubEntity(
                     name = "Americano-0",
-                    leaders = listOf(0L)
+                    leaders = listOf(0)
                 )
             )
             val club2 = cookingClubRepository.save(
                 CookingClubEntity(
                     name = "Langosch-1",
-                    leaders = listOf(0L, 1L)
+                    leaders = listOf(0, 1)
                 )
             )
         }

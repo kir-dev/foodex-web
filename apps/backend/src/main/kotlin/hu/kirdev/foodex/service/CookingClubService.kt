@@ -20,12 +20,12 @@ class CookingClubService(
     }
 
     @Transactional(readOnly = true)
-    fun getCookingClub(cookingClubId: Long) : CookingClubEntity? {
+    fun getCookingClub(cookingClubId: Int) : CookingClubEntity? {
         return cookingClubRepository.findCookingClubEntityById(cookingClubId)
     }
 
     @Transactional(readOnly = true)
-    fun getLeadersByClubId(cookingClubId: Long) : List<UserEntity> {
+    fun getLeadersByClubId(cookingClubId: Int) : List<UserEntity> {
         val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
             ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
         return userRepository.findAllById(cookingClub.leaders).toList()
@@ -41,7 +41,7 @@ class CookingClubService(
         return cookingClubRepository.save(cookingClub)
     }
 
-    fun deleteCookingClub(cookingClubId: Long) {
+    fun deleteCookingClub(cookingClubId: Int) {
         val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
             ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
         cookingClubRepository.delete(cookingClub)
@@ -51,7 +51,7 @@ class CookingClubService(
         cookingClubRepository.save(cookingClub)
     }
 
-    fun addLeaderToCookingClub(cookingClubId: Long, leaderId: Long) : CookingClubEntity {
+    fun addLeaderToCookingClub(cookingClubId: Int, leaderId: Int) : CookingClubEntity {
         val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
             ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
         val leader = userRepository.findByIdOrNull(leaderId)
@@ -66,7 +66,7 @@ class CookingClubService(
         return cookingClubRepository.save(cookingClub)
     }
 
-    fun removeLeaderToCookingClub(cookingClubId: Long, leaderId: Long) : CookingClubEntity {
+    fun removeLeaderToCookingClub(cookingClubId: Int, leaderId: Int) : CookingClubEntity {
         val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
             ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
         val leader = userRepository.findByIdOrNull(leaderId)

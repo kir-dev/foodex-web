@@ -9,16 +9,16 @@ data class FoodExRequestEntity(
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    val id: Int = 0,
 
     @Column
     var isAccepted: Boolean = false,
 
     @Column
-    val userId: Long,
+    val userId: Int,
 
     @Column
-    val cookingClubId: Long,
+    val cookingClubId: Int,
 
     @Column
     val opening: LocalDateTime,

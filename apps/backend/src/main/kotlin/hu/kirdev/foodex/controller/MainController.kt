@@ -92,7 +92,7 @@ class MainController(
 
     /********** USER ***********************************************************************************/
     @GetMapping("/user/{userId}")
-    fun getUser(@PathVariable userId: Long) : ProfilesResponseDTO {
+    fun getUser(@PathVariable userId: Int) : ProfilesResponseDTO {
         val user = userService.getUserById(userId)
             ?: throw RuntimeException("User not found")
 

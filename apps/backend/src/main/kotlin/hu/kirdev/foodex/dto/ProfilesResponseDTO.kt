@@ -6,7 +6,7 @@ import hu.kirdev.foodex.model.ShiftEntity
 import org.springframework.http.RequestEntity
 
 data class ProfilesResponseDTO(
-    val userId: Long,
+    val userId: Int,
     val role: Role,
     val name: String,
     val nickname: String,

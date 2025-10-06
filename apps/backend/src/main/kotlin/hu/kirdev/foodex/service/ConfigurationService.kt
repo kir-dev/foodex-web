@@ -14,7 +14,7 @@ class ConfigurationService (private val configurationRepository: ConfigurationRe
 
         if (config == null) {
             val configuration = ConfigurationEntity(
-                id = 0L,
+                id = 0,
                 feelingOfTheWeek = "Feeling of the week :)",
                 foodExLogo = "https://images.immediate.co.uk/production/volatile/sites/30/2020/08/chorizo-mozarella-gnocchi-bake-cropped-9ab73a3.jpg",
                 startOfSemester = LocalDateTime.of(2025, 9, 1, 0, 0),

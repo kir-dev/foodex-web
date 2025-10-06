@@ -9,7 +9,7 @@ data class ConfigurationEntity (
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    val id: Int = 0,
 
     var feelingOfTheWeek: String,
 

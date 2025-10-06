@@ -16,7 +16,7 @@ class FoodExRequestTestConfig {
         return CommandLineRunner {
             val request1 = foodExRequestRepository.save(
                 FoodExRequestEntity(
-                    userId = 0L,
+                    userId = 0,
                     cookingClubId = 0,
                     opening = LocalDateTime.now().plusDays(1),
                     closing = LocalDateTime.now().plusDays(1).plusHours(4),
@@ -26,7 +26,7 @@ class FoodExRequestTestConfig {
             )
             val request2 = foodExRequestRepository.save(
                 FoodExRequestEntity(
-                    userId = 1L,
+                    userId = 1,
                     cookingClubId = 1,
                     opening = LocalDateTime.now().plusDays(2),
                     closing = LocalDateTime.now().plusDays(2).plusHours(2),

@@ -36,12 +36,12 @@ class ShiftService(
     }
 
     @Transactional(readOnly = true)
-    fun getShiftById(shiftId: Long) : ShiftEntity? {
+    fun getShiftById(shiftId: Int) : ShiftEntity? {
         return shiftRepository.findShiftEntityById(shiftId)
     }
 
     @Transactional(readOnly = true)
-    fun getAllShiftsByUserId(userId: Long) : List<ShiftEntity> {
+    fun getAllShiftsByUserId(userId: Int) : List<ShiftEntity> {
         return shiftRepository.findAllByUserId(userId)
     }
 
@@ -58,36 +58,36 @@ class ShiftService(
     }
 
     @Transactional(readOnly = true)
-    fun getUpcomingShiftsByUserId(userId: Long) : List<ShiftEntity> {
+    fun getUpcomingShiftsByUserId(userId: Int) : List<ShiftEntity> {
         return shiftRepository.findUpcomingShiftsByUserId(userId)
     }
 
     @Transactional(readOnly = true)
-    fun getAllShiftsByCookingClubId(cookingClubId : Long) : List<ShiftEntity> {
+    fun getAllShiftsByCookingClubId(cookingClubId : Int) : List<ShiftEntity> {
         return shiftRepository.findAllByCookingClubId(cookingClubId)
     }
 
     @Transactional(readOnly = true)
-    fun getUpcomingShiftsByCookingClubId(cookingClubId : Long) : List<ShiftEntity> {
+    fun getUpcomingShiftsByCookingClubId(cookingClubId : Int) : List<ShiftEntity> {
         return shiftRepository.findUpcomingShiftsByCookingClubId(cookingClubId)
     }
 
     @Transactional(readOnly = true)
-    fun getMembersByShiftId(shiftId : Long) : List<UserEntity> {
+    fun getMembersByShiftId(shiftId : Int) : List<UserEntity> {
         val shift = shiftRepository.findShiftEntityById(shiftId)
             ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
         return userRepository.findAllById(shift.members).toList()
     }
 
     @Transactional(readOnly = true)
-    fun getNewbiesByShiftId(shiftId : Long) : List<UserEntity> {
+    fun getNewbiesByShiftId(shiftId : Int) : List<UserEntity> {
         val shift = shiftRepository.findShiftEntityById(shiftId)
             ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
         return userRepository.findAllById(shift.newbies).toList()
     }
 
     @Transactional(readOnly = false)
-    fun addMemberToShift(shiftId: Long, userId: Long): ShiftEntity {
+    fun addMemberToShift(shiftId: Int, userId: Int): ShiftEntity {
         val shift = shiftRepository.findShiftEntityById(shiftId)
             ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
         val user = userRepository.findByIdOrNull(userId)
@@ -106,7 +106,7 @@ class ShiftService(
     }
 
     @Transactional(readOnly = false)
-    fun addNewbieToShift(shiftId: Long, userId: Long): ShiftEntity {
+    fun addNewbieToShift(shiftId: Int, userId: Int): ShiftEntity {
         val shift = shiftRepository.findShiftEntityById(shiftId)
             ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
         val user = userRepository.findByIdOrNull(userId)
@@ -125,7 +125,7 @@ class ShiftService(
     }
 
     @Transactional(readOnly = false)
-    fun removeMemberFromShift(shiftId: Long, userId: Long): ShiftEntity {
+    fun removeMemberFromShift(shiftId: Int, userId: Int): ShiftEntity {
         val shift = shiftRepository.findShiftEntityById(shiftId)
             ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
         val user = userRepository.findByIdOrNull(userId)
@@ -141,7 +141,7 @@ class ShiftService(
     }
 
     @Transactional(readOnly = false)
-    fun removeNewbieFromShift(shiftId: Long, userId: Long): ShiftEntity {
+    fun removeNewbieFromShift(shiftId: Int, userId: Int): ShiftEntity {
         val shift = shiftRepository.findShiftEntityById(shiftId)
             ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
         val user = userRepository.findByIdOrNull(userId)
@@ -157,7 +157,7 @@ class ShiftService(
     }
 
     @Transactional(readOnly = false)
-    fun deleteShift(shiftId: Long) {
+    fun deleteShift(shiftId: Int) {
         shiftRepository.deleteById(shiftId)
     }
 

@@ -16,7 +16,7 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = true)
-    fun getUserById(id: Long): UserEntity? {
+    fun getUserById(id: Int): UserEntity? {
         return userRepository.findByIdOrNull(id)
     }
 
@@ -65,14 +65,14 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = false)
-    fun deleteUser(userId: Long) {
+    fun deleteUser(userId: Int) {
         val user = userRepository.findByIdOrNull(userId)
             ?: throw RuntimeException("User with id $userId not found")
         userRepository.delete(user)
     }
 
     @Transactional(readOnly = false)
-    fun updateRole(userId: Long, role: Role): UserEntity {
+    fun updateRole(userId: Int, role: Role): UserEntity {
         val user = userRepository.findByIdOrNull(userId)
         requireNotNull(user) { "User with id $userId not found" }
         user.role = role
@@ -80,7 +80,7 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = false)
-    fun activateUser(userId: Long) {
+    fun activateUser(userId: Int) {
         val user = userRepository.findByIdOrNull(userId)
             ?: throw RuntimeException("User with id $userId not found")
         user.isActive = true
@@ -88,7 +88,7 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = false)
-    fun deactivateUser(userId: Long) {
+    fun deactivateUser(userId: Int) {
         val user = userRepository.findByIdOrNull(userId)
             ?: throw RuntimeException("User with id $userId not found")
         user.isActive = false

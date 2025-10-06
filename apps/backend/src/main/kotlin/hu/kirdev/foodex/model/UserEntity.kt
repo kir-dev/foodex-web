@@ -14,7 +14,7 @@ data class UserEntity(
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    val id: Int = 0,
 
     @Enumerated(EnumType.STRING) // Store enum as string in the database
     @Column(columnDefinition = "varchar(32)", nullable = false)

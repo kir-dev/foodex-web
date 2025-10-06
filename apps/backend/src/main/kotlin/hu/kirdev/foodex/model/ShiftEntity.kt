@@ -1,6 +1,6 @@
 package hu.kirdev.foodex.model
 
-import hu.kirdev.foodex.converter.LongListConverter
+import hu.kirdev.foodex.converter.IntListConverter
 import jakarta.persistence.*
 import java.time.LocalDateTime
 
@@ -10,10 +10,10 @@ data class ShiftEntity(
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Long = 0,
+    val id: Int = 0,
 
     @Column
-    val cookingClubId: Long,
+    val cookingClubId: Int,
 
     @Column
     var maxMembers: Int = 20,
@@ -27,13 +27,13 @@ data class ShiftEntity(
     @Column(length = 30)
     var place: String,
 
-    @Column(columnDefinition = "json")
-    @Convert(converter = LongListConverter::class)
-    var members: List<Long> = emptyList(),
+    @Convert(converter = IntListConverter::class)
+    @Column(columnDefinition = "TEXT")
+    var members: List<Int> = emptyList(),
 
-    @Column(columnDefinition = "json")
-    @Convert(converter = LongListConverter::class)
-    var newbies: List<Long> = emptyList(),
+    @Convert(converter = IntListConverter::class)
+    @Column(columnDefinition = "TEXT")
+    var newbies: List<Int> = emptyList(),
 
     @Column(length = 255)
     var comment: String = ""
