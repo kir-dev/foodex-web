@@ -81,4 +81,12 @@ class CookingClubService(
         return cookingClubRepository.save(cookingClub)
     }
 
+    fun isLeaderOfCookingClub(userId: Int, cookingClubId: Int) : Boolean {
+        val leader = userRepository.findByIdOrNull(userId)
+            ?: throw IllegalArgumentException("User with id $userId not found")
+        val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
+            ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
+
+        return cookingClub.leaders.contains(leader.id)
+    }
 }

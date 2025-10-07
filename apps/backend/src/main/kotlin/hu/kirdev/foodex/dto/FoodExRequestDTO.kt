@@ -1,19 +1,20 @@
 package hu.kirdev.foodex.dto
 
 import jakarta.validation.constraints.*
+import org.jetbrains.annotations.NotNull
 import java.time.LocalDateTime
 
 data class FoodExRequestDTO(
-    @field:NotBlank
+    @field:NotNull
     val userId: Int,
 
-    @field:NotBlank
+    @field:NotNull
     val cookingClubId: Int,
 
-    @field:NotBlank
+    @field:NotNull
     val opening: LocalDateTime,
 
-    @field:NotBlank
+    @field:NotNull
     val closing: LocalDateTime,
 
     @field:NotBlank

@@ -8,7 +8,10 @@ import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
 @Service
-class FoodExRequestService(private val foodExRequestRepository: FoodExRequestRepository) {
+class FoodExRequestService(
+    private val foodExRequestRepository: FoodExRequestRepository,
+    private val cookingClubService: CookingClubService
+) {
 
     @Transactional(readOnly = true)
     fun getAllFoodExRequests() : List<FoodExRequestEntity> {
@@ -42,6 +45,15 @@ class FoodExRequestService(private val foodExRequestRepository: FoodExRequestRep
 
     @Transactional(readOnly = false)
     fun createFoodExRequest(foodExRequest: FoodExRequestDTO) : FoodExRequestEntity {
+
+        if (!cookingClubService.isLeaderOfCookingClub(foodExRequest.userId, foodExRequest.cookingClubId)) {
+            throw IllegalArgumentException("User with id ${foodExRequest.userId} is NOT a LEADER of CookingClub with id ${foodExRequest.cookingClubId}")
+        }
+
+        if (foodExRequest.opening >= foodExRequest.closing) {
+            throw IllegalArgumentException("Closing must be after opening")
+        }
+        
         val request = FoodExRequestEntity(
             userId = foodExRequest.userId,
             cookingClubId = foodExRequest.cookingClubId,

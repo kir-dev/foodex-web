@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.*
 
 @RestController
 @RequestMapping("/api")
+// probaltam localhost:3000-t is
+@CrossOrigin(origins = ["http://localhost:8080"], methods = [RequestMethod.GET, RequestMethod.POST, RequestMethod.PUT, RequestMethod.DELETE, RequestMethod.OPTIONS], allowCredentials = "true")
 class MainController(
     private val configurationService: ConfigurationService,
     private val shiftService: ShiftService,

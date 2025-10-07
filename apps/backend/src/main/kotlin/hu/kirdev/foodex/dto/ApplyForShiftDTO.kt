@@ -1,7 +1,8 @@
 package hu.kirdev.foodex.dto
-import jakarta.validation.constraints.NotBlank
+
+import org.jetbrains.annotations.NotNull
 
 data class ApplyForShiftDTO(
-    @field:NotBlank val userId: Int,
-    @field:NotBlank val shiftId: Int
+    @field:NotNull val userId: Int,
+    @field:NotNull val shiftId: Int
 )

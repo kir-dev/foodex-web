@@ -100,7 +100,7 @@ class ShiftService(
         val user = userRepository.findByIdOrNull(userId)
             ?: throw IllegalArgumentException("User with ID $userId not found")
 
-        if (user.role != Role.MEMBER || user.role != Role.ADMIN) {
+        if (user.role != Role.MEMBER && user.role != Role.ADMIN) {
             throw IllegalArgumentException("User with ID $userId not a member or admin")
         }
 
@@ -123,7 +123,7 @@ class ShiftService(
         val user = userRepository.findByIdOrNull(userId)
             ?: throw IllegalArgumentException("User with ID $userId not found")
 
-        if (user.role != Role.NEWBIE || user.role != Role.ADMIN) {
+        if (user.role != Role.NEWBIE) {
             throw IllegalArgumentException("User with ID $userId not newbie")
         }
 
@@ -146,7 +146,7 @@ class ShiftService(
         val user = userRepository.findByIdOrNull(userId)
             ?: throw IllegalArgumentException("User with ID $userId not found")
 
-        if (user.role != Role.MEMBER || user.role != Role.ADMIN) {
+        if (user.role != Role.MEMBER && user.role != Role.ADMIN) {
             throw IllegalArgumentException("User with ID $userId not a member or admin")
         }
 
@@ -166,7 +166,7 @@ class ShiftService(
         val user = userRepository.findByIdOrNull(userId)
             ?: throw IllegalArgumentException("User with ID $userId not found")
 
-        if (user.role != Role.NEWBIE || user.role != Role.ADMIN) {
+        if (user.role != Role.NEWBIE) {
             throw IllegalArgumentException("User with ID $userId not newbie")
         }
 
@@ -194,8 +194,8 @@ class ShiftService(
         val foodExRequest = foodExService.getFoodExRequestsById(request.foodExRequestId)
             ?: throw RuntimeException("Food Ex Request with ID ${request.foodExRequestId} not found")
 
-        if (foodExRequest.opening >= foodExRequest.closing) {
-            throw IllegalArgumentException("Food Ex Request with ID ${request.foodExRequestId} start is after opening error")
+        if (foodExRequest.isAccepted) {
+            throw IllegalArgumentException("Food Ex Request with ID ${request.foodExRequestId} is ALREADY accepted")
         }
 
         val shifts = mutableListOf<ShiftEntity>()

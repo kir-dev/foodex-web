@@ -14,17 +14,17 @@ class FoodExRequestTestConfig {
     @Bean
     fun initFoodExRequestRepository(foodExRequestRepository: FoodExRequestRepository): CommandLineRunner {
         return CommandLineRunner {
-            val request0 = foodExRequestRepository.save(
+            val request1 = foodExRequestRepository.save(
                 FoodExRequestEntity(
                     userId = 3,
-                    cookingClubId = 0,
+                    cookingClubId = 1,
                     opening = LocalDateTime.now().plusDays(1),
                     closing = LocalDateTime.now().plusDays(1).plusHours(4),
                     place = "10. konyha",
                     description = "ez egy leiras americano"
                 )
             )
-            val request1 = foodExRequestRepository.save(
+            val request2 = foodExRequestRepository.save(
                 FoodExRequestEntity(
                     userId = 4,
                     cookingClubId = 1,
@@ -34,7 +34,7 @@ class FoodExRequestTestConfig {
                     description = "ez is egy leiras langosch"
                 )
             )
-            val request2 = foodExRequestRepository.save(
+            val request3 = foodExRequestRepository.save(
                 FoodExRequestEntity(
                     userId = 0,
                     cookingClubId = 2,
@@ -44,7 +44,7 @@ class FoodExRequestTestConfig {
                     description = "1 evel ezelottrol request, pizzasch"
                 )
             )
-            val request3 = foodExRequestRepository.save(
+            val request4 = foodExRequestRepository.save(
                 FoodExRequestEntity(
                     userId = 4,
                     cookingClubId = 1,
@@ -52,6 +52,16 @@ class FoodExRequestTestConfig {
                     closing = LocalDateTime.now().plusHours(2),
                     place = "11. konyha",
                     description = "mar elkezdodott langosch"
+                )
+            )
+            val request5 = foodExRequestRepository.save(
+                FoodExRequestEntity(
+                    userId = 4,
+                    cookingClubId = 1,
+                    opening = LocalDateTime.now().minusMonths(6),
+                    closing = LocalDateTime.now().minusMonths(6).plusHours(2),
+                    place = "4. konyha",
+                    description = "ELMULT FELEVBOL VAN!!!"
                 )
             )
         }

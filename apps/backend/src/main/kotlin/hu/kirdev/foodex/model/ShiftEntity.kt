@@ -15,7 +15,7 @@ data class ShiftEntity(
     val cookingClubId: Int,
 
     @Column
-    var maxMembers: Int = 20,
+    var maxMembers: Int,
 
     @Column
     var opening: LocalDateTime,
