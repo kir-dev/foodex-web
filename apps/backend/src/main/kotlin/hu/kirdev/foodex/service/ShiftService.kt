@@ -1,0 +1,221 @@
+package hu.kirdev.foodex.service
+
+import hu.kirdev.foodex.dto.CreateShiftFromRequestDTO
+import hu.kirdev.foodex.model.Role
+import hu.kirdev.foodex.model.ShiftEntity
+import hu.kirdev.foodex.model.UserEntity
+import hu.kirdev.foodex.repository.ShiftRepository
+import hu.kirdev.foodex.repository.UserRepository
+import org.springframework.data.repository.findByIdOrNull
+import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
+import java.time.LocalDateTime
+import kotlin.collections.filter
+
+@Service
+class ShiftService(
+    private val shiftRepository: ShiftRepository,
+    private val userRepository: UserRepository,
+    private val configurationService: ConfigurationService,
+    private val foodExService: FoodExRequestService
+) {
+
+    @Transactional(readOnly = true)
+    fun getAllShifts() : List<ShiftEntity> {
+        return shiftRepository.findAll()
+    }
+
+    @Transactional(readOnly = true)
+    fun getAllShiftsInSemester(): List<ShiftEntity> {
+        val config = configurationService.get()
+        return shiftRepository.findAll().filter {
+            config.startOfSemester < it.closing && it.opening < config.endOfSemester
+        }
+    }
+
+    @Transactional(readOnly = true)
+    fun getUpcomingShifts() : List<ShiftEntity> {
+        val now = LocalDateTime.now()
+        return shiftRepository.findAll().filter { it.closing > now }
+    }
+
+    @Transactional(readOnly = true)
+    fun getShiftById(shiftId: Int) : ShiftEntity? {
+        return shiftRepository.findByIdOrNull(shiftId)
+    }
+
+    @Transactional(readOnly = true)
+    fun getAllShiftsByUserId(userId: Int) : List<ShiftEntity> {
+        return shiftRepository.findAllByUserIdInMembersOrNewbies(userId)
+    }
+
+    @Transactional(readOnly = true)
+    fun getActiveShifts(): List<ShiftEntity> {
+        val upcomingShifts = getUpcomingShifts()
+        return upcomingShifts.filter { it.members.size < it.maxMembers }
+    }
+
+    @Transactional(readOnly = true)
+    fun getFullShifts(): List<ShiftEntity> {
+        val upcomingShifts = getUpcomingShifts()
+        return upcomingShifts.filter { it.members.size >= it.maxMembers }
+    }
+
+    @Transactional(readOnly = true)
+    fun getUpcomingShiftsByUserId(userId: Int) : List<ShiftEntity> {
+        val now = LocalDateTime.now()
+        return getAllShiftsByUserId(userId).filter { it.closing > now }
+    }
+
+    @Transactional(readOnly = true)
+    fun getAllShiftsByCookingClubId(cookingClubId : Int) : List<ShiftEntity> {
+        return shiftRepository.findAllByCookingClubId(cookingClubId)
+    }
+
+    @Transactional(readOnly = true)
+    fun getUpcomingShiftsByCookingClubId(cookingClubId : Int) : List<ShiftEntity> {
+        val now = LocalDateTime.now()
+        return getAllShiftsByCookingClubId(cookingClubId).filter { it.closing > now }
+    }
+
+    @Transactional(readOnly = true)
+    fun getMembersByShiftId(shiftId : Int) : List<UserEntity> {
+        val shift = shiftRepository.findByIdOrNull(shiftId)
+            ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
+        return userRepository.findAllById(shift.members).toList()
+    }
+
+    @Transactional(readOnly = true)
+    fun getNewbiesByShiftId(shiftId : Int) : List<UserEntity> {
+        val shift = shiftRepository.findByIdOrNull(shiftId)
+            ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
+        return userRepository.findAllById(shift.newbies).toList()
+    }
+
+    @Transactional(readOnly = false)
+    fun addMemberToShift(shiftId: Int, userId: Int): ShiftEntity {
+        val shift = shiftRepository.findByIdOrNull(shiftId)
+            ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
+        val user = userRepository.findByIdOrNull(userId)
+            ?: throw IllegalArgumentException("User with ID $userId not found")
+
+        if (user.role != Role.MEMBER && user.role != Role.ADMIN) {
+            throw IllegalArgumentException("User with ID $userId not a member or admin")
+        }
+
+        if (shift.members.contains(userId)) {
+            throw IllegalStateException("User with ID $userId is already a member of the shift $shiftId")
+        }
+        if (shift.members.size >= shift.maxMembers) {
+            throw IllegalStateException("Shift with ID $shiftId has reached maximum member capacity")
+        }
+
+        val updatedMembers = shift.members.toMutableList().apply { add(userId) }
+        shift.members = updatedMembers
+        return shiftRepository.save(shift)
+    }
+
+    @Transactional(readOnly = false)
+    fun addNewbieToShift(shiftId: Int, userId: Int): ShiftEntity {
+        val shift = shiftRepository.findByIdOrNull(shiftId)
+            ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
+        val user = userRepository.findByIdOrNull(userId)
+            ?: throw IllegalArgumentException("User with ID $userId not found")
+
+        if (user.role != Role.NEWBIE) {
+            throw IllegalArgumentException("User with ID $userId not newbie")
+        }
+
+        if (shift.newbies.contains(userId)) {
+            throw IllegalStateException("User with ID $userId is already a member of the shift $shiftId")
+        }
+        if (shift.newbies.size >= shift.members.size) {
+            throw IllegalStateException("Shift with ID $shiftId does not have enough members for newbies to join")
+        }
+
+        val updatedNewbies = shift.newbies.toMutableList().apply { add(userId) }
+        shift.newbies = updatedNewbies
+        return shiftRepository.save(shift)
+    }
+
+    @Transactional(readOnly = false)
+    fun removeMemberFromShift(shiftId: Int, userId: Int): ShiftEntity {
+        val shift = shiftRepository.findByIdOrNull(shiftId)
+            ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
+        val user = userRepository.findByIdOrNull(userId)
+            ?: throw IllegalArgumentException("User with ID $userId not found")
+
+        if (user.role != Role.MEMBER && user.role != Role.ADMIN) {
+            throw IllegalArgumentException("User with ID $userId not a member or admin")
+        }
+
+        if (!shift.members.contains(userId)) {
+            throw IllegalStateException("User with ID $userId is not a member of shift $shiftId")
+        }
+
+        val updatedMembers = shift.members.toMutableList().apply { remove(userId) }
+        shift.members = updatedMembers
+        return shiftRepository.save(shift)
+    }
+
+    @Transactional(readOnly = false)
+    fun removeNewbieFromShift(shiftId: Int, userId: Int): ShiftEntity {
+        val shift = shiftRepository.findByIdOrNull(shiftId)
+            ?: throw IllegalArgumentException("Shift with ID $shiftId not found")
+        val user = userRepository.findByIdOrNull(userId)
+            ?: throw IllegalArgumentException("User with ID $userId not found")
+
+        if (user.role != Role.NEWBIE) {
+            throw IllegalArgumentException("User with ID $userId not newbie")
+        }
+
+        if (!shift.newbies.contains(userId)) {
+            throw IllegalStateException("User with ID $userId is not a member of shift $shiftId")
+        }
+
+        val updatedNewbies = shift.newbies.toMutableList().apply { remove(userId) }
+        shift.newbies = updatedNewbies
+        return shiftRepository.save(shift)
+    }
+
+    @Transactional(readOnly = false)
+    fun deleteShift(shiftId: Int) {
+        shiftRepository.deleteById(shiftId)
+    }
+
+    @Transactional(readOnly = false)
+    fun updateShift(shift: ShiftEntity): ShiftEntity {
+        return shiftRepository.save(shift)
+    }
+
+    @Transactional(readOnly = false)
+    fun createShiftFromFoodExRequest(request: CreateShiftFromRequestDTO) : List<ShiftEntity> {
+        val foodExRequest = foodExService.getFoodExRequestsById(request.foodExRequestId)
+            ?: throw RuntimeException("Food Ex Request with ID ${request.foodExRequestId} not found")
+
+        if (foodExRequest.isAccepted) {
+            throw IllegalArgumentException("Food Ex Request with ID ${request.foodExRequestId} is ALREADY accepted")
+        }
+
+        val shifts = mutableListOf<ShiftEntity>()
+
+        val lengthOfEachShift: Duration = Duration.between(foodExRequest.opening, foodExRequest.closing).dividedBy(request.numberOfShifts.toLong())
+
+        for (i in 0..<request.numberOfShifts) {
+            val shift = ShiftEntity(
+                cookingClubId = foodExRequest.cookingClubId,
+                maxMembers = request.maxMembers,
+                opening = foodExRequest.opening.plus(lengthOfEachShift.multipliedBy(i.toLong())),
+                closing = foodExRequest.opening.plus(lengthOfEachShift.multipliedBy((i + 1).toLong())),
+                place = foodExRequest.place
+            )
+            shiftRepository.save(shift)
+            shifts.add(shift)
+        }
+
+        foodExService.acceptFoodExRequest(request.foodExRequestId)
+
+        return shifts
+    }
+}
