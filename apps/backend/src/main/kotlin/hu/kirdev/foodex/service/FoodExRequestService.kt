@@ -6,11 +6,13 @@ import hu.kirdev.foodex.repository.FoodExRequestRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.LocalDateTime
 
 @Service
 class FoodExRequestService(
     private val foodExRequestRepository: FoodExRequestRepository,
-    private val cookingClubService: CookingClubService
+    private val cookingClubService: CookingClubService,
+    private val configurationService: ConfigurationService
 ) {
 
     @Transactional(readOnly = true)
@@ -25,7 +27,8 @@ class FoodExRequestService(
 
     @Transactional(readOnly = true)
     fun getFoodExRequestsByUserId(userId: Int) : List<FoodExRequestEntity> {
-        return foodExRequestRepository.findAllByUserId(userId)
+        val startOfSemester = configurationService.get().startOfSemester
+        return foodExRequestRepository.findAllByUserId(userId).filter { it.closing > startOfSemester }
     }
 
     @Transactional(readOnly = true)
@@ -39,8 +42,9 @@ class FoodExRequestService(
     }
 
     @Transactional(readOnly = true)
-    fun getFoodExRequestsByIsAcceptedFalse() : List<FoodExRequestEntity> {
-        return foodExRequestRepository.findAllByIsAcceptedFalse()
+    fun getRelevantFoodExRequestsByIsAcceptedFalse() : List<FoodExRequestEntity> {
+        val now = LocalDateTime.now()
+        return foodExRequestRepository.findAllByIsAcceptedFalse().filter { it.opening > now }
     }
 
     @Transactional(readOnly = false)

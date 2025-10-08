@@ -14,7 +14,11 @@ import io.mockk.verify
 
 class FoodExRequestServiceTest {
     private val foodExRequestRepository = mockk<FoodExRequestRepository>()
-    private val foodExRequestService = FoodExRequestService(foodExRequestRepository, cookingClubService)
+    private val foodExRequestService = FoodExRequestService(
+        foodExRequestRepository,
+        cookingClubService,
+        configurationService
+    )
 
     @BeforeEach
     fun setUp() {

@@ -1,16 +1,20 @@
 package hu.kirdev.foodex.controller
 
 import hu.kirdev.foodex.dto.ApplyForShiftDTO
+import hu.kirdev.foodex.dto.CookingClubLeaderDTO
 import hu.kirdev.foodex.dto.CreateShiftFromRequestDTO
 import hu.kirdev.foodex.dto.FoodExRequestDTO
 import hu.kirdev.foodex.dto.HomePageResponseDTO
 import hu.kirdev.foodex.dto.OrdersResponseDTO
 import hu.kirdev.foodex.dto.ProfilesResponseDTO
 import hu.kirdev.foodex.dto.ShiftsResponseDTO
+import hu.kirdev.foodex.model.CookingClubEntity
 import hu.kirdev.foodex.model.FoodExRequestEntity
 import hu.kirdev.foodex.model.ShiftEntity
 import hu.kirdev.foodex.model.UserEntity
+import hu.kirdev.foodex.repository.CookingClubRepository
 import hu.kirdev.foodex.service.ConfigurationService
+import hu.kirdev.foodex.service.CookingClubService
 import hu.kirdev.foodex.service.FoodExRequestService
 import hu.kirdev.foodex.service.ShiftService
 import hu.kirdev.foodex.service.UserService
@@ -29,7 +33,9 @@ class MainController(
     private val configurationService: ConfigurationService,
     private val shiftService: ShiftService,
     private val userService: UserService,
-    private val foodExRequestService: FoodExRequestService
+    private val foodExRequestService: FoodExRequestService,
+    private val cookingClubService: CookingClubService,
+    private val cookingClubRepository: CookingClubRepository
 ) {
     /********** HOME ***********************************************************************************/
     @GetMapping("/home")
@@ -55,7 +61,7 @@ class MainController(
     @GetMapping("/incoming-requests")
     fun getOrders() : OrdersResponseDTO {
         return OrdersResponseDTO(
-            incomingFoodExRequests = foodExRequestService.getFoodExRequestsByIsAcceptedFalse(),
+            incomingFoodExRequests = foodExRequestService.getRelevantFoodExRequestsByIsAcceptedFalse(),
             acceptedShifts = shiftService.getActiveShifts()
         )
     }
@@ -63,6 +69,11 @@ class MainController(
     @PostMapping("/incoming-requests")
     fun createShiftsFromRequest(@Valid @RequestBody request: CreateShiftFromRequestDTO) : List<ShiftEntity> {
         return shiftService.createShiftFromFoodExRequest(request)
+    }
+
+    @DeleteMapping("/incoming-requests/{requestId}")
+    fun deleteFoodExRequest(@PathVariable requestId: Int) {
+        foodExRequestService.deleteFoodExRequest(requestId)
     }
 
     /********** OPENINGS *******************************************************************************/
@@ -132,7 +143,7 @@ class MainController(
             favouriteQuote = user.favouriteQuote,
             isActive = user.isActive,
             profilePicture = user.profilePicture,
-            shifts = shiftService.getAllShiftsByUserId(user.id),
+            shifts = shiftService.getUpcomingShiftsByUserId(user.id),
             requests = foodExRequestService.getFoodExRequestsByUserId(user.id)
         )
         return data
@@ -141,5 +152,37 @@ class MainController(
     @PutMapping("/user")
     fun updateUser(@Valid @RequestBody user: UserEntity) : UserEntity {
         return userService.updateUser(user)
+    }
+
+    /********** COOKING-CLUBS **************************************************************************/
+    @GetMapping("/cooking-clubs")
+    fun getCookingClubs() : List<CookingClubEntity> {
+        return cookingClubService.getAllCookingClubs()
+    }
+
+    @PostMapping("/cooking-clubs/{name}")
+    fun addCookingClub(@PathVariable name: String) : CookingClubEntity {
+        return cookingClubService.createCookingClub(name)
+    }
+
+    @DeleteMapping("/cooking-clubs/{clubId}")
+    fun deleteCookingClub(@PathVariable clubId: Int) {
+        cookingClubService.deleteCookingClub(clubId)
+    }
+
+    @PostMapping("/cooking-clubs/leader")
+    fun addLeaderToCookingClub(@Valid @RequestBody clubLeader : CookingClubLeaderDTO) : CookingClubEntity {
+        return cookingClubService.addLeaderToCookingClub(
+            clubLeader.clubId,
+            clubLeader.leaderId
+        )
+    }
+
+    @DeleteMapping("cooking-clubs/leader")
+    fun removeLeaderToCookingClub(@Valid @RequestBody clubLeader: CookingClubLeaderDTO) : CookingClubEntity {
+        return cookingClubService.removeLeaderFromCookingClub(
+            clubLeader.clubId,
+            clubLeader.leaderId
+        )
     }
 }
