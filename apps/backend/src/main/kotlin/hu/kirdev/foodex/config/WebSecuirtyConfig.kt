@@ -1,17 +1,15 @@
 package hu.kirdev.foodex.config
 
-/*
+
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
-import org.springframework.security.config.Customizer
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.core.userdetails.User
 import org.springframework.security.core.userdetails.UserDetailsService
 import org.springframework.security.provisioning.InMemoryUserDetailsManager
 import org.springframework.security.web.SecurityFilterChain
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource
@@ -24,26 +22,19 @@ class WebSecurityConfig {
     @Throws(Exception::class)
     fun securityFilterChain(http: HttpSecurity): SecurityFilterChain? {
         http
-            .authorizeHttpRequests(Customizer { requests ->
-                requests
+            .csrf{it.disable()}
+            .cors { it.disable() }
+            .authorizeHttpRequests { authorize ->
+                authorize
                     .requestMatchers(
                         "/",
                         "/api/**",
-                        AntPathRequestMatcher("/api/**")
                         "/v3/api-docs",
                         "/swagger-ui/*",
-                        "/v3/api-docs/swagger-config").permitAll()
+                        "/v3/api-docs/swagger-config"
+                    ).permitAll()
                     .anyRequest().authenticated()
             }
-            )
-            .formLogin(Customizer { form ->
-                form
-                    .loginPage("/login")
-                    .permitAll()
-            }
-            )
-            .logout(Customizer { logout -> logout.permitAll() })
-
         return http.build()
     }
 
@@ -82,4 +73,3 @@ class WebSecurityConfig {
 }
 
 
- */
