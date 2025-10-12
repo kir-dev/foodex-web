@@ -83,8 +83,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --no-frozen-lockfile
 
-      - name: Build backend
-        run: pnpm build:backend
-
       - name: Build frontend
         run: pnpm build:frontend
