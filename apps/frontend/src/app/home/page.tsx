@@ -3,9 +3,13 @@
 import { ImageContainer } from '@/components/imageContainer';
 import { MembersContainer } from '@/components/membersContainer';
 import { OpeningsContainer } from '@/components/openingsContainer';
+import { HomePageData } from '@/types/homePageData';
 import Image from 'next/image';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const response = await fetch('https://api.foodex.kir-dev.hu/home');
+  const data: HomePageData = await response.json();
+
   return (
     <main className='flex flex-col items-center justify-start min-h-screen p-6 bg-white'>
       {/* Felső konténer: Kép + szöveg */}
@@ -37,15 +41,10 @@ export default function HomePage() {
           <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Aktív tagok</h3>
           {/*Példa adatok kinézet ellenőrzéshez*/}
           <MembersContainer
-            members={[
-              { name: 'Sali Nóra', quote: 'Valami radnom szöveg, ami hosszabb és látom, hogy hogyan fog kinézni.' },
-              { name: 'Fortunyák Zsófia', quote: 'A pizzás nap a kedvencem.' },
-              { name: 'Valaki Nagyonhosszúnévvel', quote: 'A pizzás nap a kedvencem.' },
-              {
-                name: 'Mégvalaki Egyhosszabbnévvel',
-                quote: 'A pizzás nap a kedvencem és kellene egy nagyobb és hosszú szöveg, hogy lássam milyen.....',
-              },
-            ]}
+            members={data.activeMembers.map((member) => ({
+              name: member.name,
+              quote: member.favoriteQuote,
+            }))}
           />
         </div>
 
@@ -54,13 +53,15 @@ export default function HomePage() {
           <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Heti nyitások</h3>
           {/*Példa adatok kinézet ellenőrzéshez*/}
           <OpeningsContainer
-            openings={[
-              { groupName: 'Vödör', day: 'Hétfő', time: '20-24', location: 'Nagykonyha' },
-              { groupName: 'Reggelisch', day: 'Csütörtök', time: '7:30-10', location: '15. konyha' },
-              { groupName: 'Magyarosch', day: 'Csütörtök', time: '7:30-10', location: '15. konyha' },
-              { groupName: 'Pizzásch', day: 'Csütörtök', time: '7:30-10', location: '15. konyha' },
-              { groupName: 'Americano', day: 'Csütörtök', time: '7:30-10', location: '15. konyha' },
-            ]}
+            openings={data.upcomgingShifts.map((shift) => ({
+              groupName: shift.cookingClubId.toString(),
+              day: new Date(shift.opening).toLocaleDateString('hu-HU', { weekday: 'long' }),
+              time:
+                new Date(shift.opening).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' }) +
+                '-' +
+                new Date(shift.closing).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' }),
+              location: shift.place,
+            }))}
           />
         </div>
       </div>
