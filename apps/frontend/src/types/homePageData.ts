@@ -4,5 +4,5 @@ import { User } from './user';
 export type HomePageData = {
   feelingOfTheWeek: string;
   activeMembers: User[];
-  upcomgingShifts: ShiftEntity[];
+  upcomingShifts: ShiftEntity[];
 };

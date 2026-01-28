@@ -1,5 +1,3 @@
-'use client';
-
 import { ImageContainer } from '@/components/imageContainer';
 import { MembersContainer } from '@/components/membersContainer';
 import { OpeningsContainer } from '@/components/openingsContainer';
@@ -7,7 +5,7 @@ import { HomePageData } from '@/types/homePageData';
 import Image from 'next/image';
 
 export default async function HomePage() {
-  const response = await fetch('https://api.foodex.kir-dev.hu/home');
+  const response = await fetch('http://localhost:8080/api/home');
   const data: HomePageData = await response.json();
 
   return (
@@ -53,7 +51,7 @@ export default async function HomePage() {
           <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Heti nyitások</h3>
           {/*Példa adatok kinézet ellenőrzéshez*/}
           <OpeningsContainer
-            openings={data.upcomgingShifts.map((shift) => ({
+            openings={data.upcomingShifts.map((shift) => ({
               groupName: shift.cookingClubId.toString(),
               day: new Date(shift.opening).toLocaleDateString('hu-HU', { weekday: 'long' }),
               time:
