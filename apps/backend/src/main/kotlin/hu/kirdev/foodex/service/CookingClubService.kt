@@ -20,6 +20,11 @@ class CookingClubService(
     }
 
     @Transactional(readOnly = true)
+    fun getAllCookingClubsOfUser(userId: Int) : List<CookingClubEntity> {
+        return cookingClubRepository.findAll().filter { it.leaders.contains(userId) }
+    }
+
+    @Transactional(readOnly = true)
     fun getCookingClub(cookingClubId: Int) : CookingClubEntity? {
         return cookingClubRepository.findByIdOrNull(cookingClubId)
     }
@@ -41,16 +46,19 @@ class CookingClubService(
         return cookingClubRepository.save(cookingClub)
     }
 
+    @Transactional(readOnly = false)
     fun deleteCookingClub(cookingClubId: Int) {
         val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
             ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
         cookingClubRepository.delete(cookingClub)
     }
 
+    @Transactional(readOnly = false)
     fun updateCookingClub(cookingClub: CookingClubEntity) {
         cookingClubRepository.save(cookingClub)
     }
 
+    @Transactional(readOnly = false)
     fun addLeaderToCookingClub(cookingClubId: Int, leaderId: Int) : CookingClubEntity {
         val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
             ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
@@ -66,6 +74,7 @@ class CookingClubService(
         return cookingClubRepository.save(cookingClub)
     }
 
+    @Transactional(readOnly = false)
     fun removeLeaderFromCookingClub(cookingClubId: Int, leaderId: Int) : CookingClubEntity {
         val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
             ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")
@@ -81,6 +90,7 @@ class CookingClubService(
         return cookingClubRepository.save(cookingClub)
     }
 
+    @Transactional(readOnly = true)
     fun isLeaderOfCookingClub(userId: Int, cookingClubId: Int) : Boolean {
         val leader = userRepository.findByIdOrNull(userId)
             ?: throw IllegalArgumentException("User with id $userId not found")
