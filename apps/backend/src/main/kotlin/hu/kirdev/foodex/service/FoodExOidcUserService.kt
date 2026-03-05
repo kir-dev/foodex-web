@@ -24,10 +24,8 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
         31,     // Kakas
         528,    // Paschta;
         395,    // Palacsintázó
-        0,      // TODO: Dobozosch !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        490,    // ReggeliSCH
-        0,      // TODO: Magyarosch !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!111
-        235     // Falatozó Reszort
+        490     // ReggeliSCH
+        // TODO: Dobozosch & Magyarosch
     )
 
     @Transactional(readOnly = false)
@@ -91,10 +89,7 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
 
         // TODO Member vs Newbie vs Executives ???????????????????????????????????????????????
 
-        // FoodEx:  182
-        // Kir-Dev: 106 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-        // TODO: Remove %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-        if (foodexUser.memberships.any { it.id == foodExID || it.id == 106L }) {
+        if (foodexUser.memberships.any { it.id == foodExID }) {
             authorities.add(SimpleGrantedAuthority("ROLE_${Role.MEMBER.name}"))
         }
 
@@ -113,9 +108,9 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
             if (true) {
                 return Role.MEMBER
             }
-            else if (true) {    // TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
-                return Role.NEWBIE
-            }
+//            else if (foodexUser.memberships[0].title.any { it } "újonc") {    // TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
+//                return Role.NEWBIE
+//            }
         }
 
         // Guest or Ex-member
