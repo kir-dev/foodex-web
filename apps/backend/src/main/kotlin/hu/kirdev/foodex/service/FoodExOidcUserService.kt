@@ -104,13 +104,13 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
         }
 
         // Member of FoodEx
-        if (foodexUser.memberships.any { it.id == foodExID }) {
-            if (true) {
+        for(membership in foodexUser.memberships) {
+            if (membership.id == foodExID) {
+                if (membership.title.contains("újonc")) {
+                    return Role.NEWBIE
+                }
                 return Role.MEMBER
             }
-//            else if (foodexUser.memberships[0].title.any { it } "újonc") {    // TODO!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!11
-//                return Role.NEWBIE
-//            }
         }
 
         // Guest or Ex-member
