@@ -9,3 +9,5 @@ yarn-error.log*
 temp
 .idea/workspace.xml
 .idea*
+application-local.properties
+*application-local.properties
