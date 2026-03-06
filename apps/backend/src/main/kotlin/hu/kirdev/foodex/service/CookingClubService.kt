@@ -47,6 +47,17 @@ class CookingClubService(
     }
 
     @Transactional(readOnly = false)
+    fun createCookingClub(clubId: Int, name: String) : CookingClubEntity {
+        if (name.length > 30) throw IllegalArgumentException("Name cannot be more than 30 characters")
+        val cookingClub = CookingClubEntity(
+            id = clubId,
+            name = name,
+            leaders = emptyList()
+        )
+        return cookingClubRepository.save(cookingClub)
+    }
+
+    @Transactional(readOnly = false)
     fun deleteCookingClub(cookingClubId: Int) {
         val cookingClub = cookingClubRepository.findByIdOrNull(cookingClubId)
             ?: throw IllegalArgumentException("Cooking club with ID $cookingClubId not found")

@@ -55,7 +55,7 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
             foodexUser.extraAuthorities = getAuthoritiesFromEntity(foodexUser)  // TODO Is it necessary???
 
             // Reload permission to Cooking Clubs
-            reloadPermissionsOfUserToCookingClubs(user.id, foodexUser.executiveAtCircles.map { it.id.toInt() }.toSet())
+            reloadPermissionsOfUserToCookingClubs(user, foodexUser.executiveAtCircles.map { it.id.toInt() }.toSet())
 
             userService.updateUser(user)
         }
@@ -74,7 +74,7 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
             foodexUser.extraAuthorities = getAuthoritiesFromEntity(foodexUser) // TODO Is it necessary???
 
             // Reload permission to Cooking Clubs
-            reloadPermissionsOfUserToCookingClubs(user.id, foodexUser.executiveAtCircles.map { it.id.toInt() }.toSet())
+            reloadPermissionsOfUserToCookingClubs(user, foodexUser.executiveAtCircles.map { it.id.toInt() }.toSet())
 
             userService.updateUser(user)
         }
@@ -117,9 +117,16 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
         return Role.GUEST
     }
 
-    private fun reloadPermissionsOfUserToCookingClubs(userId: Int, executiveAtCircles: Set<Int>) {
-        removeAllCookingClubPermissionsOfUser(userId)
-        addCookingClubAdminPermissionsToUser(userId, executiveAtCircles intersect allCookingClubIds)
+    private fun reloadPermissionsOfUserToCookingClubs(user: UserEntity, executiveAtCircles: Set<Int>) {
+        removeAllCookingClubPermissionsOfUser(user.id)
+
+        if (user.role == Role.ADMIN) {
+            // Add privileges to all clubs
+            addCookingClubAdminPermissionsToUser(user.id, cookingClubService.getAllCookingClubs().map { it.id }.toSet())
+            return
+        }
+
+        addCookingClubAdminPermissionsToUser(user.id, executiveAtCircles intersect allCookingClubIds)
     }
 
     private fun removeAllCookingClubPermissionsOfUser(userId: Int) {

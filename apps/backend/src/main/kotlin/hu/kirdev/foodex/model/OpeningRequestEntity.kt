@@ -4,8 +4,8 @@ import jakarta.persistence.*
 import java.time.LocalDateTime
 
 @Entity
-@Table(name = "foodEx_requests")
-data class FoodExRequestEntity(
+@Table(name = "opening_requests")
+data class OpeningRequestEntity(
     @Id
     @Column
     @GeneratedValue(strategy = GenerationType.IDENTITY)

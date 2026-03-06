@@ -16,7 +16,7 @@ class ShiftTestConfig {
         return CommandLineRunner {
             val shift1 = shiftRepository.save(
                 ShiftEntity(
-                    cookingClubId = 1,
+                    cookingClubId = 403,
                     maxMembers = 20,
                     opening = LocalDateTime.now().minusHours(1),
                     closing = LocalDateTime.now().plusDays(1),
@@ -28,7 +28,7 @@ class ShiftTestConfig {
             )
             val shift2 = shiftRepository.save(
                 ShiftEntity(
-                    cookingClubId = 2,
+                    cookingClubId = 473,
                     maxMembers = 10,
                     opening = LocalDateTime.now().minusHours(1),
                     closing = LocalDateTime.now().plusHours(1),
@@ -40,7 +40,7 @@ class ShiftTestConfig {
             )
             val shift3 = shiftRepository.save(
                 ShiftEntity(
-                    cookingClubId = 3,
+                    cookingClubId = 223,
                     maxMembers = 3,
                     opening = LocalDateTime.now().minusHours(1),
                     closing = LocalDateTime.now().plusHours(1),
@@ -52,7 +52,7 @@ class ShiftTestConfig {
             )
             val shift4 = shiftRepository.save(
                 ShiftEntity(
-                    cookingClubId = 1,
+                    cookingClubId = 403,
                     maxMembers = 3,
                     opening = LocalDateTime.now().minusHours(1),
                     closing = LocalDateTime.now().plusHours(1),
@@ -64,7 +64,7 @@ class ShiftTestConfig {
             )
             val shift5 = shiftRepository.save(
                 ShiftEntity(
-                    cookingClubId = 4,
+                    cookingClubId = 528,
                     maxMembers = 3,
                     opening = LocalDateTime.now().minusHours(20),
                     closing = LocalDateTime.now().minusHours(15),
@@ -76,7 +76,7 @@ class ShiftTestConfig {
             )
             val shift6 = shiftRepository.save(
                 ShiftEntity(
-                    cookingClubId = 4,
+                    cookingClubId = 528,
                     maxMembers = 3,
                     opening = LocalDateTime.now().minusMonths(6).minusHours(4),
                     closing = LocalDateTime.now().minusMonths(6),

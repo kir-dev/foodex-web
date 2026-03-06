@@ -3,19 +3,18 @@ package hu.kirdev.foodex.controller
 import hu.kirdev.foodex.dto.ApplyForShiftDTO
 import hu.kirdev.foodex.dto.CookingClubLeaderDTO
 import hu.kirdev.foodex.dto.CreateShiftFromRequestDTO
-import hu.kirdev.foodex.dto.FoodExRequestDTO
+import hu.kirdev.foodex.dto.OpeningRequestDTO
 import hu.kirdev.foodex.dto.HomePageResponseDTO
 import hu.kirdev.foodex.dto.OrdersResponseDTO
 import hu.kirdev.foodex.dto.ProfilesResponseDTO
 import hu.kirdev.foodex.dto.ShiftsResponseDTO
 import hu.kirdev.foodex.model.CookingClubEntity
-import hu.kirdev.foodex.model.FoodExRequestEntity
+import hu.kirdev.foodex.model.OpeningRequestEntity
 import hu.kirdev.foodex.model.ShiftEntity
 import hu.kirdev.foodex.model.UserEntity
-import hu.kirdev.foodex.repository.CookingClubRepository
 import hu.kirdev.foodex.service.ConfigurationService
 import hu.kirdev.foodex.service.CookingClubService
-import hu.kirdev.foodex.service.FoodExRequestService
+import hu.kirdev.foodex.service.OpeningRequestService
 import hu.kirdev.foodex.service.ShiftService
 import hu.kirdev.foodex.service.UserService
 import org.springframework.web.bind.annotation.GetMapping
@@ -31,9 +30,8 @@ class MainController(
     private val configurationService: ConfigurationService,
     private val shiftService: ShiftService,
     private val userService: UserService,
-    private val foodExRequestService: FoodExRequestService,
-    private val cookingClubService: CookingClubService,
-    private val cookingClubRepository: CookingClubRepository
+    private val openingRequestService: OpeningRequestService,
+    private val cookingClubService: CookingClubService
 ) {
     /********** HOME ***********************************************************************************/
     @GetMapping("/home")
@@ -51,27 +49,27 @@ class MainController(
 
     /********** REQUEST ********************************************************************************/
     @PostMapping("/request")
-    fun createFoodExRequest(@Valid @RequestBody request: FoodExRequestDTO) : FoodExRequestEntity {
-        return foodExRequestService.createFoodExRequest(request)
+    fun createOpeningRequest(@Valid @RequestBody request: OpeningRequestDTO) : OpeningRequestEntity {
+        return openingRequestService.createOpeningRequest(request)
     }
 
     /********** INCOMING-REQUESTS **********************************************************************/
     @GetMapping("/incoming-requests")
     fun getOrders() : OrdersResponseDTO {
         return OrdersResponseDTO(
-            incomingFoodExRequests = foodExRequestService.getRelevantFoodExRequestsByIsAcceptedFalse(),
+            incomingOpeningRequests = openingRequestService.getRelevantOpeningRequestsByIsAcceptedFalse(),
             acceptedShifts = shiftService.getActiveShifts()
         )
     }
 
     @PostMapping("/incoming-requests")
     fun createShiftsFromRequest(@Valid @RequestBody request: CreateShiftFromRequestDTO) : List<ShiftEntity> {
-        return shiftService.createShiftFromFoodExRequest(request)
+        return shiftService.createShiftFromOpeningRequest(request)
     }
 
     @DeleteMapping("/incoming-requests/{requestId}")
-    fun deleteFoodExRequest(@PathVariable requestId: Int) {
-        foodExRequestService.deleteFoodExRequest(requestId)
+    fun deleteOpeningRequest(@PathVariable requestId: Int) {
+        openingRequestService.deleteOpeningRequest(requestId)
     }
 
     /********** OPENINGS *******************************************************************************/
@@ -142,7 +140,7 @@ class MainController(
             isActive = user.isActive,
             profilePicture = user.profilePicture,
             shifts = shiftService.getUpcomingShiftsByUserId(user.id),
-            requests = foodExRequestService.getFoodExRequestsByUserId(user.id)
+            requests = openingRequestService.getOpeningRequestsByUserId(user.id)
         )
         return data
     }

@@ -4,7 +4,7 @@ import jakarta.validation.constraints.*
 import org.jetbrains.annotations.NotNull
 import java.time.LocalDateTime
 
-data class FoodExRequestDTO(
+data class OpeningRequestDTO(
     @field:NotNull
     val userId: Int,
 
