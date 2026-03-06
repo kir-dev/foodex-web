@@ -8,3 +8,4 @@ yarn-error.log*
 .yarn
 temp
 .idea/workspace.xml
+.idea*
