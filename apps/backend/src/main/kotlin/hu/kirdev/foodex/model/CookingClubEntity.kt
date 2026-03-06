@@ -8,7 +8,7 @@ import jakarta.validation.constraints.*
 data class CookingClubEntity(
     @Id
     @Column
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    //@GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
 
     @Column(length = 30, nullable = false)
