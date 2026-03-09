@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull
 
 data class CreateShiftFromRequestDTO(
     @field:NotNull
-    val foodExRequestId: Int,
+    val openingRequestId: Int,
 
     @field:NotNull
     @field:Min(1)

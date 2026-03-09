@@ -1,9 +1,8 @@
 package hu.kirdev.foodex.dto
 
-import hu.kirdev.foodex.model.FoodExRequestEntity
+import hu.kirdev.foodex.model.OpeningRequestEntity
 import hu.kirdev.foodex.model.Role
 import hu.kirdev.foodex.model.ShiftEntity
-import org.springframework.http.RequestEntity
 
 data class ProfilesResponseDTO(
     val userId: Int,
@@ -15,5 +14,5 @@ data class ProfilesResponseDTO(
     val isActive: Boolean,
     val profilePicture: String?,
     val shifts: List<ShiftEntity>,
-    val requests: List<FoodExRequestEntity>
+    val requests: List<OpeningRequestEntity>
 )

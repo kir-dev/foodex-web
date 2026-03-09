@@ -6,3 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 .DS_Store
 .yarn
+temp
+.idea/workspace.xml
+.idea*
+application-local.properties
+*application-local.properties

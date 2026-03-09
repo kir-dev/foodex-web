@@ -2,7 +2,7 @@ package hu.kirdev.foodex
 
 import hu.kirdev.foodex.config.ConfigurationTestConfig
 import hu.kirdev.foodex.config.CookingClubTestConfig
-import hu.kirdev.foodex.config.FoodExRequestTestConfig
+import hu.kirdev.foodex.config.OpeningRequestTestConfig
 import hu.kirdev.foodex.config.ShiftTestConfig
 import hu.kirdev.foodex.config.UserTestConfig
 import org.springframework.boot.autoconfigure.SpringBootApplication
@@ -13,14 +13,14 @@ import org.springframework.context.annotation.Import
 @Import(
     UserTestConfig::class,
     ShiftTestConfig::class,
-    FoodExRequestTestConfig::class,
+    OpeningRequestTestConfig::class,
     CookingClubTestConfig::class,
     ConfigurationTestConfig::class
 )
 class FoodExApplication
 
 fun main(args: Array<String>) {
-    val profiles = arrayOf("test-user", "test-shift", "test-foodex-request", "test-cookingclub", "test-config")
+    val profiles = arrayOf("test-user", "test-shift", "test-opening-request", "test-cookingclub", "test-config")
 	runApplication<FoodExApplication>(*args) {
         setAdditionalProfiles(*profiles)
     }
