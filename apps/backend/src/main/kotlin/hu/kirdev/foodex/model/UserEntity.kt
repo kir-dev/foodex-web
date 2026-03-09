@@ -16,9 +16,6 @@ data class UserEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
 
-    @Column(unique = true, nullable = false, length = 36)
-    val internalId: String,
-
     @Enumerated(EnumType.STRING) // Store enum as string in the database
     @Column(columnDefinition = "varchar(32)", nullable = false)
     var role: Role = Role.GUEST,
@@ -30,6 +27,7 @@ data class UserEntity(
     var nickname: String = "",
 
     @Column
+    @Email
     var email: String,
 
     @Column(length = 255)

@@ -18,8 +18,8 @@ class ConfigurationTestConfig {
                 ConfigurationEntity(
                     feelingOfTheWeek = "Sunshine",
                     foodExLogo = "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/LEGO_logo.svg/512px-LEGO_logo.svg.png",
-                    startOfSemester = LocalDateTime.of(2026, 2, 14, 0, 0, 0),
-                    endOfSemester = LocalDateTime.of(2026, 8, 31, 23, 59, 59)
+                    startOfSemester = LocalDateTime.of(2025, 9, 1, 0, 0, 0),
+                    endOfSemester = LocalDateTime.of(2026, 2, 1, 23, 59, 59)
                 )
             )
         }

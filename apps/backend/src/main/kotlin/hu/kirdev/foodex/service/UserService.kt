@@ -21,11 +21,6 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = true)
-    fun getUserByInternalId(internalId: String): UserEntity? {
-        return userRepository.findUserEntityByInternalId(internalId)
-    }
-
-    @Transactional(readOnly = true)
     fun searchUserByNameOrNickname(nameOrNickname: String): UserEntity? {
         return userRepository.findUserEntityByNameOrNicknameIgnoreCase(nameOrNickname, nameOrNickname)
     }
@@ -43,6 +38,25 @@ class UserService(private val userRepository: UserRepository) {
     @Transactional(readOnly = true)
     fun getInactiveUsers(): List<UserEntity> {
         return userRepository.findUserEntitiesByIsActiveFalse()
+    }
+
+    @Transactional(readOnly = false)
+    fun createUser(
+        name: String,
+        email: String,
+        role: Role = Role.GUEST,
+        nickname: String,
+        isActive: Boolean = false
+        ): UserEntity {
+
+        val user = UserEntity(
+            name = name,
+            email = email,
+            role = role,
+            nickname = nickname,
+            isActive = isActive
+        )
+        return userRepository.save(user)
     }
 
     @Transactional(readOnly = false)
