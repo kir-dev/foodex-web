@@ -7,6 +7,7 @@ import org.springframework.boot.CommandLineRunner
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
+import java.util.UUID
 
 @Configuration
 @Profile("test-user")
@@ -17,6 +18,7 @@ class UserTestConfig {
         return CommandLineRunner {
             val user1 = userRepository.save(
                 UserEntity(
+                    internalId = UUID.randomUUID().toString(),
                     role = Role.ADMIN,
                     name = "Sali Nora",
                     nickname = "Nori",
@@ -28,6 +30,7 @@ class UserTestConfig {
             )
             val user2 = userRepository.save(
                 UserEntity(
+                    internalId = UUID.randomUUID().toString(),
                     role = Role.MEMBER,
                     name = "Kis Pista",
                     nickname = "Pistike",
@@ -39,6 +42,7 @@ class UserTestConfig {
             )
             val user3 = userRepository.save(
                 UserEntity(
+                    internalId = UUID.randomUUID().toString(),
                     role = Role.GUEST,
                     name = "Langosch es Paschta korvez",
                     nickname = "langosch paschta korvez",
@@ -50,6 +54,7 @@ class UserTestConfig {
             )
             val user4 = userRepository.save(
                 UserEntity(
+                    internalId = UUID.randomUUID().toString(),
                     role = Role.MEMBER,
                     name = "Americano korvez es member",
                     nickname = "americano korvez es member",
@@ -61,6 +66,7 @@ class UserTestConfig {
             )
             val user5 = userRepository.save(
                 UserEntity(
+                    internalId = UUID.randomUUID().toString(),
                     role = Role.NEWBIE,
                     name = "Langosch korvez es newbie",
                     nickname = "langosch korvez es newbie",
@@ -72,6 +78,7 @@ class UserTestConfig {
             )
             val user6 = userRepository.save(
                 UserEntity(
+                    internalId = UUID.randomUUID().toString(),
                     role = Role.NEWBIE,
                     name = "Ujonc Peter",
                     nickname = "Peti",
