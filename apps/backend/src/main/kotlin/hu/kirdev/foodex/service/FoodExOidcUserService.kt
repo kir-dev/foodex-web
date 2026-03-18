@@ -24,8 +24,9 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
         31,     // Kakas
         528,    // Paschta;
         395,    // Palacsintázó
-        490     // ReggeliSCH
-        // TODO: Dobozosch & Magyarosch
+        490,    // ReggeliSCH
+        529     // Dobozosch
+        // TODO: Magyarosch
     )
 
     @Transactional(readOnly = false)
