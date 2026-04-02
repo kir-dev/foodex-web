@@ -41,7 +41,7 @@ export default async function HomePage() {
           <MembersContainer
             members={data.activeMembers.map((member) => ({
               name: member.name,
-              quote: member.favoriteQuote,
+              quote: member.favouriteQuote,
             }))}
           />
         </div>

@@ -1,10 +1,10 @@
 export type User = {
   id: number;
-  role: 'admin' | 'member' | 'guest' | 'newbie';
+  role: 'ADMIN' | 'MEMBER' | 'GUEST' | 'NEWBIE';
   name: string;
   nickname: string;
   email: string;
-  favoriteQuote: string;
+  favouriteQuote: string;
   isActive: boolean;
-  profilePicture: string;
+  profilePicture: string | null;
 };
