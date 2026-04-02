@@ -16,22 +16,17 @@ class CreateUserDto {
 }
 
 class UpdateUserDto {
-    role: Role ???
     name: String
     nickname: String?
     email: String
     favouriteQuote: String?
-    isActive: Boolean ???
     profilePicture: String?
 }
 
 class UserDto {
     id: Int
     role: Role
-    name: String
-    nickname: String?
-    isActive: Boolean ???
-    profilePicture: String?
+    nickname / name: String
 }
 
 class DetailedUserDto {
@@ -87,6 +82,7 @@ class DetailedCookingClubDto {
     id: Int
     name: String
     leaders: List&lt;UserDto&gt;
+    shifts: List&lt;ShiftDto&gt;
 }
 ```
 
@@ -110,8 +106,6 @@ class UpdateShiftDto {
     opening: LocalDateTime
     closing: LocalDateTime
     place: String
-    members: List&lt;UserDto&gt;
-    newbies: List&lt;UserDto&gt;
     comment: String
 }
 
@@ -148,8 +142,8 @@ class ApplyForShiftDto {
     shiftId: Int
 }
 
-class CreateShiftFromRequestDto {
-    opening: OpeningDto ???
+class CreateShiftFromOpeningRequestDto {
+    openingRequestId: Int
     maxMembers: Int
     numberOfShifts: Int
 }
@@ -202,7 +196,7 @@ class UpdateOpeningRequestDto {
 classDiagram
 
 class OrdersResponseDto {
-    incomingRequests: List&lt;OpeningDto&gt;
+    incomingRequests: List&lt;OpeningRequestDto&gt;
     acceptedShifts: List&lt;ShiftDto&gt;
 }
 ```
@@ -213,7 +207,6 @@ class OrdersResponseDto {
 classDiagram
 
 class ConfigurationDto {
-    id: Int ????
     feelingOfTheWeek: String
     foodExLogo: String
     startOfSemester: LocalDateTime
@@ -221,7 +214,6 @@ class ConfigurationDto {
 }
 
 class UpdateConfigurationDto {
-    id: Int ????
     feelingOfTheWeek: String
     foodExLogo: String
     startOfSemester: LocalDateTime
@@ -237,10 +229,8 @@ classDiagram
 class HomePageDto {
     feelingOfTheWeek: String
     foodExLogo: String
-    startOfSemester: LocalDateTime ???
-    endOfSemester: LocalDateTime ???
     activeMembers: List&lt;UserDto&gt;
-    upcomingShifts: List&lt;ShiftDto&gt;
+    upcomingOpenings: List&lt;OpeningRequestDto&gt;
 }
 
 ```
