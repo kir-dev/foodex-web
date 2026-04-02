@@ -5,14 +5,6 @@
 ```mermaid
 classDiagram
 
-class Role {
-    <<enumeration>>
-    ADMIN
-    MEMBER
-    NEWBIE
-    GUEST
-}
-
 class CreateUserDto {
     role: Role
     name: String
@@ -24,12 +16,12 @@ class CreateUserDto {
 }
 
 class UpdateUserDto {
-    role: Role
+    role: Role ???
     name: String
     nickname: String?
     email: String
     favouriteQuote: String?
-    isActive: Boolean
+    isActive: Boolean ???
     profilePicture: String?
 }
 
@@ -38,7 +30,7 @@ class UserDto {
     role: Role
     name: String
     nickname: String?
-    isActive: Boolean
+    isActive: Boolean ???
     profilePicture: String?
 }
 
@@ -52,6 +44,22 @@ class DetailedUserDto {
     isActive: Boolean
     profilePicture: String?
     leaderAt: List&lt;CookingClubDto&gt;
+    shifts: List&lt;ShiftDto&gt;
+    requests: List&lt;OpeningRequestDto&gt;
+}
+```
+
+### Role
+
+```mermaid
+classDiagram
+
+class Role {
+    <<enumeration>>
+    ADMIN
+    MEMBER
+    NEWBIE
+    GUEST
 }
 ```
 
@@ -130,26 +138,109 @@ class DetailedShiftDto {
 }
 ```
 
-## Opening
+### Shift optional?
 
 ```mermaid
 classDiagram
 
-class OpeningDto {
+class ApplyForShiftDto {
+    userId: Int
+    shiftId: Int
+}
 
+class CreateShiftFromRequestDto {
+    opening: OpeningDto ???
+    maxMembers: Int
+    numberOfShifts: Int
+}
+
+class ShiftsResponseDto {
+    activeShifts: List&lt;ShiftDto&gt;
+    fullShifts: List&lt;ShiftDto&gt;
 }
 ```
 
-## Config
+## OpeningRequest
+
+```mermaid
+classDiagram
+
+class CreateOpeningRequestDto {
+    userId: Int
+    cookingClubId: Int
+    opening: LocalDateTime
+    closing: LocalDateTime
+    place: String
+    description: String
+}
+
+class OpeningRequestDto {
+    id: Int
+    isAccepted: Boolean
+    userId: Int
+    cookingClubId: Int
+    opening: LocalDateTime
+    closing: LocalDateTime
+    place: String
+    description: String
+}
+
+class UpdateOpeningRequestDto {
+    isAccepted: Boolean
+    userId: Int
+    cookingClubId: Int
+    opening: LocalDateTime
+    closing: LocalDateTime
+    place: String
+    description: String
+}
+```
+
+### Orders response
+
+```mermaid
+classDiagram
+
+class OrdersResponseDto {
+    incomingRequests: List&lt;OpeningDto&gt;
+    acceptedShifts: List&lt;ShiftDto&gt;
+}
+```
+
+## Configuration
 
 ```mermaid
 classDiagram
 
 class ConfigurationDto {
-
+    id: Int ????
+    feelingOfTheWeek: String
+    foodExLogo: String
+    startOfSemester: LocalDateTime
+    endOfSemester: LocalDateTime
 }
+
+class UpdateConfigurationDto {
+    id: Int ????
+    feelingOfTheWeek: String
+    foodExLogo: String
+    startOfSemester: LocalDateTime
+    endOfSemester: LocalDateTime
+}
+```
+
+### Home page
+
+```mermaid
+classDiagram
 
 class HomePageDto {
-
+    feelingOfTheWeek: String
+    foodExLogo: String
+    startOfSemester: LocalDateTime ???
+    endOfSemester: LocalDateTime ???
+    activeMembers: List&lt;UserDto&gt;
+    upcomingShifts: List&lt;ShiftDto&gt;
 }
+
 ```
