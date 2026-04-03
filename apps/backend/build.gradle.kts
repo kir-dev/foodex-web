@@ -1,9 +1,9 @@
 plugins {
-	kotlin("jvm") version "1.9.25"
-	kotlin("plugin.spring") version "1.9.25"
-	id("org.springframework.boot") version "3.5.5"
+	kotlin("jvm") version "2.3.10"
+	kotlin("plugin.spring") version "2.3.10"
+	id("org.springframework.boot") version "4.0.3"
 	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("plugin.jpa") version "1.9.25"
+	kotlin("plugin.jpa") version "2.3.10"
 }
 
 group = "hu.kirdev"
@@ -12,7 +12,7 @@ description = "Demo project for Spring Boot"
 
 java {
 	toolchain {
-		languageVersion = JavaLanguageVersion.of(17)
+		languageVersion = JavaLanguageVersion.of(21)
 	}
 }
 
@@ -27,8 +27,8 @@ dependencies {
     implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13")
-    implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.13")
+    implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
+	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 	runtimeOnly("com.h2database:h2")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
