@@ -1,8 +1,9 @@
-package hu.kirdev.foodex.repository
+package hu.kirdev.foodex.config
 
-import hu.kirdev.foodex.model.ConfigurationEntity
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
 
+@Repository
 interface ConfigurationRepository : JpaRepository<ConfigurationEntity, Int> {
     fun findTopByOrderByIdDesc(): ConfigurationEntity?
 }
