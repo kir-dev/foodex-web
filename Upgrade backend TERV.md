@@ -83,6 +83,7 @@ class DetailedCookingClubDto {
     name: String
     leaders: List&lt;UserDto&gt;
     shifts: List&lt;ShiftDto&gt;
+    requests: List&lt;OpeningRequestDto&gt;
 }
 ```
 
@@ -121,14 +122,14 @@ class ShiftDto {
 
 class DetailedShiftDto {
     id: Int
-    cookingClubId: Int
+    cookingClub: CookingClubDto
     maxMembers: Int
     opening: LocalDateTime
     closing: LocalDateTime
     place: String
+    comment: String
     members: List&lt;UserDto&gt;
     newbies: List&lt;UserDto&gt;
-    comment: String
 }
 ```
 
@@ -136,11 +137,6 @@ class DetailedShiftDto {
 
 ```mermaid
 classDiagram
-
-class ApplyForShiftDto {
-    userId: Int
-    shiftId: Int
-}
 
 class CreateShiftFromOpeningRequestDto {
     openingRequestId: Int
@@ -168,6 +164,16 @@ class CreateOpeningRequestDto {
     description: String
 }
 
+class UpdateOpeningRequestDto {
+    isAccepted: Boolean
+    userId: Int
+    cookingClubId: Int
+    opening: LocalDateTime
+    closing: LocalDateTime
+    place: String
+    description: String
+}
+
 class OpeningRequestDto {
     id: Int
     isAccepted: Boolean
@@ -179,10 +185,11 @@ class OpeningRequestDto {
     description: String
 }
 
-class UpdateOpeningRequestDto {
+class DetailedOpeningRequestDto {
+    id: Int
     isAccepted: Boolean
-    userId: Int
-    cookingClubId: Int
+    user: UserDto
+    cookingClub: CookingClubDto
     opening: LocalDateTime
     closing: LocalDateTime
     place: String

@@ -26,14 +26,30 @@ class WebSecurityConfig {
             .cors { it.disable() }
             .authorizeHttpRequests { authorize ->
                 authorize
+                    // Public endpoints
                     .requestMatchers(
                         "/",
-                        "/api/**",
+                        "/api/home",
+                        "/api/**",  // TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         "/v3/api-docs",
                         "/swagger-ui/*",
                         "/v3/api-docs/swagger-config"
                     ).permitAll()
+
+                    // Static resources (CSS, JS, images, etc.)
+                    .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()     // TODO: ?????
+
+                    // All other API endpoints require login
+                    .requestMatchers("/api/**").authenticated()
+
+                    // Protect any other routes
                     .anyRequest().authenticated()
+            }
+            .oauth2Login { oauth2 ->
+                oauth2
+                    // Fallback when no saved request exists (e.g. direct login)
+                    .defaultSuccessUrl("/api/home", false)
+                    // false = respect the originally requested URL when available
             }
         return http.build()
     }

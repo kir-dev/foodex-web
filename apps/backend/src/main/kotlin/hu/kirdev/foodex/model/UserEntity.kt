@@ -4,9 +4,9 @@ import jakarta.persistence.*
 import jakarta.validation.constraints.*
 
 // Roles withing FoodEx
-enum class Role{
-    ADMIN, MEMBER, NEWBIE, GUEST
-}
+//enum class Role{
+//    ADMIN, MEMBER, NEWBIE, GUEST
+//}
 
 @Entity
 @Table(name = "users")
