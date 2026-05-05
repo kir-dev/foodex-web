@@ -1,6 +1,5 @@
 package hu.kirdev.foodex.user
 
-import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -10,46 +9,46 @@ import org.springframework.web.server.ResponseStatusException
 class UserService(private val userRepository: UserRepository) {
 
     @Transactional(readOnly = true)
-    fun getAllUsers(): List<UserDto> {
-        return userRepository.findAll().map { UserDto(it) }
+    fun getAllUsers(): List<DetailedUserDto> {
+        return userRepository.findAll().map { DetailedUserDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getUserById(id: Int) : UserDto {
+    fun getUserById(id: Int) : DetailedUserDto {
         return userRepository.findById(id)
             .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
-            .let { UserDto(it) }
+            .let { DetailedUserDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getUserByInternalId(internalId: String) : UserDto? {
-        return userRepository.findUserEntityByInternalId(internalId)?.let { UserDto(it) }
+    fun getUserByInternalId(internalId: String) : DetailedUserDto? {
+        return userRepository.findUserEntityByInternalId(internalId)?.let { DetailedUserDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getUserByNameOrNickname(nameOrNickname: String): UserDto? {
+    fun getUserByNameOrNickname(nameOrNickname: String): DetailedUserDto? {
         return userRepository.findUserEntityByNameOrNicknameIgnoreCase(nameOrNickname, nameOrNickname)
-            ?.let { UserDto(it) }
+            ?.let { DetailedUserDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getUsersByNameOrNickname(nameOrNickname: String): List<UserDto> {
+    fun getUsersByNameOrNickname(nameOrNickname: String): List<DetailedUserDto> {
         return userRepository.findUserEntitiesByNameOrNicknameIgnoreCase(nameOrNickname, nameOrNickname)
-            .map { UserDto(it) }
+            .map { DetailedUserDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getActiveUsers(): List<UserDto> {
-        return userRepository.findUserEntitiesByIsActiveTrue().map { UserDto(it) }
+    fun getActiveUsers(): List<DetailedUserDto> {
+        return userRepository.findUserEntitiesByIsActiveTrue().map { DetailedUserDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getInactiveUsers(): List<UserDto> {
-        return userRepository.findUserEntitiesByIsActiveFalse().map { UserDto(it) }
+    fun getInactiveUsers(): List<DetailedUserDto> {
+        return userRepository.findUserEntitiesByIsActiveFalse().map { DetailedUserDto(it) }
     }
 
     @Transactional(readOnly = false)
-    fun updateUser(id: Int, updateTo: UpdateUserDto): UserDto {
+    fun updateUser(id: Int, updateTo: UpdateUserDto): DetailedUserDto {
         val user = userRepository.findById(id)
             .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
 
@@ -60,7 +59,7 @@ class UserService(private val userRepository: UserRepository) {
         updateTo.favouriteQuote?.let { user.favouriteQuote = it }
         updateTo.profilePicture?.let { user.profilePicture = it }
 
-        return UserDto(userRepository.save(user))
+        return DetailedUserDto(userRepository.save(user))
     }
 
     @Transactional(readOnly = false)
@@ -71,20 +70,20 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = false)
-    fun updateRole(userId: Int, role: Role): UserDto {
+    fun updateRole(userId: Int, role: Role): DetailedUserDto {
         val user = userRepository.findById(userId)
             .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         user.role = role
 
-        return UserDto(userRepository.save(user))
+        return DetailedUserDto(userRepository.save(user))
     }
 
     @Transactional(readOnly = false)
-    fun updateActivation(userId: Int, isActive: Boolean): UserDto {
+    fun updateActivation(userId: Int, isActive: Boolean): DetailedUserDto {
         val user = userRepository.findById(userId)
             .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         user.isActive = isActive
 
-        return UserDto(userRepository.save(user))
+        return DetailedUserDto(userRepository.save(user))
     }
 }
