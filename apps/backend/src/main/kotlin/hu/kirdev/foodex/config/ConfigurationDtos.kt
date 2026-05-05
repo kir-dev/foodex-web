@@ -19,10 +19,10 @@ data class ConfigurationDto (
 }
 
 data class UpdateConfigurationDto (
-    val feelingOfTheWeek: String,
-    val foodExLogo: String,
-    val startOfSemester: LocalDateTime,
-    val endOfSemester: LocalDateTime,
+    val feelingOfTheWeek: String?,
+    val foodExLogo: String?,
+    val startOfSemester: LocalDateTime?,
+    val endOfSemester: LocalDateTime?,
 )
 
 data class HomePageDto (
