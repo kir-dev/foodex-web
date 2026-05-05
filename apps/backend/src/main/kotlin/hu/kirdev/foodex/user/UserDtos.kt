@@ -15,9 +15,9 @@ data class CreatUserDto (
 )
 
 data class UpdateUserDto (
-    val name: String,
+    val name: String?,
     val nickname: String?,
-    val email: String,
+    val email: String?,
     val favouriteQuote: String?,
     val profilePicture: String?,
 )

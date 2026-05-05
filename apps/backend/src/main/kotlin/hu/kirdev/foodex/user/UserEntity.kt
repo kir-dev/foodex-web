@@ -18,6 +18,7 @@ data class UserEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
 
+    // AuthSch
     @Column(unique = true, nullable = false, length = 36)
     val internalId: String,
 
