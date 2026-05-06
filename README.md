@@ -38,7 +38,7 @@ spring.jpa.show-sql=true
   - **Select the main class** *hu.kirdev.foodex.FoodExApplication*
   - Select **JDK 25**. If not available, than go to four horizontal lines (upper left corner of window), then *'File'* / *'Project Structure...'*, and select JDK 25.
   - Ensure that the **`local`** profile is set in the *Active profiles*. ***TODO:*** To insert demo data, also enalbe the `test` profile.
-- **Press** Debug *FoodEx-Web*🪲, then **open** http://localhost:8080
+- **Press** Debug *FoodEx-Web*🪲, then **open** <http://localhost:8080>
 
 ## Getting Started - Frontend
 
