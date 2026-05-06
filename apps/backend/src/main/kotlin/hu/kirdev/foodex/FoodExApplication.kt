@@ -1,10 +1,10 @@
 package hu.kirdev.foodex
 
-import hu.kirdev.foodex.config.ConfigurationTestConfig
-import hu.kirdev.foodex.config.CookingClubTestConfig
-import hu.kirdev.foodex.config.OpeningRequestTestConfig
-import hu.kirdev.foodex.config.ShiftTestConfig
-import hu.kirdev.foodex.config.UserTestConfig
+import hu.kirdev.foodex.testconfig.ConfigurationTestConfig
+import hu.kirdev.foodex.testconfig.CookingClubTestConfig
+import hu.kirdev.foodex.testconfig.OpeningRequestTestConfig
+import hu.kirdev.foodex.testconfig.ShiftTestConfig
+import hu.kirdev.foodex.testconfig.UserTestConfig
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 import org.springframework.context.annotation.Import

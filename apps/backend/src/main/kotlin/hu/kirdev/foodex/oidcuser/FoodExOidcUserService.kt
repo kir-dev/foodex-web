@@ -1,19 +1,22 @@
-package hu.kirdev.foodex.service
+package hu.kirdev.foodex.oidcuser
 
-import hu.kirdev.foodex.model.ExecutiveAt
-import hu.kirdev.foodex.model.FoodExOidcUser
-import hu.kirdev.foodex.model.Role
-import hu.kirdev.foodex.model.UserEntity
+import hu.kirdev.foodex.cookingclub.CookingClubEntity
+import hu.kirdev.foodex.cookingclub.CookingClubService
+import hu.kirdev.foodex.user.UserService
+import hu.kirdev.foodex.user.Role
+import hu.kirdev.foodex.user.UserEntity
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
 import org.springframework.transaction.annotation.Transactional
-import kotlin.text.toInt
 
-open class FoodExOidcUserService(val userService: UserService, val cookingClubService: CookingClubService) :
-    OidcUserService() {
+open class FoodExOidcUserService(
+    val userService: UserService,
+    val cookingClubService: CookingClubService
+) : OidcUserService() {
+
     private final val foodExID = 182L
 
     private final val allCookingClubIds = setOf<Int>(
@@ -34,6 +37,7 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
         val authschUser = super.loadUser(userRequest) ?: return null
 
         val foodexUser = FoodExOidcUser(authschUser)
+        val leaderAt : Set<Int> = foodexUser.memberships.map { it.id.toInt() }.toSet().intersect(allCookingClubIds)
 
         val user = userService.getUserByInternalId(foodexUser.internalId)
 
@@ -56,7 +60,7 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
             foodexUser.extraAuthorities = getAuthoritiesFromEntity(foodexUser)  // TODO Is it necessary???
 
             // Reload permission to Cooking Clubs
-            reloadPermissionsOfUserToCookingClubs(user, foodexUser.executiveAtCircles.map { it.id.toInt() }.toSet())
+            reloadPermissionsOfUserToCookingClubs(user, leaderAt)
 
             userService.updateUser(user)
         }
@@ -67,15 +71,17 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
                 internalId = foodexUser.internalId,
                 role = getHighestRole(foodexUser),
                 name = foodexUser.name,
-                nickname = foodexUser.nickName?:"",
+                nickname = foodexUser.nickName,
                 email = foodexUser.email,
-                isActive = true
+                favouriteQuote = null,
+                isActive = foodexUser.memberships.map { it.id }.contains(foodExID),
+                profilePicture = foodexUser.profile,
                 // TODO: profile etc.
             )
             foodexUser.extraAuthorities = getAuthoritiesFromEntity(foodexUser) // TODO Is it necessary???
 
             // Reload permission to Cooking Clubs
-            reloadPermissionsOfUserToCookingClubs(user, foodexUser.executiveAtCircles.map { it.id.toInt() }.toSet())
+            reloadPermissionsOfUserToCookingClubs(user, leaderAt)
 
             userService.updateUser(user)
         }
@@ -118,29 +124,23 @@ open class FoodExOidcUserService(val userService: UserService, val cookingClubSe
         return Role.GUEST
     }
 
-    private fun reloadPermissionsOfUserToCookingClubs(user: UserEntity, executiveAtCircles: Set<Int>) {
-        removeAllCookingClubPermissionsOfUser(user.id)
+    private fun reloadPermissionsOfUserToCookingClubs(user: UserEntity, leaderAt: Set<Int>) {
+        // Remove all permissions of user
+        for (club in user.leaderAt) {
+            cookingClubService.removeLeaderFromCookingClub(user.id, club.id)
+        }
 
+        // Admin --> Add privileges to ALL clubs
         if (user.role == Role.ADMIN) {
-            // Add privileges to all clubs
-            addCookingClubAdminPermissionsToUser(user.id, cookingClubService.getAllCookingClubs().map { it.id }.toSet())
+            for (club in cookingClubService.getAllCookingClubs()) {
+                cookingClubService.addLeaderToCookingClub(user.id, club.id)
+            }
             return
         }
 
-        addCookingClubAdminPermissionsToUser(user.id, executiveAtCircles intersect allCookingClubIds)
-    }
-
-    private fun removeAllCookingClubPermissionsOfUser(userId: Int) {
-        val clubs = cookingClubService.getAllCookingClubsOfUser(userId)
-
-        for (club in clubs) {
-            cookingClubService.removeLeaderFromCookingClub(club.id, userId)
-        }
-    }
-
-    private fun addCookingClubAdminPermissionsToUser(userId: Int, cookingClubs: Set<Int>) {
-        for (clubId in cookingClubs) {
-            cookingClubService.addLeaderToCookingClub(clubId, userId)
+        // Add privileges to clubs
+        for (club in user.leaderAt) {
+            cookingClubService.addLeaderToCookingClub(user.id, club.id)
         }
     }
 }

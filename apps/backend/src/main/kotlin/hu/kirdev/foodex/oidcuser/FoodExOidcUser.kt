@@ -1,4 +1,4 @@
-package hu.kirdev.foodex.model
+package hu.kirdev.foodex.oidcuser
 
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.oauth2.core.oidc.user.OidcUser

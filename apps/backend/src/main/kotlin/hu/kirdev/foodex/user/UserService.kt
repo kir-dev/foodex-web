@@ -21,8 +21,8 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = true)
-    fun getUserByInternalId(internalId: String) : DetailedUserDto? {
-        return userRepository.findUserEntityByInternalId(internalId)?.let { DetailedUserDto(it) }
+    fun getUserByInternalId(internalId: String) : UserEntity? {
+        return userRepository.findUserEntityByInternalId(internalId)
     }
 
     @Transactional(readOnly = true)
@@ -63,6 +63,11 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = false)
+    fun updateUser(user: UserEntity): UserEntity {
+        return userRepository.save(user)
+    }
+
+    @Transactional(readOnly = false)
     fun deleteUser(id: Int) {
         userRepository.findById(id).orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
 
@@ -79,10 +84,19 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = false)
-    fun updateActivation(userId: Int, isActive: Boolean): DetailedUserDto {
+    fun activateUser(userId: Int): DetailedUserDto {
         val user = userRepository.findById(userId)
             .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
-        user.isActive = isActive
+        user.isActive = true
+
+        return DetailedUserDto(userRepository.save(user))
+    }
+
+    @Transactional(readOnly = false)
+    fun deActivateUser(userId: Int): DetailedUserDto {
+        val user = userRepository.findById(userId)
+            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+        user.isActive = false
 
         return DetailedUserDto(userRepository.save(user))
     }

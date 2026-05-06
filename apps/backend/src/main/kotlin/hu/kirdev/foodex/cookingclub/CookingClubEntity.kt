@@ -17,13 +17,18 @@ data class CookingClubEntity(
     @field:Size(max = 30)
     var name: String,
 
-    @ManyToMany(mappedBy = "cooking_clubs")
+    @ManyToMany
+    @JoinTable(
+        name = "user_cooking_club_leadership",
+        joinColumns = [JoinColumn(name = "club_id")],
+        inverseJoinColumns = [JoinColumn(name = "user_id")]
+    )
     var leaders: MutableList<UserEntity> = mutableListOf(),
 
-    @ManyToMany(mappedBy = "cooking_clubs")
+    @ManyToMany(mappedBy = "cooking_clubs") // TODO: fix?
     var shifts: MutableList<ShiftEntity> = mutableListOf(),
 
-    @OneToMany(mappedBy = "cooking_clubs")
+    @OneToMany(mappedBy = "cooking_clubs")  // TODO: fix?
     var requests: MutableList<OpeningRequestEntity> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {

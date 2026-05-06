@@ -1,7 +1,7 @@
-package hu.kirdev.foodex.config
+package hu.kirdev.foodex.testconfig
 
-import hu.kirdev.foodex.model.ConfigurationEntity
-import hu.kirdev.foodex.repository.ConfigurationRepository
+import hu.kirdev.foodex.config.ConfigurationEntity
+import hu.kirdev.foodex.config.ConfigurationRepository
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Profile
 import org.springframework.context.annotation.Bean

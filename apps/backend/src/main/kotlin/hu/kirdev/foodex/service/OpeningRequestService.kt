@@ -1,7 +1,7 @@
 package hu.kirdev.foodex.service
 
 import hu.kirdev.foodex.dto.OpeningRequestDTO
-import hu.kirdev.foodex.model.OpeningRequestEntity
+import hu.kirdev.foodex.oidcuser.OpeningRequestEntity
 import hu.kirdev.foodex.repository.OpeningRequestRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.stereotype.Service

@@ -1,9 +1,9 @@
 package hu.kirdev.foodex.service
 
 import hu.kirdev.foodex.dto.CreateShiftFromRequestDTO
-import hu.kirdev.foodex.model.Role
-import hu.kirdev.foodex.model.ShiftEntity
-import hu.kirdev.foodex.model.UserEntity
+import hu.kirdev.foodex.oidcuser.Role
+import hu.kirdev.foodex.oidcuser.ShiftEntity
+import hu.kirdev.foodex.oidcuser.UserEntity
 import hu.kirdev.foodex.repository.ShiftRepository
 import hu.kirdev.foodex.repository.UserRepository
 import org.springframework.data.repository.findByIdOrNull
