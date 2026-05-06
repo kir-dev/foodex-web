@@ -1,6 +1,5 @@
 package hu.kirdev.foodex.oidcuser
 
-import hu.kirdev.foodex.cookingclub.CookingClubEntity
 import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.user.UserService
 import hu.kirdev.foodex.user.Role

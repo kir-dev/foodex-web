@@ -11,9 +11,11 @@ data class ShiftEntity(
 
     @Id
     @Column(nullable = false)
-    val id: Int,
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    val id: Int = 0,
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shft_cooking_club", nullable = false)
     var cookingClub: CookingClubEntity,
 
     @Column(nullable = false)
@@ -31,11 +33,13 @@ data class ShiftEntity(
     @Column(nullable = false)
     var comment: String = "",
 
-    @ManyToMany(mappedBy = "shifts")
-    var members: MutableList<UserEntity>,
-
-    @ManyToMany(mappedBy = "shifts")
-    var newbies: MutableList<UserEntity>,
+    @ManyToMany
+    @JoinTable(
+        name = "shift_workers",
+        joinColumns = [JoinColumn(name = "shift_id")],
+        inverseJoinColumns = [JoinColumn(name = "user_id")]
+    )
+    var workers: MutableList<UserEntity> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

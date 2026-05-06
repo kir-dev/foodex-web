@@ -1,22 +1,18 @@
 package hu.kirdev.foodex.controller
 
+import hu.kirdev.foodex.config.ConfigurationService
 import hu.kirdev.foodex.dto.ApplyForShiftDTO
 import hu.kirdev.foodex.dto.CookingClubLeaderDTO
 import hu.kirdev.foodex.dto.CreateShiftFromRequestDTO
 import hu.kirdev.foodex.dto.OpeningRequestDTO
-import hu.kirdev.foodex.dto.HomePageResponseDTO
-import hu.kirdev.foodex.dto.OrdersResponseDTO
-import hu.kirdev.foodex.dto.ProfilesResponseDTO
-import hu.kirdev.foodex.dto.ShiftsResponseDTO
-import hu.kirdev.foodex.model.CookingClubEntity
-import hu.kirdev.foodex.model.OpeningRequestEntity
-import hu.kirdev.foodex.model.ShiftEntity
-import hu.kirdev.foodex.model.UserEntity
-import hu.kirdev.foodex.service.ConfigurationService
-import hu.kirdev.foodex.service.CookingClubService
+import hu.kirdev.foodex.cookingclub.CookingClubEntity
+import hu.kirdev.foodex.cookingclub.CookingClubService
+import hu.kirdev.foodex.openingrequest.OpeningRequestEntity
+import hu.kirdev.foodex.shift.ShiftEntity
+import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.service.OpeningRequestService
 import hu.kirdev.foodex.service.ShiftService
-import hu.kirdev.foodex.service.UserService
+import hu.kirdev.foodex.user.UserService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.RequestMapping
@@ -35,10 +31,10 @@ class MainController(
 ) {
     /********** HOME ***********************************************************************************/
     @GetMapping("/home")
-    fun getHomePage() : HomePageResponseDTO {
+    fun getHomePage() : HomePageDTO {
         val config = configurationService.get()
 
-        val homePage = HomePageResponseDTO(
+        val homePage = HomePageDTO(
             feelingOfTheWeek = config.feelingOfTheWeek,
             foodExLogo = config.foodExLogo,
             activeMembers = userService.getActiveUsers(),

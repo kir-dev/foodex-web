@@ -1,6 +1,7 @@
 package hu.kirdev.foodex.shift
 
 import hu.kirdev.foodex.cookingclub.CookingClubDto
+import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserDto
 import java.time.LocalDateTime
 
@@ -14,12 +15,12 @@ data class CreateShiftDto (
 )
 
 data class UpdateShiftDto (
-    val cookingClubId: Int,
-    val maxMembers: Int,
-    val opening: LocalDateTime,
-    val closing: LocalDateTime,
-    val place: String,
-    val comment: String,
+    val cookingClubId: Int?,
+    val maxMembers: Int?,
+    val opening: LocalDateTime?,
+    val closing: LocalDateTime?,
+    val place: String?,
+    val comment: String?,
 )
 
 data class ShiftDto (
@@ -61,8 +62,8 @@ data class DetailedShiftDto (
         closing = shift.closing,
         place = shift.place,
         comment = shift.comment,
-        members = shift.members.map { UserDto(it) },
-        newbies = shift.newbies.map { UserDto(it) },
+        members = shift.workers.filter { it.role == Role.MEMBER || it.role == Role.ADMIN }.map { UserDto(it) },
+        newbies = shift.workers.filter { it.role == Role.NEWBIE }.map { UserDto(it) },
     )
 }
 

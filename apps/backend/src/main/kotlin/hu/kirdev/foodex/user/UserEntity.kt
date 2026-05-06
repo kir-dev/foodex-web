@@ -42,7 +42,7 @@ data class UserEntity(
     @ManyToMany(mappedBy = "leaders")
     var leaderAt: MutableList<CookingClubEntity> = mutableListOf(),
 
-    @ManyToMany // TODO: fix
+    @ManyToMany(mappedBy = "workers")
     var shifts: MutableList<ShiftEntity> = mutableListOf(),
 
     @OneToMany  // TODO: fix

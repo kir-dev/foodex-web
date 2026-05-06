@@ -19,13 +19,17 @@ data class CookingClubEntity(
 
     @ManyToMany
     @JoinTable(
-        name = "user_cooking_club_leadership",
+        name = "cooking_club_leaders",
         joinColumns = [JoinColumn(name = "club_id")],
         inverseJoinColumns = [JoinColumn(name = "user_id")]
     )
     var leaders: MutableList<UserEntity> = mutableListOf(),
 
-    @ManyToMany(mappedBy = "cooking_clubs") // TODO: fix?
+    @OneToMany(
+        mappedBy = "cookingClub",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
     var shifts: MutableList<ShiftEntity> = mutableListOf(),
 
     @OneToMany(mappedBy = "cooking_clubs")  // TODO: fix?
