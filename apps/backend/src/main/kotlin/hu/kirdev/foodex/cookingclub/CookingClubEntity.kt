@@ -17,13 +17,26 @@ data class CookingClubEntity(
     @field:Size(max = 30)
     var name: String,
 
-    @ManyToMany(mappedBy = "cooking_clubs")
+    @ManyToMany
+    @JoinTable(
+        name = "cooking_club_leaders",
+        joinColumns = [JoinColumn(name = "club_id")],
+        inverseJoinColumns = [JoinColumn(name = "user_id")]
+    )
     var leaders: MutableList<UserEntity> = mutableListOf(),
 
-    @ManyToMany(mappedBy = "cooking_clubs")
+    @OneToMany(
+        mappedBy = "cookingClub",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
     var shifts: MutableList<ShiftEntity> = mutableListOf(),
 
-    @OneToMany(mappedBy = "cooking_clubs")
+    @OneToMany(
+        mappedBy = "cookingClub",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
     var requests: MutableList<OpeningRequestEntity> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {

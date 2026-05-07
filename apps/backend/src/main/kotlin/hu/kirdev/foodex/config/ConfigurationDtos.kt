@@ -1,6 +1,6 @@
 package hu.kirdev.foodex.config
 
-import hu.kirdev.foodex.openingrequest.OpeningRequestDto
+import hu.kirdev.foodex.openingrequest.DetailedOpeningRequestDto
 import hu.kirdev.foodex.user.UserDto
 import java.time.LocalDateTime
 
@@ -19,15 +19,15 @@ data class ConfigurationDto (
 }
 
 data class UpdateConfigurationDto (
-    val feelingOfTheWeek: String,
-    val foodExLogo: String,
-    val startOfSemester: LocalDateTime,
-    val endOfSemester: LocalDateTime,
+    val feelingOfTheWeek: String?,
+    val foodExLogo: String?,
+    val startOfSemester: LocalDateTime?,
+    val endOfSemester: LocalDateTime?,
 )
 
 data class HomePageDto (
     val feelingOfTheWeek: String,
     val foodExLogo: String,
     val activeMembers: List<UserDto>,
-    val upcomingOpenings: List<OpeningRequestDto>,
+    val upcomingOpenings: List<DetailedOpeningRequestDto>,  // TODO: ???
 )

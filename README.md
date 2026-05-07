@@ -1,5 +1,14 @@
 # FoodEx-Web
 
+```console
+    ______                ________         _       __     __
+   / ____/___  ____  ____/ / ____/  __    | |     / /__  / /_
+  / /_  / __ \/ __ \/ __  / __/ | |/_/____| | /| / / _ \/ __ \
+ / __/ / /_/ / /_/ / /_/ / /____>  </_____/ |/ |/ /  __/ /_/ /
+/_/    \____/\____/\__,_/_____/_/|_|      |__/|__/\___/_.___/
+
+```
+
 This is a starter project for a fullstack application using React and Spring Boot.
 
 ## Getting Started - Backend
@@ -7,6 +16,10 @@ This is a starter project for a fullstack application using React and Spring Boo
 ### Running/debugging locally
 
 - Open the repository in IntelliJ IDEA (Ultimate) in the **`apps/backend`** directory!!!
+- Make sure **gradle in linked**!
+  - Open `build.gradle.kts`
+  - To refresh click on the little elephant in the upper-right corner of the tab
+  - If there is no syntax highlighting, than it hasn't been successful
 - **Go to** [auth.sch.bme.hu](https://auth.sch.bme.hu/console/) and **create a new** OAuth client. Set the *Átirányítási cím* to `http://localhost:8080/login/oauth2/code/authsch`
 - In the `src/main/resources/config/` directory, **create a new file** `application-local.properties` using the config below and update it with your AuthSCH credentials:
 
@@ -23,8 +36,9 @@ spring.jpa.show-sql=true
   - Click on the **+** icon (*Add New Configuration*), then choose *Spring Boot*. If you don't see this option, then activate IntelliJ Ultimate with your *@edu.bme.hu* email - [JetBrains student pack](https://www.jetbrains.com/academy/student-pack/)
   - Let's name it `FoodEx-Web`
   - **Select the main class** *hu.kirdev.foodex.FoodExApplication*
+  - Select **JDK 25**. If not available, than go to four horizontal lines (upper left corner of window), then *'File'* / *'Project Structure...'*, and select JDK 25.
   - Ensure that the **`local`** profile is set in the *Active profiles*. ***TODO:*** To insert demo data, also enalbe the `test` profile.
-- **Press** *Debug 'FoodEx-Web'*🪲, then **open** http://localhost:8080
+- **Press** Debug *FoodEx-Web*🪲, then **open** <http://localhost:8080>
 
 ## Getting Started - Frontend
 
@@ -84,4 +98,16 @@ pnpm lint
 
 ```bash
 pnpm format:check
+```
+
+## Happy coding :D
+
+```console
+ ________                   __  _______                    __      __          __
+/\  _____\                 /\ \/\  ____\                  /\ \  __/\ \        /\ \
+\ \ \_____  ____    ____   \_\ \ \ \____     __  _        \ \ \/\ \ \ \     __\ \ \____
+ \ \  ____\/ __`\  / __`\  /'_` \ \  ___\   /\ \/ \ _______\ \ \ \ \ \ \  /'__`\ \ '__`\
+  \ \ \   /\ \_\ \/\ \_\ \/\ \_\ \ \ \____  \/>  <//\______\\ \ \_/ \_\ \/\  __/\ \ \_\ \
+   \ \_\  \ \____/\ \____/\ \___,_\ \_____\  /\_/\_\/______/ \ `\___x___/\ \____\\ \_,__/
+    \/_/   \/___/  \/___/  \/__,_ /\/_____/ \/_/\/_/          '\/__//__/  \/____/ \/___/
 ```

@@ -4,20 +4,10 @@ import hu.kirdev.foodex.cookingclub.CookingClubDto
 import hu.kirdev.foodex.openingrequest.OpeningRequestDto
 import hu.kirdev.foodex.shift.ShiftDto
 
-data class CreatUserDto (
-    val role: Role,
-    val name: String,
-    val nickname: String?,
-    val email: String,
-    val favouriteQuote: String?,
-    val isActive: Boolean,
-    val profilePicture: String?,
-)
-
 data class UpdateUserDto (
-    val name: String,
+    val name: String?,
     val nickname: String?,
-    val email: String,
+    val email: String?,
     val favouriteQuote: String?,
     val profilePicture: String?,
 )

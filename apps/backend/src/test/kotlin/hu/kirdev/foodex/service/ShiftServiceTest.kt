@@ -1,7 +1,7 @@
 package hu.kirdev.foodex.service
 
-import hu.kirdev.foodex.model.ConfigurationEntity
-import hu.kirdev.foodex.model.ShiftEntity
+import hu.kirdev.foodex.oidcuser.ConfigurationEntity
+import hu.kirdev.foodex.oidcuser.ShiftEntity
 import hu.kirdev.foodex.repository.ShiftRepository
 import hu.kirdev.foodex.repository.UserRepository
 import io.mockk.clearAllMocks

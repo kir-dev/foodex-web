@@ -1,11 +1,10 @@
-package hu.kirdev.foodex.repository
+package hu.kirdev.foodex.openingrequest
 
-import hu.kirdev.foodex.model.OpeningRequestEntity
 import org.springframework.data.jpa.repository.JpaRepository
+import org.springframework.stereotype.Repository
 
+@Repository
 interface OpeningRequestRepository : JpaRepository<OpeningRequestEntity, Int> {
-    fun findAllByCookingClubId(cookingClubId: Int): List<OpeningRequestEntity>
-    fun findAllByUserId(userId: Int): List<OpeningRequestEntity>
     fun findAllByIsAcceptedTrue(): List<OpeningRequestEntity>
     fun findAllByIsAcceptedFalse(): List<OpeningRequestEntity>
 }

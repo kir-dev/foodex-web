@@ -5,11 +5,6 @@ import hu.kirdev.foodex.openingrequest.OpeningRequestEntity
 import hu.kirdev.foodex.shift.ShiftEntity
 import jakarta.persistence.*
 
-// Roles within FoodEx
-enum class Role{
-    ADMIN, MEMBER, NEWBIE, GUEST
-}
-
 @Entity
 @Table(name = "users")
 data class UserEntity(
@@ -18,6 +13,7 @@ data class UserEntity(
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
 
+    // AuthSch
     @Column(unique = true, nullable = false, length = 36)
     val internalId: String,
 
@@ -43,13 +39,17 @@ data class UserEntity(
     @Column(columnDefinition = "text")
     var profilePicture: String? = null, // URL to picture
 
-    @ManyToMany(mappedBy = "users")
+    @ManyToMany(mappedBy = "leaders")
     var leaderAt: MutableList<CookingClubEntity> = mutableListOf(),
 
-    @ManyToMany(mappedBy = "users")
+    @ManyToMany(mappedBy = "workers")
     var shifts: MutableList<ShiftEntity> = mutableListOf(),
 
-    @OneToMany(mappedBy = "users")
+    @OneToMany(
+        mappedBy = "user",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
     var requests: MutableList<OpeningRequestEntity> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {

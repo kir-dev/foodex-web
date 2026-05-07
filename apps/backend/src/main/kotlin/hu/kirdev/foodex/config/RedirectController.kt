@@ -1,4 +1,4 @@
-package hu.kirdev.foodex.controller
+package hu.kirdev.foodex.config
 
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
