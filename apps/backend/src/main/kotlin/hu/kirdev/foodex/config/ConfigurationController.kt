@@ -3,6 +3,7 @@ package hu.kirdev.foodex.config
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
+import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.springframework.http.HttpStatus
@@ -58,7 +59,7 @@ class ConfigurationController(
             )
     )
     @PatchMapping("/config")
-    fun updateConfiguration(config: UpdateConfigurationDto) : ResponseEntity<ConfigurationDto>  {
+    fun updateConfiguration(@RequestBody config: UpdateConfigurationDto) : ResponseEntity<ConfigurationDto>  {
         val configuration = configurationService.updateConfiguration(config)
         return ResponseEntity.status(HttpStatus.OK).body(configuration)
     }

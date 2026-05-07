@@ -1,6 +1,5 @@
 package hu.kirdev.foodex.openingrequest
 
-import hu.kirdev.foodex.config.ConfigurationService
 import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.user.UserRepository
 import org.springframework.http.HttpStatus
@@ -22,10 +21,10 @@ class OpeningRequestService(
     }
 
     @Transactional(readOnly = true)
-    fun getOpeningRequestById(id: Int) : OpeningRequestDto {
+    fun getOpeningRequestById(id: Int) : DetailedOpeningRequestDto {
         return openingRequestRepository.findById(id)
             .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Opening request not found") }
-            .let { OpeningRequestDto(it) }
+            .let { DetailedOpeningRequestDto(it) }
     }
 
     @Transactional(readOnly = true)
