@@ -12,15 +12,17 @@ data class OpeningRequestEntity(
     @Id
     @Column(nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    val id: Int,
+    val id: Int = 0,
 
     @Column(nullable = false)
     var isAccepted: Boolean = false,
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "opening_request_user", nullable = false)
     var user: UserEntity,
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "opening_request_cooking_club", nullable = false)
     var cookingClub: CookingClubEntity,
 
     @Column(nullable = false)

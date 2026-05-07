@@ -32,7 +32,11 @@ data class CookingClubEntity(
     )
     var shifts: MutableList<ShiftEntity> = mutableListOf(),
 
-    @OneToMany(mappedBy = "cooking_clubs")  // TODO: fix?
+    @OneToMany(
+        mappedBy = "cookingClub",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
     var requests: MutableList<OpeningRequestEntity> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {

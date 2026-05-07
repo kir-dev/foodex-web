@@ -15,13 +15,10 @@ data class CreateOpeningRequestDto (
 )
 
 data class UpdateOpeningRequestDto (
-    val isAccepted: Boolean,
-    val userId: Int,
-    val cookingClubId: Int,
-    val opening: LocalDateTime,
-    val closing: LocalDateTime,
-    val place: String,
-    val description: String,
+    val opening: LocalDateTime?,
+    val closing: LocalDateTime?,
+    val place: String?,
+    val description: String?,
 )
 
 data class OpeningRequestDto (

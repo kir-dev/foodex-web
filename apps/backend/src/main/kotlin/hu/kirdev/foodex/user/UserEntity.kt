@@ -45,7 +45,11 @@ data class UserEntity(
     @ManyToMany(mappedBy = "workers")
     var shifts: MutableList<ShiftEntity> = mutableListOf(),
 
-    @OneToMany  // TODO: fix
+    @OneToMany(
+        mappedBy = "user",
+        cascade = [CascadeType.ALL],
+        orphanRemoval = true
+    )
     var requests: MutableList<OpeningRequestEntity> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {

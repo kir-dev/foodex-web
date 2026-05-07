@@ -24,6 +24,12 @@ class CookingClubService(
             .let { DetailedCookingClubDto(it) }
     }
 
+    @Transactional(readOnly = true)
+    fun getCookingClubEntity(id: Int) : CookingClubEntity {
+        return cookingClubRepository.findById(id)
+            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
+    }
+
     @Transactional(readOnly = false)
     fun createCookingClub(club: CreateCookingClubDto) : DetailedCookingClubDto {
         return cookingClubRepository.save(CookingClubEntity(
