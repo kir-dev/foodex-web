@@ -46,13 +46,13 @@ class ConfigurationService(
     }
 
     @Transactional(readOnly = true)
-    fun getHomePage() : HomePageDto {
+    fun getHomepage() : HomepageDto {
         val config = get()
 
-        return HomePageDto(
+        return HomepageDto(
             feelingOfTheWeek = config.feelingOfTheWeek,
             foodExLogo = config.foodExLogo,
-            activeMembers = userRepository.findUserEntitiesByIsActiveTrue().map { UserDto(it) },
+            activeMembers = userRepository.findUserEntitiesByIsActiveTrue().map { UserDto(it) },    // TODO: only members???
             upcomingOpenings = openingRequestRepository.findAllByIsAcceptedTrue().map { DetailedOpeningRequestDto(it) },
         )
     }

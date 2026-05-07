@@ -22,6 +22,12 @@ data class UserDto (
         role = user.role,
         nickname = user.nickname ?: user.name,
     )
+
+    constructor(user: DetailedUserDto) : this(
+        id = user.id,
+        role = user.role,
+        nickname = user.nickname ?: user.name,
+    )
 }
 
 data class DetailedUserDto (
