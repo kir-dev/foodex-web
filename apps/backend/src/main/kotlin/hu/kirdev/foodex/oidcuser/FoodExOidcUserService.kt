@@ -75,7 +75,6 @@ open class FoodExOidcUserService(
                 favouriteQuote = null,
                 isActive = foodexUser.memberships.map { it.id }.contains(foodExID),
                 profilePicture = foodexUser.profile,
-                // TODO: profile etc.
             )
             foodexUser.extraAuthorities = getAuthoritiesFromEntity(foodexUser) // TODO Is it necessary???
 
