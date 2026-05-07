@@ -74,6 +74,6 @@ data class CreateShiftFromOpeningRequestDto (
 )
 
 data class ShiftsResponseDto (
-    val activeShifts: List<ShiftDto>,
-    val fullShifts: List<ShiftDto>,
+    val activeShifts: List<DetailedShiftDto>,
+    val fullShifts: List<DetailedShiftDto>,
 )

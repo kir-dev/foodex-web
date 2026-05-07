@@ -1,6 +1,5 @@
 package hu.kirdev.foodex.service
 
-import hu.kirdev.foodex.dto.OpeningRequestDTO
 import hu.kirdev.foodex.oidcuser.OpeningRequestEntity
 import hu.kirdev.foodex.repository.OpeningRequestRepository
 import io.mockk.clearAllMocks

@@ -3,6 +3,7 @@ package hu.kirdev.foodex.shift
 import hu.kirdev.foodex.config.ConfigurationService
 import hu.kirdev.foodex.cookingclub.CookingClubRepository
 import hu.kirdev.foodex.openingrequest.OpeningRequestRepository
+import hu.kirdev.foodex.openingrequest.OpeningRequestService
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserRepository
 import org.springframework.data.repository.findByIdOrNull
@@ -19,6 +20,7 @@ class ShiftService(
     private val userRepository: UserRepository,
     private val cookingClubRepository: CookingClubRepository,
     private val openingRequestRepository: OpeningRequestRepository,
+    private val openingRequestService: OpeningRequestService,
     private val configurationService: ConfigurationService,
 ) {
 
@@ -164,7 +166,7 @@ class ShiftService(
             shifts.add(shift)
         }
 
-        // TODO: openingService.acceptOpeningRequest(createRequest.openingRequestId)
+        openingRequestService.acceptOpeningRequest(createRequest.openingRequestId)
 
         return shifts.map { DetailedShiftDto(it) }
     }

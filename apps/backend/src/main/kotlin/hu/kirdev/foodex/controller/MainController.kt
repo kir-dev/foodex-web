@@ -1,17 +1,11 @@
 package hu.kirdev.foodex.controller
 
 import hu.kirdev.foodex.config.ConfigurationService
-import hu.kirdev.foodex.dto.ApplyForShiftDTO
-import hu.kirdev.foodex.dto.CookingClubLeaderDTO
-import hu.kirdev.foodex.dto.CreateShiftFromRequestDTO
-import hu.kirdev.foodex.dto.OpeningRequestDTO
 import hu.kirdev.foodex.cookingclub.CookingClubEntity
 import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.openingrequest.OpeningRequestEntity
 import hu.kirdev.foodex.shift.ShiftEntity
 import hu.kirdev.foodex.user.UserEntity
-import hu.kirdev.foodex.service.OpeningRequestService
-import hu.kirdev.foodex.service.ShiftService
 import hu.kirdev.foodex.user.UserService
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PostMapping

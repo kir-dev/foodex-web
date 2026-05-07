@@ -1,6 +1,6 @@
 package hu.kirdev.foodex.config
 
-import hu.kirdev.foodex.openingrequest.OpeningRequestDto
+import hu.kirdev.foodex.openingrequest.DetailedOpeningRequestDto
 import hu.kirdev.foodex.openingrequest.OpeningRequestRepository
 import hu.kirdev.foodex.user.UserDto
 import hu.kirdev.foodex.user.UserRepository
@@ -53,7 +53,7 @@ class ConfigurationService(
             feelingOfTheWeek = config.feelingOfTheWeek,
             foodExLogo = config.foodExLogo,
             activeMembers = userRepository.findUserEntitiesByIsActiveTrue().map { UserDto(it) },
-            upcomingOpenings = openingRequestRepository.findAllByIsAcceptedTrue().map { OpeningRequestDto(it) },
+            upcomingOpenings = openingRequestRepository.findAllByIsAcceptedTrue().map { DetailedOpeningRequestDto(it) },
         )
     }
 }
