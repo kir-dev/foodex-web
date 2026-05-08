@@ -15,6 +15,8 @@ This is a starter project for a fullstack application using React and Spring Boo
 
 ### Running/debugging locally
 
+#### Setup
+
 - Open the repository in IntelliJ IDEA (Ultimate) in the **`apps/backend`** directory!!!
 - Make sure **gradle in linked**!
   - Open `build.gradle.kts`
@@ -39,6 +41,16 @@ spring.jpa.show-sql=true
   - Select **JDK 25**. If not available, than go to four horizontal lines (upper left corner of window), then *'File'* / *'Project Structure...'*, and select JDK 25.
   - Ensure that the **`local`** profile is set in the *Active profiles*. ***TODO:*** To insert demo data, also enalbe the `test` profile.
 - **Press** Debug *FoodEx-Web*🪲, then **open** <http://localhost:8080>
+
+#### Signing in with AuthSch
+
+Go to <http://localhost:8080/oauth2/authorization/authsch> to sign in.
+
+Optional: you can place breakpoints at `userService.updateUser(user)` lines of `FoodExOidcUserService`.
+
+### Swagger API documentation
+
+Check out the Swagger API documentation at <http://localhost:8080/swagger-ui/index.html>!
 
 ## Getting Started - Frontend
 
