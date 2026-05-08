@@ -71,12 +71,10 @@ class CookingClubController(private val cookingClubService: CookingClubService) 
             ApiResponse(responseCode = "404", description = "Cooking club not found")
         ]
     )
-    @PostMapping("/{clubId}")
+    @PutMapping("/{clubId}")
     fun updateCookingClub(
         @PathVariable clubId: Int,
-        @RequestBody updateRequest: UpdateCookingClubDto
-        ) : ResponseEntity<DetailedCookingClubDto> {
-
+        @RequestBody updateRequest: UpdateCookingClubDto) : ResponseEntity<DetailedCookingClubDto> {
         val club = cookingClubService.updateCookingClub(clubId, updateRequest)
         return ResponseEntity.status(HttpStatus.OK).body(club)
     }
