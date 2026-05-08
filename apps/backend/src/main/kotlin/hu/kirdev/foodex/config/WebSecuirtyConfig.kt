@@ -23,7 +23,7 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class WebSecurityConfig {
     @Bean
     @Throws(Exception::class)
-    fun securityFilterChain(http: HttpSecurity): SecurityFilterChain? {
+    fun securityFilterChain(http: HttpSecurity, userService: UserService, cookingClubService: CookingClubService): SecurityFilterChain? {
         http
             .csrf{it.disable()}
             .cors { it.disable() }
@@ -41,6 +41,7 @@ class WebSecurityConfig {
                         "/api/**",  // TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         "/v3/api-docs",
                         "/swagger-ui/*",
+                        "/swagger-ui.html",
                         "/v3/api-docs/swagger-config"
                     ).permitAll()
 
@@ -57,7 +58,7 @@ class WebSecurityConfig {
                 oauth2
                     // Fallback when no saved request exists (e.g. direct login)
                     .defaultSuccessUrl("/api/homepage", false)
-                    // false = respect the originally requested URL when available
+                // false = respect the originally requested URL when available
             }
         return http.build()
     }
@@ -95,5 +96,4 @@ class WebSecurityConfig {
         return InMemoryUserDetailsManager(user)
     }
 }
-
 
