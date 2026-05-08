@@ -52,11 +52,11 @@ class ConfigurationController(
 
     @Operation(summary = "Update the configuration")
     @ApiResponses(
-            ApiResponse(
-                responseCode = "200",
-                description = "Configuration updated",
-                content = [Content(schema = Schema(implementation = ConfigurationDto::class))]
-            )
+        ApiResponse(
+            responseCode = "200",
+            description = "Configuration updated",
+            content = [Content(schema = Schema(implementation = ConfigurationDto::class))]
+        )
     )
     @PatchMapping("/config")
     fun updateConfiguration(@RequestBody config: UpdateConfigurationDto) : ResponseEntity<ConfigurationDto>  {
