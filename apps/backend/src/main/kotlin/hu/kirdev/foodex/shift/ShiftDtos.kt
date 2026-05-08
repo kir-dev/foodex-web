@@ -68,12 +68,11 @@ data class DetailedShiftDto (
 }
 
 data class CreateShiftFromOpeningRequestDto (
-    val openingRequestId: Int,
     val maxMembers: Int,
     val numberOfShifts: Int,
 )
 
-data class ShiftsResponseDto (
+data class ActiveAndFullShifts (
     val activeShifts: List<DetailedShiftDto>,
     val fullShifts: List<DetailedShiftDto>,
 )

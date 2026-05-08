@@ -30,7 +30,7 @@ class ConfigurationController(
             ApiResponse(responseCode = "404", description = "Part of homepage not found"),
         ]
     )
-    @GetMapping("/home")
+    @GetMapping("/homepage")
     fun getHomepage() : ResponseEntity<HomepageDto> {
         val homePage = configurationService.getHomepage()
         return ResponseEntity.status(HttpStatus.OK).body(homePage)

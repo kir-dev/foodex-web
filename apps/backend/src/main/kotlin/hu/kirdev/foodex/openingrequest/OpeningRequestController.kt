@@ -1,5 +1,8 @@
 package hu.kirdev.foodex.openingrequest
 
+import hu.kirdev.foodex.shift.CreateShiftFromOpeningRequestDto
+import hu.kirdev.foodex.shift.DetailedShiftDto
+import hu.kirdev.foodex.shift.ShiftService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
@@ -14,9 +17,10 @@ import org.springframework.web.bind.annotation.*
 @Controller
 @RequestMapping("/api")
 class OpeningRequestController(
-    private val openingRequestService: OpeningRequestService
+    private val openingRequestService: OpeningRequestService,
+    private val shiftService: ShiftService,
 ) {
-
+    /********** REQUESTS *******************************************************************************/
     @Operation(summary = "Create an opening requests")
     @ApiResponses(
         ApiResponse(
@@ -25,12 +29,14 @@ class OpeningRequestController(
             content = [Content(schema = Schema(implementation = DetailedOpeningRequestDto::class))]
         )
     )
-    @PostMapping("/request")
+    @PostMapping("/requests")
     fun createOpeningRequest(@RequestBody createRequest: CreateOpeningRequestDto) : ResponseEntity<DetailedOpeningRequestDto> {
         val request = openingRequestService.createOpeningRequest(createRequest)
         return ResponseEntity.status(HttpStatus.OK).body(request)
     }
 
+
+    /********** INCOMING-REQUESTS **********************************************************************/
     @Operation(summary = "List opening requests")
     @ApiResponses(
         ApiResponse(
@@ -39,7 +45,7 @@ class OpeningRequestController(
             content = [Content(schema = Schema(implementation = DetailedOpeningRequestDto::class))]
         )
     )
-    @GetMapping("/incoming-request")
+    @GetMapping("/incoming-requests")
     fun getUpcomingOpeningRequest() : ResponseEntity<List<DetailedOpeningRequestDto>> {
         val requests = openingRequestService.getUpcomingOpeningRequestsByIsAcceptedFalse()
         return ResponseEntity.status(HttpStatus.OK).body(requests)
@@ -56,7 +62,7 @@ class OpeningRequestController(
             ApiResponse(responseCode = "404", description = "Opening request not found"),
         ]
     )
-    @GetMapping("/incoming-request/{requestId}")
+    @GetMapping("/incoming-requests/{requestId}")
     fun getOpeningRequest(@PathVariable requestId: Int) : ResponseEntity<DetailedOpeningRequestDto> {
         val request = openingRequestService.getOpeningRequestById(requestId)
         return ResponseEntity.status(HttpStatus.OK).body(request)
@@ -73,7 +79,7 @@ class OpeningRequestController(
             ApiResponse(responseCode = "404", description = "Opening request not found"),
         ]
     )
-    @PatchMapping("/incoming-request/{requestId}")
+    @PatchMapping("/incoming-requests/{requestId}")
     fun updateOpeningRequest(
         @PathVariable requestId: Int,
         @RequestBody toUpdate: UpdateOpeningRequestDto
@@ -93,9 +99,27 @@ class OpeningRequestController(
             ApiResponse(responseCode = "404", description = "Opening request not found"),
         ]
     )
-    @DeleteMapping("/incoming-request/{requestId}")
+    @DeleteMapping("/incoming-requests/{requestId}")
     fun deleteOpeningRequest(@PathVariable requestId: Int) : ResponseEntity<Void>  {
         openingRequestService.deleteOpeningRequest(requestId)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
+    }
+
+    @Operation(summary = "Create shifts from opening request")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Shifts created",
+            content = [Content(schema = Schema(implementation = DetailedShiftDto::class))]
+        )
+    )
+    @PostMapping("/requests/{requestId}")
+    fun createShiftsFromOpeningRequest(
+        @PathVariable requestId: Int,
+        @RequestBody createRequest: CreateShiftFromOpeningRequestDto
+        ) : ResponseEntity<List<DetailedShiftDto>> {
+
+        val shifts = shiftService.createShiftsFromOpeningRequest(requestId, createRequest)
+        return ResponseEntity.status(HttpStatus.OK).body(shifts)
     }
 }
