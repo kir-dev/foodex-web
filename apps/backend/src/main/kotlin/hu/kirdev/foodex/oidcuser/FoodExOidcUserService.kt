@@ -1,16 +1,18 @@
 package hu.kirdev.foodex.oidcuser
 
 import hu.kirdev.foodex.cookingclub.CookingClubService
-import hu.kirdev.foodex.user.UserService
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
+import hu.kirdev.foodex.user.UserService
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserService
 import org.springframework.security.oauth2.core.oidc.user.OidcUser
+import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 
+@Service
 open class FoodExOidcUserService(
     val userService: UserService,
     val cookingClubService: CookingClubService

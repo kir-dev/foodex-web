@@ -2,9 +2,7 @@ package hu.kirdev.foodex.config
 
 
 
-import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.oidcuser.FoodExOidcUserService
-import hu.kirdev.foodex.user.UserService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -23,13 +21,16 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class WebSecurityConfig {
     @Bean
     @Throws(Exception::class)
-    fun securityFilterChain(http: HttpSecurity, userService: UserService, cookingClubService: CookingClubService): SecurityFilterChain? {
+    fun securityFilterChain(
+        http: HttpSecurity,
+        foodexOidcUserService: FoodExOidcUserService,
+        ): SecurityFilterChain? {
         http
             .csrf{it.disable()}
             .cors { it.disable() }
             .oauth2Login {
                 it.userInfoEndpoint { endpoint ->
-                    endpoint.oidcUserService(FoodExOidcUserService(userService, cookingClubService)) // TODO: + admins?
+                    endpoint.oidcUserService(foodexOidcUserService) // TODO: + admins?
                 }
             }
             .authorizeHttpRequests { authorize ->
