@@ -12,7 +12,7 @@ import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
 
 @Controller
-@RequestMapping("/api/user")
+@RequestMapping("/api/users")
 class UserController(private val userService: UserService) {
 
     @Operation(summary = "Get users")
