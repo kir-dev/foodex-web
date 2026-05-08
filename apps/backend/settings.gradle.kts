@@ -1,1 +1,1 @@
-rootProject.name = "FoodEx"
+rootProject.name = "FoodEx-Web"
