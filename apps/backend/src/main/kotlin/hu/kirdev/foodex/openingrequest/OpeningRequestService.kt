@@ -1,6 +1,5 @@
 package hu.kirdev.foodex.openingrequest
 
-import hu.kirdev.foodex.config.ConfigurationService
 import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.user.UserRepository
 import org.springframework.http.HttpStatus
@@ -14,7 +13,6 @@ class OpeningRequestService(
     private val openingRequestRepository: OpeningRequestRepository,
     private val userRepository: UserRepository,
     private val cookingClubService: CookingClubService,
-    private val configurationService: ConfigurationService,
 ) {
 
     @Transactional(readOnly = true)
@@ -23,19 +21,22 @@ class OpeningRequestService(
     }
 
     @Transactional(readOnly = true)
-    fun getOpeningRequestById(id: Int) : OpeningRequestDto {
+    fun getOpeningRequestById(id: Int) : DetailedOpeningRequestDto {
         return openingRequestRepository.findById(id)
             .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Opening request not found") }
-            .let { OpeningRequestDto(it) }
+            .let { DetailedOpeningRequestDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getOpeningRequestsByIsAcceptedTrue() : List<DetailedOpeningRequestDto> {
-        return openingRequestRepository.findAllByIsAcceptedTrue().map { DetailedOpeningRequestDto(it) }
+    fun getUpcomingOpeningRequestsByIsAcceptedTrue() : List<DetailedOpeningRequestDto> {
+        val now = LocalDateTime.now()
+        return openingRequestRepository.findAllByIsAcceptedTrue()
+            .filter { it.opening > now }
+            .map { DetailedOpeningRequestDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getRelevantOpeningRequestsByIsAcceptedFalse() : List<DetailedOpeningRequestDto> {
+    fun getUpcomingOpeningRequestsByIsAcceptedFalse() : List<DetailedOpeningRequestDto> {
         val now = LocalDateTime.now()
         return openingRequestRepository.findAllByIsAcceptedFalse()
             .filter { it.opening > now }.map { DetailedOpeningRequestDto(it) }

@@ -37,7 +37,7 @@ class WebSecurityConfig {
                     // Public endpoints
                     .requestMatchers(
                         "/",
-                        "/api/home",
+                        "/api/homepage",
                         "/api/**",  // TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         "/v3/api-docs",
                         "/swagger-ui/*",
@@ -56,7 +56,7 @@ class WebSecurityConfig {
             .oauth2Login { oauth2 ->
                 oauth2
                     // Fallback when no saved request exists (e.g. direct login)
-                    .defaultSuccessUrl("/api/home", false)
+                    .defaultSuccessUrl("/api/homepage", false)
                     // false = respect the originally requested URL when available
             }
         return http.build()

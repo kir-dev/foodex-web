@@ -8,6 +8,6 @@ class RedirectController {
 
     @GetMapping("/")
     fun redirectToHomepage(): String {
-        return "redirect:/api/home"
+        return "redirect:/api/homepage"
     }
 }

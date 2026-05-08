@@ -51,6 +51,14 @@ class ShiftService(
     }
 
     @Transactional(readOnly = true)
+    fun getUpcomingActiveAndFullShifts(): ActiveAndFullShifts {
+        return ActiveAndFullShifts(
+            activeShifts = getActiveShifts(),
+            fullShifts = getFullShifts(),
+        )
+    }
+
+    @Transactional(readOnly = true)
     fun getActiveShifts(): List<DetailedShiftDto> {
         return getUpcomingShifts().filter {
             it.members.size < it.maxMembers
@@ -145,8 +153,8 @@ class ShiftService(
     }
 
     @Transactional(readOnly = false)
-    fun createShiftsFromOpeningRequest(createRequest: CreateShiftFromOpeningRequestDto) : List<DetailedShiftDto> {
-        val request = openingRequestRepository.findById(createRequest.openingRequestId)
+    fun createShiftsFromOpeningRequest(openingRequestId: Int, createRequest: CreateShiftFromOpeningRequestDto) : List<DetailedShiftDto> {
+        val request = openingRequestRepository.findById(openingRequestId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Opening request not found") }
 
         val shifts = mutableListOf<ShiftEntity>()
@@ -166,7 +174,7 @@ class ShiftService(
             shifts.add(shift)
         }
 
-        openingRequestService.acceptOpeningRequest(createRequest.openingRequestId)
+        openingRequestService.acceptOpeningRequest(openingRequestId)
 
         return shifts.map { DetailedShiftDto(it) }
     }

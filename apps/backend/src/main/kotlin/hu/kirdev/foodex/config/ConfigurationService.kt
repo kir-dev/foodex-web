@@ -1,7 +1,6 @@
 package hu.kirdev.foodex.config
 
-import hu.kirdev.foodex.openingrequest.DetailedOpeningRequestDto
-import hu.kirdev.foodex.openingrequest.OpeningRequestRepository
+import hu.kirdev.foodex.openingrequest.OpeningRequestService
 import hu.kirdev.foodex.user.UserDto
 import hu.kirdev.foodex.user.UserRepository
 import org.springframework.stereotype.Service
@@ -12,7 +11,7 @@ import java.time.LocalDateTime
 class ConfigurationService(
     private val configurationRepository: ConfigurationRepository,
     private val userRepository: UserRepository,
-    private val openingRequestRepository: OpeningRequestRepository
+    private val openingRequestService: OpeningRequestService,
 ) {
 
     @Transactional(readOnly = false)
@@ -46,14 +45,14 @@ class ConfigurationService(
     }
 
     @Transactional(readOnly = true)
-    fun getHomePage() : HomePageDto {
+    fun getHomepage() : HomepageDto {
         val config = get()
 
-        return HomePageDto(
+        return HomepageDto(
             feelingOfTheWeek = config.feelingOfTheWeek,
             foodExLogo = config.foodExLogo,
-            activeMembers = userRepository.findUserEntitiesByIsActiveTrue().map { UserDto(it) },
-            upcomingOpenings = openingRequestRepository.findAllByIsAcceptedTrue().map { DetailedOpeningRequestDto(it) },
+            activeMembers = userRepository.findUserEntitiesByIsActiveTrue().map { UserDto(it) },    // TODO: only members???
+            upcomingOpenings = openingRequestService.getUpcomingOpeningRequestsByIsAcceptedTrue()
         )
     }
 }

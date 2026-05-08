@@ -25,7 +25,7 @@ data class UpdateConfigurationDto (
     val endOfSemester: LocalDateTime?,
 )
 
-data class HomePageDto (
+data class HomepageDto (
     val feelingOfTheWeek: String,
     val foodExLogo: String,
     val activeMembers: List<UserDto>,
