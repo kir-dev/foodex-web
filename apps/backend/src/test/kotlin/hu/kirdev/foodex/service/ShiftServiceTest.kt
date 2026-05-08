@@ -1,25 +1,22 @@
 package hu.kirdev.foodex.service
 
-import hu.kirdev.foodex.model.ConfigurationEntity
-import hu.kirdev.foodex.model.ShiftEntity
-import hu.kirdev.foodex.model.UserEntity
+import hu.kirdev.foodex.oidcuser.ConfigurationEntity
+import hu.kirdev.foodex.oidcuser.ShiftEntity
 import hu.kirdev.foodex.repository.ShiftRepository
 import hu.kirdev.foodex.repository.UserRepository
 import io.mockk.clearAllMocks
 import io.mockk.every
 import io.mockk.mockk
-import io.mockk.verify
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
-import org.springframework.data.repository.findByIdOrNull
 import java.time.LocalDateTime
 
 class ShiftServiceTest {
     val shiftRepository = mockk<ShiftRepository>()
     val userRepository = mockk<UserRepository>()
     val configurationService = mockk<ConfigurationService>()
-    val foodExService = mockk<FoodExRequestService>()
+    val foodExService = mockk<OpeningRequestService>()
 
     @Test
     fun getAllShiftsInSemester() {

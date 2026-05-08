@@ -2,9 +2,7 @@ package hu.kirdev.foodex.config
 
 
 
-import hu.kirdev.foodex.service.CookingClubService
-import hu.kirdev.foodex.service.FoodExOidcUserService
-import hu.kirdev.foodex.service.UserService
+import hu.kirdev.foodex.oidcuser.FoodExOidcUserService
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -23,26 +21,45 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource
 class WebSecurityConfig {
     @Bean
     @Throws(Exception::class)
-    fun securityFilterChain(http: HttpSecurity, userService: UserService, cookingClubService: CookingClubService): SecurityFilterChain? {
+    fun securityFilterChain(
+        http: HttpSecurity,
+        foodexOidcUserService: FoodExOidcUserService,
+        ): SecurityFilterChain? {
         http
             .csrf{it.disable()}
             .cors { it.disable() }
             .oauth2Login {
                 it.userInfoEndpoint { endpoint ->
-                    endpoint.oidcUserService(FoodExOidcUserService(userService, cookingClubService)) // + admins?
+                    endpoint.oidcUserService(foodexOidcUserService) // TODO: + admins?
                 }
             }
             .authorizeHttpRequests { authorize ->
                 authorize
+                    // Public endpoints
                     .requestMatchers(
                         "/",
-                        "/api/**",  // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+                        "/api/homepage",
+                        "/api/**",  // TODO: REMOVE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
                         "/v3/api-docs",
                         "/swagger-ui/*",
                         "/swagger-ui.html",
                         "/v3/api-docs/swagger-config"
                     ).permitAll()
+
+                    // Static resources (CSS, JS, images, etc.)
+                    .requestMatchers("/css/**", "/js/**", "/images/**", "/favicon.ico").permitAll()     // TODO: ?????
+
+                    // All other API endpoints require login
+                    .requestMatchers("/api/**").authenticated()
+
+                    // Protect any other routes
                     .anyRequest().authenticated()
+            }
+            .oauth2Login { oauth2 ->
+                oauth2
+                    // Fallback when no saved request exists (e.g. direct login)
+                    .defaultSuccessUrl("/api/homepage", false)
+                // false = respect the originally requested URL when available
             }
         return http.build()
     }
@@ -80,5 +97,4 @@ class WebSecurityConfig {
         return InMemoryUserDetailsManager(user)
     }
 }
-
 
