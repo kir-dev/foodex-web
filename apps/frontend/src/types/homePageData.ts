@@ -3,6 +3,8 @@ import { User } from './user';
 
 export type HomePageData = {
   feelingOfTheWeek: string;
+  foodExLogo: string; // Hozzáadva a backendből érkező logó URL miatt
   activeMembers: User[];
-  upcomingShifts: ShiftEntity[];
+  upcomingOpenings?: any[]; // A backendről érkező pontos kulcs
+  upcomingShifts?: ShiftEntity[]; // Megtartva a visszafelé kompatibilitás miatt
 };

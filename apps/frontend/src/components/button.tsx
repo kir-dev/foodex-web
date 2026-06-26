@@ -1,17 +1,16 @@
+'use client';
+
 import clsx from 'clsx';
-import React from 'react';
+import React, { ComponentPropsWithoutRef } from 'react';
 
 export type ButtonVariant = 'primary' | 'secondary';
 
-interface ButtonProps {
+interface ButtonProps extends ComponentPropsWithoutRef<'button'> {
   label: string;
-  onClick?: () => void;
-  type?: 'button' | 'submit' | 'reset';
-  className?: string;
   variant?: ButtonVariant;
 }
 
-const Button: React.FC<ButtonProps> = ({ label, onClick, type = 'button', className = '', variant = 'primary' }) => {
+const Button: React.FC<ButtonProps> = ({ label, type = 'button', className = '', variant = 'primary', ...props }) => {
   const baseClasses = 'font-semibold text-xl px-4 py-2 rounded-full border-2 transition-all';
 
   const variantClasses = {
@@ -20,7 +19,16 @@ const Button: React.FC<ButtonProps> = ({ label, onClick, type = 'button', classN
   };
 
   return (
-    <button type={type} onClick={onClick} className={clsx(baseClasses, variantClasses[variant], className)}>
+    <button
+      type={type}
+      {...props}
+      className={clsx(
+        baseClasses,
+        variantClasses[variant],
+        'disabled:opacity-50 disabled:cursor-not-allowed',
+        className
+      )}
+    >
       {label}
     </button>
   );
