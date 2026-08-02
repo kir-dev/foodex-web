@@ -1,19 +1,27 @@
 package hu.kirdev.foodex.user
 
+import hu.kirdev.foodex.security.CurrentUserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
+import org.springframework.web.bind.annotation.RestController
 
-@Controller
+@RestController
 @RequestMapping("/api/users")
-class UserController(private val userService: UserService) {
+class UserController(
+    private val userService: UserService,
+    private val currentUserService: CurrentUserService,
+) {
 
     @Operation(summary = "Get users")
     @ApiResponses(
@@ -23,9 +31,25 @@ class UserController(private val userService: UserService) {
             content = [Content(schema = Schema(implementation = DetailedUserDto::class))]
         )
     )
-    @GetMapping()
-    fun getUsers() : ResponseEntity<List<DetailedUserDto>> {
+    @GetMapping
+    fun getUsers(): ResponseEntity<List<DetailedUserDto>> {
         val users = userService.getActiveUsers()
+        return ResponseEntity.status(HttpStatus.OK).body(users)
+    }
+
+    @Operation(summary = "Search users by name or nickname")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Users found",
+            content = [Content(schema = Schema(implementation = DetailedUserDto::class))]
+        )
+    )
+    @GetMapping("/search")
+    fun searchUsersByNameOrNickname(
+        @RequestParam("q") nameOrNickname: String
+    ): ResponseEntity<List<DetailedUserDto>> {
+        val users = userService.getUsersByNameOrNickname(nameOrNickname)
         return ResponseEntity.status(HttpStatus.OK).body(users)
     }
 
@@ -41,25 +65,8 @@ class UserController(private val userService: UserService) {
         ]
     )
     @GetMapping("/{userId}")
-    fun getUser(@PathVariable userId: Int) : ResponseEntity<DetailedUserDto> {
+    fun getUser(@PathVariable userId: Int): ResponseEntity<DetailedUserDto> {
         val user = userService.getUserById(userId)
-        return ResponseEntity.status(HttpStatus.OK).body(user)
-    }
-
-    @Operation(summary = "Search users by name or nickname")
-    @ApiResponses(
-        ApiResponse(
-            responseCode = "200",
-            description = "Users found",
-            content = [Content(schema = Schema(implementation = DetailedUserDto::class))]
-        )
-    )
-    @GetMapping("/search")
-    fun searchUsersByNameOrNickname(
-        @RequestParam("q") nameOrNickname: String
-        ) : ResponseEntity<List<DetailedUserDto>> {
-
-        val user = userService.getUsersByNameOrNickname(nameOrNickname)
         return ResponseEntity.status(HttpStatus.OK).body(user)
     }
 
@@ -75,12 +82,12 @@ class UserController(private val userService: UserService) {
         ]
     )
     @PatchMapping("/{userId}")
-    fun updateOpeningRequest(
+    fun updateUser(
         @PathVariable userId: Int,
         @RequestBody toUpdate: UpdateUserDto
-    ) : ResponseEntity<DetailedUserDto>  {
-
-        val user = userService.updateUser(userId, toUpdate)
+    ): ResponseEntity<DetailedUserDto> {
+        val actor = currentUserService.requireUser()
+        val user = userService.updateUser(userId, toUpdate, actor)
         return ResponseEntity.status(HttpStatus.OK).body(user)
     }
 }

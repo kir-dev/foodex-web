@@ -5,6 +5,7 @@ import hu.kirdev.foodex.shift.ShiftEntity
 import hu.kirdev.foodex.user.UserEntity
 import jakarta.persistence.*
 import jakarta.validation.constraints.Size
+import org.hibernate.annotations.BatchSize
 
 @Entity
 @Table(name = "cooking_clubs")
@@ -23,6 +24,7 @@ data class CookingClubEntity(
         joinColumns = [JoinColumn(name = "club_id")],
         inverseJoinColumns = [JoinColumn(name = "user_id")]
     )
+    @BatchSize(size = 32)
     var leaders: MutableList<UserEntity> = mutableListOf(),
 
     @OneToMany(
@@ -30,6 +32,7 @@ data class CookingClubEntity(
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
+    @BatchSize(size = 32)
     var shifts: MutableList<ShiftEntity> = mutableListOf(),
 
     @OneToMany(
@@ -37,6 +40,7 @@ data class CookingClubEntity(
         cascade = [CascadeType.ALL],
         orphanRemoval = true
     )
+    @BatchSize(size = 32)
     var requests: MutableList<OpeningRequestEntity> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {

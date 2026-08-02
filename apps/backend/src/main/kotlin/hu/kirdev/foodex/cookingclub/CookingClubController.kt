@@ -3,15 +3,20 @@ package hu.kirdev.foodex.cookingclub
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.stereotype.Controller
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.PutMapping
+import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RestController
 
-@Controller
+@RestController
 @RequestMapping("/api/cooking-clubs")
 class CookingClubController(private val cookingClubService: CookingClubService) {
 
@@ -23,8 +28,8 @@ class CookingClubController(private val cookingClubService: CookingClubService) 
             content = [Content(schema = Schema(implementation = DetailedCookingClubDto::class))]
         )
     )
-    @GetMapping()
-    fun getCookingClubs() : ResponseEntity<List<DetailedCookingClubDto>> {
+    @GetMapping
+    fun getCookingClubs(): ResponseEntity<List<DetailedCookingClubDto>> {
         val clubs = cookingClubService.getAllCookingClubs()
         return ResponseEntity.status(HttpStatus.OK).body(clubs)
     }
@@ -41,7 +46,7 @@ class CookingClubController(private val cookingClubService: CookingClubService) 
         ]
     )
     @GetMapping("/{clubId}")
-    fun getCookingClub(@PathVariable clubId: Int) : ResponseEntity<DetailedCookingClubDto> {
+    fun getCookingClub(@PathVariable clubId: Int): ResponseEntity<DetailedCookingClubDto> {
         val club = cookingClubService.getCookingClub(clubId)
         return ResponseEntity.status(HttpStatus.OK).body(club)
     }
@@ -49,15 +54,15 @@ class CookingClubController(private val cookingClubService: CookingClubService) 
     @Operation(summary = "Create a cooking club")
     @ApiResponses(
         ApiResponse(
-            responseCode = "200",
+            responseCode = "201",
             description = "Cooking club created",
             content = [Content(schema = Schema(implementation = DetailedCookingClubDto::class))]
         )
     )
-    @PostMapping()
-    fun createCookingClub(@RequestBody createRequest: CreateCookingClubDto) : ResponseEntity<DetailedCookingClubDto> {
+    @PostMapping
+    fun createCookingClub(@RequestBody createRequest: CreateCookingClubDto): ResponseEntity<DetailedCookingClubDto> {
         val club = cookingClubService.createCookingClub(createRequest)
-        return ResponseEntity.status(HttpStatus.OK).body(club)
+        return ResponseEntity.status(HttpStatus.CREATED).body(club)
     }
 
     @Operation(summary = "Update a cooking club")
@@ -74,7 +79,8 @@ class CookingClubController(private val cookingClubService: CookingClubService) 
     @PutMapping("/{clubId}")
     fun updateCookingClub(
         @PathVariable clubId: Int,
-        @RequestBody updateRequest: UpdateCookingClubDto) : ResponseEntity<DetailedCookingClubDto> {
+        @RequestBody updateRequest: UpdateCookingClubDto
+    ): ResponseEntity<DetailedCookingClubDto> {
         val club = cookingClubService.updateCookingClub(clubId, updateRequest)
         return ResponseEntity.status(HttpStatus.OK).body(club)
     }
@@ -90,7 +96,7 @@ class CookingClubController(private val cookingClubService: CookingClubService) 
         ]
     )
     @DeleteMapping("/{clubId}")
-    fun updateCookingClub(@PathVariable clubId: Int) : ResponseEntity<Void> {
+    fun deleteCookingClub(@PathVariable clubId: Int): ResponseEntity<Void> {
         cookingClubService.deleteCookingClub(clubId)
         return ResponseEntity.noContent().build()
     }

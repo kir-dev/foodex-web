@@ -1,15 +1,20 @@
 package hu.kirdev.foodex.shift
 
-import hu.kirdev.foodex.openingrequest.OpeningRequestService
+import hu.kirdev.foodex.security.CurrentUserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
-import org.springframework.web.bind.annotation.*
+import org.springframework.web.bind.annotation.DeleteMapping
+import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.PathVariable
+import org.springframework.web.bind.annotation.PostMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -17,9 +22,9 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api")
 class ShiftController(
     private val shiftService: ShiftService,
-    private val openingRequestService: OpeningRequestService,
+    private val currentUserService: CurrentUserService,
 ) {
-    /********** OPENINGS *******************************************************************************/
+
     @Operation(summary = "List all shifts of semester")
     @ApiResponses(
         ApiResponse(
@@ -29,7 +34,7 @@ class ShiftController(
         )
     )
     @GetMapping("/openings")
-    fun getOpenings() : ResponseEntity<List<DetailedShiftDto>> {
+    fun getOpenings(): ResponseEntity<List<DetailedShiftDto>> {
         val openings = shiftService.getAllShiftsInSemester()
         return ResponseEntity.status(HttpStatus.OK).body(openings)
     }
@@ -38,17 +43,18 @@ class ShiftController(
     @ApiResponses(
         value = [
             ApiResponse(
-                responseCode = "200",
-                description = "Shift found",
+                responseCode = "201",
+                description = "Shift created",
                 content = [Content(schema = Schema(implementation = DetailedShiftDto::class))]
             ),
             ApiResponse(responseCode = "404", description = "Cooking club not found"),
         ]
     )
     @PostMapping("/openings")
-    fun createShift(@RequestBody createRequest: CreateShiftDto) : ResponseEntity<DetailedShiftDto> {
-        val shift = shiftService.createShift(createRequest)
-        return ResponseEntity.status(HttpStatus.OK).body(shift)
+    fun createShift(@Valid @RequestBody createRequest: CreateShiftDto): ResponseEntity<DetailedShiftDto> {
+        val actor = currentUserService.requireUser()
+        val shift = shiftService.createShift(createRequest, actor)
+        return ResponseEntity.status(HttpStatus.CREATED).body(shift)
     }
 
     @Operation(summary = "Update a shift")
@@ -63,8 +69,12 @@ class ShiftController(
         ]
     )
     @PatchMapping("/openings/{shiftId}")
-    fun updateShift(@PathVariable shiftId: Int, @RequestBody updateShift: UpdateShiftDto) : ResponseEntity<DetailedShiftDto> {
-        val shift = shiftService.updateShift(shiftId, updateShift)
+    fun updateShift(
+        @PathVariable shiftId: Int,
+        @Valid @RequestBody updateShift: UpdateShiftDto
+    ): ResponseEntity<DetailedShiftDto> {
+        val actor = currentUserService.requireUser()
+        val shift = shiftService.updateShift(shiftId, updateShift, actor)
         return ResponseEntity.status(HttpStatus.OK).body(shift)
     }
 
@@ -79,13 +89,12 @@ class ShiftController(
         ]
     )
     @DeleteMapping("/openings/{shiftId}")
-    fun deleteShift(@PathVariable shiftId: Int) : ResponseEntity<Void> {
-        shiftService.deleteShift(shiftId)
+    fun deleteShift(@PathVariable shiftId: Int): ResponseEntity<Void> {
+        val actor = currentUserService.requireUser()
+        shiftService.deleteShift(shiftId, actor)
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build()
     }
 
-
-    /********** SHIFTS *********************************************************************************/
     @Operation(summary = "List upcoming active and full shifts")
     @ApiResponses(
         ApiResponse(
@@ -95,7 +104,7 @@ class ShiftController(
         )
     )
     @GetMapping("/shifts")
-    fun getUpcomingActiveAndFullShifts() : ResponseEntity<ActiveAndFullShifts> {
+    fun getUpcomingActiveAndFullShifts(): ResponseEntity<ActiveAndFullShifts> {
         val shifts = shiftService.getUpcomingActiveAndFullShifts()
         return ResponseEntity.status(HttpStatus.OK).body(shifts)
     }
@@ -112,7 +121,7 @@ class ShiftController(
         ]
     )
     @GetMapping("/shifts/{shiftId}")
-    fun getShift(@PathVariable shiftId: Int) : ResponseEntity<DetailedShiftDto> {
+    fun getShift(@PathVariable shiftId: Int): ResponseEntity<DetailedShiftDto> {
         val shift = shiftService.getShiftById(shiftId)
         return ResponseEntity.status(HttpStatus.OK).body(shift)
     }
@@ -130,8 +139,12 @@ class ShiftController(
         ]
     )
     @PostMapping("/shifts/{shiftId}/{workerId}")
-    fun addWorkerToShift(@PathVariable shiftId: Int, @PathVariable workerId: Int) : ResponseEntity<DetailedShiftDto> {
-        val shift = shiftService.addWorkerToShift(workerId, shiftId)
+    fun addWorkerToShift(
+        @PathVariable shiftId: Int,
+        @PathVariable workerId: Int
+    ): ResponseEntity<DetailedShiftDto> {
+        val actor = currentUserService.requireUser()
+        val shift = shiftService.addWorkerToShift(workerId, shiftId, actor)
         return ResponseEntity.status(HttpStatus.OK).body(shift)
     }
 
@@ -148,8 +161,12 @@ class ShiftController(
         ]
     )
     @DeleteMapping("/shifts/{shiftId}/{workerId}")
-    fun removeWorkerFromShift(@PathVariable shiftId: Int, @PathVariable workerId: Int) : ResponseEntity<DetailedShiftDto> {
-        val shift = shiftService.removeWorkerFromShift(workerId, shiftId)
+    fun removeWorkerFromShift(
+        @PathVariable shiftId: Int,
+        @PathVariable workerId: Int
+    ): ResponseEntity<DetailedShiftDto> {
+        val actor = currentUserService.requireUser()
+        val shift = shiftService.removeWorkerFromShift(workerId, shiftId, actor)
         return ResponseEntity.status(HttpStatus.OK).body(shift)
     }
 }

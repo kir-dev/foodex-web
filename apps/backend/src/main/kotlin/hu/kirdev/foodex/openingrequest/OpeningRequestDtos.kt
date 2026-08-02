@@ -3,25 +3,25 @@ package hu.kirdev.foodex.openingrequest
 import hu.kirdev.foodex.cookingclub.CookingClubDto
 import hu.kirdev.foodex.shift.ShiftDto
 import hu.kirdev.foodex.user.UserDto
+import jakarta.validation.constraints.NotBlank
 import java.time.LocalDateTime
 
-data class CreateOpeningRequestDto (
-    val userId: Int,
+data class CreateOpeningRequestDto(
     val cookingClubId: Int,
     val opening: LocalDateTime,
     val closing: LocalDateTime,
-    val place: String,
+    @field:NotBlank val place: String,
     val description: String,
 )
 
-data class UpdateOpeningRequestDto (
+data class UpdateOpeningRequestDto(
     val opening: LocalDateTime?,
     val closing: LocalDateTime?,
     val place: String?,
     val description: String?,
 )
 
-data class OpeningRequestDto (
+data class OpeningRequestDto(
     val id: Int,
     val isAccepted: Boolean,
     val userId: Int,
@@ -43,7 +43,7 @@ data class OpeningRequestDto (
     )
 }
 
-data class DetailedOpeningRequestDto (
+data class DetailedOpeningRequestDto(
     val id: Int,
     val isAccepted: Boolean,
     val user: UserDto,
@@ -65,7 +65,7 @@ data class DetailedOpeningRequestDto (
     )
 }
 
-data class OrdersResponseDto (
+data class OrdersResponseDto(
     val incomingRequests: List<OpeningRequestDto>,
     val acceptedShifts: List<ShiftDto>
 )

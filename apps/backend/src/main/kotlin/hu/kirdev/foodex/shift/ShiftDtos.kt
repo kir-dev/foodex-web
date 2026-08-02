@@ -3,27 +3,29 @@ package hu.kirdev.foodex.shift
 import hu.kirdev.foodex.cookingclub.CookingClubDto
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserDto
+import jakarta.validation.constraints.NotBlank
+import jakarta.validation.constraints.Positive
 import java.time.LocalDateTime
 
-data class CreateShiftDto (
+data class CreateShiftDto(
     val cookingClubId: Int,
-    val maxMembers: Int,
+    @field:Positive val maxMembers: Int,
     val opening: LocalDateTime,
     val closing: LocalDateTime,
-    val place: String,
-    val comment: String,
+    @field:NotBlank val place: String,
+    val comment: String = "",
 )
 
-data class UpdateShiftDto (
+data class UpdateShiftDto(
     val cookingClubId: Int?,
-    val maxMembers: Int?,
+    @field:Positive val maxMembers: Int?,
     val opening: LocalDateTime?,
     val closing: LocalDateTime?,
     val place: String?,
     val comment: String?,
 )
 
-data class ShiftDto (
+data class ShiftDto(
     val id: Int,
     val cookingClubId: Int,
     val maxMembers: Int,
@@ -43,7 +45,7 @@ data class ShiftDto (
     )
 }
 
-data class DetailedShiftDto (
+data class DetailedShiftDto(
     val id: Int,
     val cookingClub: CookingClubDto,
     val maxMembers: Int,
@@ -67,12 +69,12 @@ data class DetailedShiftDto (
     )
 }
 
-data class CreateShiftFromOpeningRequestDto (
-    val maxMembers: Int,
-    val numberOfShifts: Int,
+data class CreateShiftFromOpeningRequestDto(
+    @field:Positive val maxMembers: Int,
+    @field:Positive val numberOfShifts: Int,
 )
 
-data class ActiveAndFullShifts (
+data class ActiveAndFullShifts(
     val activeShifts: List<DetailedShiftDto>,
     val fullShifts: List<DetailedShiftDto>,
 )
