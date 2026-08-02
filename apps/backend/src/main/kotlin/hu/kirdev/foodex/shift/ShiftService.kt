@@ -2,9 +2,11 @@ package hu.kirdev.foodex.shift
 
 import hu.kirdev.foodex.config.ConfigurationService
 import hu.kirdev.foodex.cookingclub.CookingClubRepository
+import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.openingrequest.OpeningRequestRepository
 import hu.kirdev.foodex.openingrequest.OpeningRequestService
 import hu.kirdev.foodex.user.Role
+import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.user.UserRepository
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
@@ -19,163 +21,245 @@ class ShiftService(
     private val shiftRepository: ShiftRepository,
     private val userRepository: UserRepository,
     private val cookingClubRepository: CookingClubRepository,
+    private val cookingClubService: CookingClubService,
     private val openingRequestRepository: OpeningRequestRepository,
     private val openingRequestService: OpeningRequestService,
     private val configurationService: ConfigurationService,
 ) {
 
     @Transactional(readOnly = true)
-    fun getAllShifts() : List<DetailedShiftDto> {
+    fun getAllShifts(): List<DetailedShiftDto> {
         return shiftRepository.findAll().map { DetailedShiftDto(it) }
     }
 
     @Transactional(readOnly = true)
     fun getAllShiftsInSemester(): List<DetailedShiftDto> {
         val config = configurationService.get()
-        return shiftRepository.findAll().filter {
-            config.startOfSemester < it.closing && it.opening < config.endOfSemester
-        }.map { DetailedShiftDto(it) }
+        return shiftRepository
+            .findOverlappingSemester(config.startOfSemester, config.endOfSemester)
+            .map { DetailedShiftDto(it) }
     }
 
     @Transactional(readOnly = true)
+    fun getUpcomingShiftEntities(): List<ShiftEntity> {
+        return shiftRepository.findUpcomingWithClub(LocalDateTime.now())
+    }
+
+
+    @Transactional(readOnly = true)
     fun getUpcomingShifts(): List<DetailedShiftDto> {
-        val now = LocalDateTime.now()
-        return shiftRepository.findAll().filter { it.closing > now }.map { DetailedShiftDto(it) }
+        return getUpcomingShiftEntities().map { DetailedShiftDto(it) }
     }
 
     @Transactional(readOnly = true)
     fun getShiftById(id: Int): DetailedShiftDto {
-        return shiftRepository.findById(id)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Shift not found") }
-            .let { DetailedShiftDto(it) }
+        val shift = shiftRepository.findByIdWithClub(id)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Shift not found")
+        return DetailedShiftDto(shift)
+    }
+
+    @Transactional(readOnly = true)
+    fun getShiftEntity(id: Int): ShiftEntity {
+        return shiftRepository.findByIdWithClub(id)
+            ?: throw ResponseStatusException(HttpStatus.NOT_FOUND, "Shift not found")
     }
 
     @Transactional(readOnly = true)
     fun getUpcomingActiveAndFullShifts(): ActiveAndFullShifts {
+        val upcoming = getUpcomingShiftEntities()
         return ActiveAndFullShifts(
-            activeShifts = getActiveShifts(),
-            fullShifts = getFullShifts(),
+            activeShifts = upcoming.filter { hasOpenSlot(it) }.map { DetailedShiftDto(it) },
+            fullShifts = upcoming.filter { !hasOpenSlot(it) }.map { DetailedShiftDto(it) },
         )
     }
 
-    @Transactional(readOnly = true)
-    fun getActiveShifts(): List<DetailedShiftDto> {
-        return getUpcomingShifts().filter {
-            it.members.size < it.maxMembers
-            || it.newbies.size < it.members.size // TODO: ???
-        }
-    }
-
-    @Transactional(readOnly = true)
-    fun getFullShifts(): List<DetailedShiftDto> {
-        return getUpcomingShifts().filter {
-            it.members.size >= it.maxMembers
-            && it.newbies.size >= it.members.size   // TODO: ???
-        }
-    }
-
     @Transactional(readOnly = false)
-    fun createShift(shift: CreateShiftDto): DetailedShiftDto {
+    fun createShift(shift: CreateShiftDto, actor: UserEntity): DetailedShiftDto {
         val club = cookingClubRepository.findById(shift.cookingClubId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Club not found") }
 
-        return shiftRepository.save(ShiftEntity(
-            cookingClub = club,
-            maxMembers = shift.maxMembers,
-            opening = shift.opening,
-            closing = shift.closing,
-            place = shift.place,
-            comment = shift.comment,
-        )).let { DetailedShiftDto(it) }
+        requireLeaderOrAdmin(actor, club.id)
+
+        if (!shift.opening.isBefore(shift.closing)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Closing must be after opening")
+        }
+        if (shift.maxMembers < 1) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be positive")
+        }
+
+        return shiftRepository.save(
+            ShiftEntity(
+                cookingClub = club,
+                maxMembers = shift.maxMembers,
+                opening = shift.opening,
+                closing = shift.closing,
+                place = shift.place,
+                comment = shift.comment,
+            )
+        ).let { DetailedShiftDto(it) }
     }
 
     @Transactional(readOnly = false)
-    fun addWorkerToShift(userId: Int, shiftId: Int) : DetailedShiftDto {
+    fun addWorkerToShift(userId: Int, shiftId: Int, actor: UserEntity): DetailedShiftDto {
         val user = userRepository.findById(userId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         val shift = shiftRepository.findById(shiftId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Shift not found") }
 
-        if (shift.workers.contains(user)) {
+        requireSelfLeaderOrAdmin(actor, userId, shift.cookingClub.id)
+
+        if (shift.workers.any { it.id == user.id }) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "User already added")
         }
 
-        val shiftDto = DetailedShiftDto(shift)
-        if ((user.role == Role.MEMBER || user.role != Role.ADMIN)
-            && shiftDto.members.size >= shift.maxMembers) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Shift has too many members")
-        }
-        else if (user.role == Role.NEWBIE && shiftDto.newbies.size >= shiftDto.members.size) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "Shift has too many newbies")
+        when {
+            user.role == Role.GUEST ->
+                throw ResponseStatusException(HttpStatus.FORBIDDEN, "Guests cannot join shifts")
+            !canJoin(user, shift) ->
+                throw ResponseStatusException(HttpStatus.CONFLICT, "Shift capacity full for this role")
         }
 
         shift.workers.add(user)
-
         return DetailedShiftDto(shiftRepository.save(shift))
     }
 
     @Transactional(readOnly = false)
-    fun removeWorkerFromShift(userId: Int, shiftId: Int) : DetailedShiftDto {
+    fun removeWorkerFromShift(userId: Int, shiftId: Int, actor: UserEntity): DetailedShiftDto {
         val user = userRepository.findById(userId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         val shift = shiftRepository.findById(shiftId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Shift not found") }
 
-        if(!shift.workers.contains(user)) {
+        requireSelfLeaderOrAdmin(actor, userId, shift.cookingClub.id)
+
+        if (!shift.workers.any { it.id == user.id }) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Worker is not part of shift")
         }
 
-        shift.workers.remove(user)
-
+        shift.workers.removeIf { it.id == user.id }
         return DetailedShiftDto(shiftRepository.save(shift))
     }
 
     @Transactional(readOnly = false)
-    fun deleteShift(shiftId: Int) {
-        shiftRepository.deleteById(shiftId)
-    }
-
-    @Transactional(readOnly = false)
-    fun updateShift(shiftId: Int, toUpdate: UpdateShiftDto): DetailedShiftDto {
+    fun deleteShift(shiftId: Int, actor: UserEntity) {
         val shift = shiftRepository.findById(shiftId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Shift not found") }
 
-        val club = toUpdate.cookingClubId?.let{ cookingClubRepository.findByIdOrNull(it) }
-        club?.let { shift.cookingClub = it }
+        requireLeaderOrAdmin(actor, shift.cookingClub.id)
+        shiftRepository.delete(shift)
+    }
 
-        toUpdate.maxMembers?.let { shift.maxMembers = it }
+    @Transactional(readOnly = false)
+    fun updateShift(shiftId: Int, toUpdate: UpdateShiftDto, actor: UserEntity): DetailedShiftDto {
+        val shift = shiftRepository.findById(shiftId)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Shift not found") }
+
+        requireLeaderOrAdmin(actor, shift.cookingClub.id)
+
+        val club = toUpdate.cookingClubId?.let { cookingClubRepository.findByIdOrNull(it) }
+        if (toUpdate.cookingClubId != null && club == null) {
+            throw ResponseStatusException(HttpStatus.NOT_FOUND, "Club not found")
+        }
+        club?.let {
+            requireLeaderOrAdmin(actor, it.id)
+            shift.cookingClub = it
+        }
+
+        toUpdate.maxMembers?.let {
+            if (it < 1) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be positive")
+            shift.maxMembers = it
+        }
         toUpdate.opening?.let { shift.opening = it }
         toUpdate.closing?.let { shift.closing = it }
         toUpdate.place?.let { shift.place = it }
         toUpdate.comment?.let { shift.comment = it }
 
+        if (!shift.opening.isBefore(shift.closing)) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Closing must be after opening")
+        }
+
         return DetailedShiftDto(shiftRepository.save(shift))
     }
 
     @Transactional(readOnly = false)
-    fun createShiftsFromOpeningRequest(openingRequestId: Int, createRequest: CreateShiftFromOpeningRequestDto) : List<DetailedShiftDto> {
+    fun createShiftsFromOpeningRequest(
+        openingRequestId: Int,
+        createRequest: CreateShiftFromOpeningRequestDto,
+        actor: UserEntity,
+    ): List<DetailedShiftDto> {
+        if (createRequest.numberOfShifts < 1) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "numberOfShifts must be positive")
+        }
+        if (createRequest.maxMembers < 1) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be positive")
+        }
+
         val request = openingRequestRepository.findById(openingRequestId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Opening request not found") }
 
-        val shifts = mutableListOf<ShiftEntity>()
+        requireLeaderOrAdmin(actor, request.cookingClub.id)
+
+        if (request.isAccepted) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Opening request already accepted")
+        }
 
         val lengthOfEachShift: Duration = Duration.between(request.opening, request.closing)
             .dividedBy(createRequest.numberOfShifts.toLong())
 
-        for (i in 0..<createRequest.numberOfShifts) {
+        val shifts = mutableListOf<ShiftEntity>()
+        for (i in 0 until createRequest.numberOfShifts) {
             val shift = ShiftEntity(
                 cookingClub = request.cookingClub,
                 maxMembers = createRequest.maxMembers,
                 opening = request.opening.plus(lengthOfEachShift.multipliedBy(i.toLong())),
                 closing = request.opening.plus(lengthOfEachShift.multipliedBy((i + 1).toLong())),
-                place = request.place
+                place = request.place,
             )
-            shiftRepository.save(shift)
-            shifts.add(shift)
+            shifts.add(shiftRepository.save(shift))
         }
 
-        openingRequestService.acceptOpeningRequest(openingRequestId)
+        openingRequestService.acceptOpeningRequest(openingRequestId, actor)
 
         return shifts.map { DetailedShiftDto(it) }
+    }
+
+    // --- capacity helpers (pure / READ on entity state) ---
+
+    fun memberCount(shift: ShiftEntity): Int =
+        shift.workers.count { it.role == Role.MEMBER || it.role == Role.ADMIN }
+
+    fun newbieCount(shift: ShiftEntity): Int =
+        shift.workers.count { it.role == Role.NEWBIE }
+
+    fun canJoin(user: UserEntity, shift: ShiftEntity): Boolean = when (user.role) {
+        Role.GUEST -> false
+        Role.MEMBER, Role.ADMIN -> memberCount(shift) < shift.maxMembers
+        Role.NEWBIE -> {
+            val members = memberCount(shift)
+            members > 0 && newbieCount(shift) < members
+        }
+    }
+
+    fun hasOpenSlot(shift: ShiftEntity): Boolean {
+        val members = memberCount(shift)
+        val newbies = newbieCount(shift)
+        val memberSlot = members < shift.maxMembers
+        val newbieSlot = members > 0 && newbies < members
+        return memberSlot || newbieSlot
+    }
+
+    private fun requireLeaderOrAdmin(actor: UserEntity, cookingClubId: Int) {
+        if (actor.role == Role.ADMIN) return
+        if (!cookingClubService.isLeaderOfCookingClub(actor.id, cookingClubId)) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not leader of cooking club")
+        }
+    }
+
+    private fun requireSelfLeaderOrAdmin(actor: UserEntity, targetUserId: Int, cookingClubId: Int) {
+        if (actor.role == Role.ADMIN) return
+        if (actor.id == targetUserId) return
+        if (!cookingClubService.isLeaderOfCookingClub(actor.id, cookingClubId)) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to modify this worker")
+        }
     }
 }

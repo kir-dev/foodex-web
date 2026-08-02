@@ -1,15 +1,16 @@
 package hu.kirdev.foodex.config
 
+import hu.kirdev.foodex.security.CurrentUserService
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
-import io.swagger.v3.oas.annotations.parameters.RequestBody
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
 import org.springframework.web.bind.annotation.PatchMapping
+import org.springframework.web.bind.annotation.RequestBody
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
@@ -17,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController
 @RequestMapping("/api")
 class ConfigurationController(
     private val configurationService: ConfigurationService,
+    private val currentUserService: CurrentUserService,
 ) {
 
     @Operation(summary = "Get home page")
@@ -31,7 +33,7 @@ class ConfigurationController(
         ]
     )
     @GetMapping("/homepage")
-    fun getHomepage() : ResponseEntity<HomepageDto> {
+    fun getHomepage(): ResponseEntity<HomepageDto> {
         val homePage = configurationService.getHomepage()
         return ResponseEntity.status(HttpStatus.OK).body(homePage)
     }
@@ -45,7 +47,7 @@ class ConfigurationController(
         )
     )
     @GetMapping("/config")
-    fun getConfiguration() : ResponseEntity<ConfigurationDto>  {
+    fun getConfiguration(): ResponseEntity<ConfigurationDto> {
         val configuration = configurationService.get()
         return ResponseEntity.status(HttpStatus.OK).body(configuration)
     }
@@ -59,8 +61,9 @@ class ConfigurationController(
         )
     )
     @PatchMapping("/config")
-    fun updateConfiguration(@RequestBody config: UpdateConfigurationDto) : ResponseEntity<ConfigurationDto>  {
-        val configuration = configurationService.updateConfiguration(config)
+    fun updateConfiguration(@RequestBody config: UpdateConfigurationDto): ResponseEntity<ConfigurationDto> {
+        val actor = currentUserService.requireUser()
+        val configuration = configurationService.updateConfiguration(config, actor)
         return ResponseEntity.status(HttpStatus.OK).body(configuration)
     }
 }

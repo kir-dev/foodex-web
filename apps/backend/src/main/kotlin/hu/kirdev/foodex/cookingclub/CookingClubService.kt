@@ -13,71 +13,75 @@ class CookingClubService(
 ) {
 
     @Transactional(readOnly = true)
-    fun getAllCookingClubs() : List<DetailedCookingClubDto> {
+    fun getAllCookingClubs(): List<DetailedCookingClubDto> {
         return cookingClubRepository.findAll().map { DetailedCookingClubDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getCookingClub(id: Int) : DetailedCookingClubDto {
+    fun getCookingClub(id: Int): DetailedCookingClubDto {
         return cookingClubRepository.findById(id)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
             .let { DetailedCookingClubDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getCookingClubEntity(id: Int) : CookingClubEntity {
+    fun getCookingClubEntity(id: Int): CookingClubEntity {
         return cookingClubRepository.findById(id)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
     }
 
     @Transactional(readOnly = false)
-    fun createCookingClub(club: CreateCookingClubDto) : DetailedCookingClubDto {
-        return cookingClubRepository.save(CookingClubEntity(
-            id = club.id,
-            name = club.name,
-        )).let { DetailedCookingClubDto(it) }
+    fun createCookingClub(club: CreateCookingClubDto): DetailedCookingClubDto {
+        return cookingClubRepository.save(
+            CookingClubEntity(
+                id = club.id,
+                name = club.name,
+            )
+        ).let { DetailedCookingClubDto(it) }
     }
 
     @Transactional(readOnly = false)
-    fun updateCookingClub(id: Int, updateTo: UpdateCookingClubDto) : DetailedCookingClubDto {
+    fun updateCookingClub(id: Int, updateTo: UpdateCookingClubDto): DetailedCookingClubDto {
         val club = cookingClubRepository.findById(id)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
 
         club.name = updateTo.name
         return DetailedCookingClubDto(cookingClubRepository.save(club))
     }
 
     @Transactional(readOnly = false)
-    fun updateCookingClub(club: CookingClubEntity) : CookingClubEntity {
+    fun updateCookingClub(club: CookingClubEntity): CookingClubEntity {
         return cookingClubRepository.save(club)
     }
 
     @Transactional(readOnly = false)
     fun deleteCookingClub(id: Int) {
         cookingClubRepository.findById(id)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
 
         cookingClubRepository.deleteById(id)
     }
 
     @Transactional(readOnly = false)
-    fun addLeaderToCookingClub(leaderId: Int, cookingClubId: Int) : DetailedCookingClubDto {
+    fun addLeaderToCookingClub(leaderId: Int, cookingClubId: Int): DetailedCookingClubDto {
         val user = userRepository.findById(leaderId)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         val club = cookingClubRepository.findById(cookingClubId)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Club not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Club not found") }
 
-        club.leaders.add(user)
+        if (!club.leaders.any { it.id == user.id }) {
+            club.leaders.add(user)
+        }
 
         return DetailedCookingClubDto(cookingClubRepository.save(club))
     }
 
     @Transactional(readOnly = false)
-    fun removeLeaderFromCookingClub(leaderId: Int, cookingClubId: Int) : DetailedCookingClubDto {
+    fun removeLeaderFromCookingClub(leaderId: Int, cookingClubId: Int): DetailedCookingClubDto {
         val user = userRepository.findById(leaderId)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         val club = cookingClubRepository.findById(cookingClubId)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Club not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Club not found") }
 
         club.leaders.remove(user)
 
@@ -85,12 +89,10 @@ class CookingClubService(
     }
 
     @Transactional(readOnly = true)
-    fun isLeaderOfCookingClub(userId: Int, cookingClubId: Int) : Boolean {
-        val user = userRepository.findById(userId)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+    fun isLeaderOfCookingClub(userId: Int, cookingClubId: Int): Boolean {
         val club = cookingClubRepository.findById(cookingClubId)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
 
-        return club.leaders.any { leader -> leader.id == club.id }
+        return club.leaders.any { leader -> leader.id == userId }
     }
 }

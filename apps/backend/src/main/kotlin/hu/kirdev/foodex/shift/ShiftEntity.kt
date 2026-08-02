@@ -3,6 +3,7 @@ package hu.kirdev.foodex.shift
 import hu.kirdev.foodex.cookingclub.CookingClubEntity
 import hu.kirdev.foodex.user.UserEntity
 import jakarta.persistence.*
+import org.hibernate.annotations.BatchSize
 import java.time.LocalDateTime
 
 @Entity
@@ -39,6 +40,7 @@ data class ShiftEntity(
         joinColumns = [JoinColumn(name = "shift_id")],
         inverseJoinColumns = [JoinColumn(name = "user_id")]
     )
+    @BatchSize(size = 32)
     var workers: MutableList<UserEntity> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {

@@ -14,14 +14,14 @@ class UserService(private val userRepository: UserRepository) {
     }
 
     @Transactional(readOnly = true)
-    fun getUserById(id: Int) : DetailedUserDto {
+    fun getUserById(id: Int): DetailedUserDto {
         return userRepository.findById(id)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
             .let { DetailedUserDto(it) }
     }
 
     @Transactional(readOnly = true)
-    fun getUserByInternalId(internalId: String) : UserEntity? {
+    fun getUserByInternalId(internalId: String): UserEntity? {
         return userRepository.findUserEntityByInternalId(internalId)
     }
 
@@ -47,12 +47,16 @@ class UserService(private val userRepository: UserRepository) {
         return userRepository.findUserEntitiesByIsActiveFalse().map { DetailedUserDto(it) }
     }
 
+    // Self or ADMIN
     @Transactional(readOnly = false)
-    fun updateUser(id: Int, updateTo: UpdateUserDto): DetailedUserDto {
-        val user = userRepository.findById(id)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+    fun updateUser(id: Int, updateTo: UpdateUserDto, actor: UserEntity): DetailedUserDto {
+        if (actor.role != Role.ADMIN && actor.id != id) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Can only update own profile")
+        }
 
-        // Update non-null fields
+        val user = userRepository.findById(id)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+
         updateTo.name?.let { user.name = it }
         updateTo.nickname?.let { user.nickname = it }
         updateTo.email?.let { user.email = it }
@@ -62,6 +66,7 @@ class UserService(private val userRepository: UserRepository) {
         return DetailedUserDto(userRepository.save(user))
     }
 
+    // Internal (OIDC / system)
     @Transactional(readOnly = false)
     fun updateUser(user: UserEntity): UserEntity {
         return userRepository.save(user)
@@ -69,35 +74,31 @@ class UserService(private val userRepository: UserRepository) {
 
     @Transactional(readOnly = false)
     fun deleteUser(id: Int) {
-        userRepository.findById(id).orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
-
+        userRepository.findById(id).orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         userRepository.deleteById(id)
     }
 
     @Transactional(readOnly = false)
     fun updateRole(userId: Int, role: Role): DetailedUserDto {
         val user = userRepository.findById(userId)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         user.role = role
-
         return DetailedUserDto(userRepository.save(user))
     }
 
     @Transactional(readOnly = false)
     fun activateUser(userId: Int): DetailedUserDto {
         val user = userRepository.findById(userId)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         user.isActive = true
-
         return DetailedUserDto(userRepository.save(user))
     }
 
     @Transactional(readOnly = false)
     fun deActivateUser(userId: Int): DetailedUserDto {
         val user = userRepository.findById(userId)
-            .orElseThrow{ ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         user.isActive = false
-
         return DetailedUserDto(userRepository.save(user))
     }
 }

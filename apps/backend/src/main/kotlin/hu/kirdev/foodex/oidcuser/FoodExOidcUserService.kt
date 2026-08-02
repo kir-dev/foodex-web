@@ -4,6 +4,7 @@ import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.user.UserService
+import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.oauth2.client.oidc.userinfo.OidcUserRequest
@@ -15,12 +16,13 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 open class FoodExOidcUserService(
     val userService: UserService,
-    val cookingClubService: CookingClubService
+    val cookingClubService: CookingClubService,
+    @param:Qualifier("developerAdminIds") private val developerAdminIds: Set<String>,
 ) : OidcUserService() {
 
     private final val foodExID = 182L
 
-    private final val allCookingClubIds = setOf<Int>(
+    private final val allCookingClubIds = setOf(
         223,    // Pizzásch
         403,    // Americano
         179,    // Vödör
@@ -33,77 +35,50 @@ open class FoodExOidcUserService(
         // TODO: Magyarosch
     )
 
+    // Upsert user and reload club leadership on login
     @Transactional(readOnly = false)
     override fun loadUser(userRequest: OidcUserRequest?): OidcUser? {
         val authschUser = super.loadUser(userRequest) ?: return null
 
         val foodexUser = FoodExOidcUser(authschUser)
-        val leaderAt : Set<Int> = foodexUser.memberships.map { it.id.toInt() }.toSet().intersect(allCookingClubIds)
+        val leaderAt: Set<Int> = foodexUser.memberships
+            .map { it.id.toInt() }
+            .toSet()
+            .intersect(allCookingClubIds)
 
-        val user = userService.getUserByInternalId(foodexUser.internalId)
+        val existing = userService.getUserByInternalId(foodexUser.internalId)
+        val role = getHighestRole(foodexUser)
 
-        // Already registered in database
-        if (user != null) {
-
-            user.role = getHighestRole(foodexUser)
-            user.email = foodexUser.email
-
-//            FYI
-//            if (admins.contains(user.uid))
-//                user.sysadmin = true
-
-            // TODO
-            // checkIfMemberInFoodEx()
-            // checkIfExecutiveAtFoodEx()
-            // checkIfExecutiveAtCookingClub()
-
-
-            foodexUser.extraAuthorities = getAuthoritiesFromEntity(foodexUser)  // TODO Is it necessary???
-
-            // Reload permission to Cooking Clubs
-            reloadPermissionsOfUserToCookingClubs(user, leaderAt)
-
-            userService.updateUser(user)
-        }
-
-        // Not registered in the database
-        else {
-            val user = UserEntity(
+        val user = if (existing != null) {
+            existing.role = role
+            existing.email = foodexUser.email
+            existing
+        } else {
+            UserEntity(
                 internalId = foodexUser.internalId,
-                role = getHighestRole(foodexUser),
+                role = role,
                 name = foodexUser.name,
                 nickname = foodexUser.nickName,
                 email = foodexUser.email,
                 favouriteQuote = null,
-                isActive = foodexUser.memberships.map { it.id }.contains(foodExID),
+                isActive = foodexUser.memberships.map { it.id }.contains(foodExID) || role == Role.ADMIN,
                 profilePicture = foodexUser.profile,
             )
-            foodexUser.extraAuthorities = getAuthoritiesFromEntity(foodexUser) // TODO Is it necessary???
-
-            // Reload permission to Cooking Clubs
-            reloadPermissionsOfUserToCookingClubs(user, leaderAt)
-
-            userService.updateUser(user)
         }
+
+        // Persist first so leadership ops have a real user id
+        val saved = userService.updateUser(user)
+        reloadPermissionsOfUserToCookingClubs(saved, leaderAt)
+        foodexUser.extraAuthorities = authoritiesFor(saved.role)
 
         return foodexUser
     }
 
-    // Is it necessary???
-    private fun getAuthoritiesFromEntity(foodexUser: FoodExOidcUser): List<GrantedAuthority> {
-        val authorities: MutableList<GrantedAuthority> = ArrayList()
-        authorities.add(SimpleGrantedAuthority("ROLE_${Role.GUEST.name}"))
-
-        // TODO Member vs Newbie vs Executives ???????????????????????????????????????????????
-
-        if (foodexUser.memberships.any { it.id == foodExID }) {
-            authorities.add(SimpleGrantedAuthority("ROLE_${Role.MEMBER.name}"))
+    fun getHighestRole(foodexUser: FoodExOidcUser): Role {
+        // Developer admin elevators (AuthSCH internalId)
+        if (foodexUser.internalId in developerAdminIds) {
+            return Role.ADMIN
         }
-
-        return authorities
-    }
-
-    private fun getHighestRole(foodexUser: FoodExOidcUser): Role {
 
         // Admin of FoodEx
         if (foodexUser.executiveAtCircles.any { it.id == foodExID }) {
@@ -111,22 +86,28 @@ open class FoodExOidcUserService(
         }
 
         // Member of FoodEx
-        for(membership in foodexUser.memberships) {
+        for (membership in foodexUser.memberships) {
             if (membership.id == foodExID) {
-                if (membership.title.contains("újonc")) {
+                if (membership.title.any { it.contains("újonc", ignoreCase = true) }) {
                     return Role.NEWBIE
                 }
                 return Role.MEMBER
             }
         }
 
-        // Guest or Ex-member
         return Role.GUEST
     }
 
-    private fun reloadPermissionsOfUserToCookingClubs(user: UserEntity, leaderAt: Set<Int>) {
+    private fun authoritiesFor(role: Role): List<GrantedAuthority> =
+        listOf(SimpleGrantedAuthority("ROLE_${role.name}"))
+
+    // Refresh cooking-club leadership join table
+    fun reloadPermissionsOfUserToCookingClubs(user: UserEntity, leaderAtClubIds: Set<Int>) {
+        val currentlyLeading = user.leaderAt.toList()
+
+
         // Remove all permissions of user
-        for (club in user.leaderAt) {
+        for (club in currentlyLeading) {
             cookingClubService.removeLeaderFromCookingClub(user.id, club.id)
         }
 
@@ -138,9 +119,10 @@ open class FoodExOidcUserService(
             return
         }
 
-        // Add privileges to clubs
-        for (club in user.leaderAt) {
-            cookingClubService.addLeaderToCookingClub(user.id, club.id)
+        for (clubId in leaderAtClubIds) {
+            runCatching {
+                cookingClubService.addLeaderToCookingClub(user.id, clubId)
+            }
         }
     }
 }
