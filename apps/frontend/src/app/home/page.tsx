@@ -13,8 +13,6 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // A WebSecurityConfig-od alapján a /api/homepage permitAll(),
-    // így a Next.js proxy-don keresztül simán átmegy auth nélkül is.
     fetch('/backend-api/homepage', { credentials: 'include' })
       .then((res) => {
         if (!res.ok) {
@@ -99,19 +97,23 @@ export default function HomePage() {
           />
         </div>
 
-        {/* Heti nyitások (A backendből érkező upcomingOpenings térképezése) */}
+        {/* Heti nyitások (Az összes elfogadott opening request megjelenítése) */}
         <div className='w-full border-2 border-[#332C81] rounded-xl p-2'>
           <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Heti nyitások</h3>
           <OpeningsContainer
-            openings={(data.upcomingOpenings || []).map((shift) => ({
-              groupName: shift.cookingClub?.name || `Kör #${shift.cookingClubId}`,
-              day: new Date(shift.opening).toLocaleDateString('hu-HU', { weekday: 'long' }),
-              time:
-                new Date(shift.opening).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' }) +
-                ' - ' +
-                new Date(shift.closing).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' }),
-              location: shift.place,
-            }))}
+            openings={(data.upcomingOpenings || []).map((openingReq) => {
+              const name = openingReq.cookingClub?.name || 'Ismeretlen kör';
+
+              return {
+                groupName: name,
+                day: new Date(openingReq.opening).toLocaleDateString('hu-HU', { weekday: 'long' }),
+                time:
+                  new Date(openingReq.opening).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' }) +
+                  ' - ' +
+                  new Date(openingReq.closing).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' }),
+                location: openingReq.place || 'Nincs megadva',
+              };
+            })}
           />
         </div>
       </div>

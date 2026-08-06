@@ -3,7 +3,7 @@
 import Button from '@/components/button';
 import { StyledInput } from '@/components/styledInput';
 import { StyledLabel } from '@/components/styledLabel';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const COOKING_CLUB_IDS: Record<string, number> = {
   pizzásch: 223,
@@ -26,7 +26,39 @@ export default function RequestingPage() {
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
 
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch('/backend-api/users', { credentials: 'include' })
+      .then((res) => {
+        if (res.status === 401 || res.status === 403 || res.type === 'opaqueredirect') {
+          window.location.href = 'http://localhost:8080/oauth2/authorization/authsch';
+          return null;
+        }
+        if (!res.ok) throw new Error('Nem sikerült betölteni a felhasználókat.');
+        return res.json();
+      })
+      .then((usersList) => {
+        if (usersList && usersList.length > 0) {
+          // Kiszedjük a legelső aktív felhasználó ID-ját az adatbázisból
+          const activeUserId = Number(usersList[0].id);
+          console.log('Sikeresen azonosított felhasználó ID:', activeUserId);
+          setCurrentUserId(activeUserId);
+        } else {
+          console.warn('Nem található aktív felhasználó a rendszerben.');
+        }
+      })
+      .catch((err) => {
+        console.error('Hiba a felhasználó lekérdezése során:', err);
+      });
+  }, []);
+
   const handleSubmit = async () => {
+    if (!currentUserId) {
+      alert('A felhasználói adatok még töltődnek, vagy nem vagy bejelentkezve!');
+      return;
+    }
+
     if (!cookingClubName || !date || !startTime || !endTime || !location) {
       alert('Kérlek tölts ki minden kötelező mezőt!');
       return;
@@ -41,25 +73,35 @@ export default function RequestingPage() {
     setLoading(true);
 
     try {
-      const openingDateTime = `${date}T${startTime}:00`;
-      const closingDateTime = `${date}T${endTime}:00`;
+      const formattedStartTime = startTime.length === 5 ? `${startTime}:00` : startTime;
+      const formattedEndTime = endTime.length === 5 ? `${endTime}:00` : endTime;
 
       const payload = {
-        cookingClubId: clubId,
-        opening: openingDateTime,
-        closing: closingDateTime,
-        place: location,
-        comment: comment || null,
+        userId: Number(currentUserId),
+        cookingClubId: Number(clubId),
+        opening: `${date}T${formattedStartTime}`,
+        closing: `${date}T${formattedEndTime}`,
+        place: String(location).trim(),
+        description: String(comment).trim(),
       };
 
-      // Javított útvonal: /backend-api/requests a /backend-api/incoming-requests helyett!
-      const response = await fetch('/backend-api/requests', {
+      // A küldésre kész adatok (payload) változatlanok maradnak!
+      console.log('Küldésre kész adatok (JSON):', JSON.stringify(payload));
+
+      // Erre a saját belső végpontra lőjük a kérést:
+      const response = await fetch('/api/requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
       });
+
+      if (response.url && response.url.includes('oauth2/authorization/authsch')) {
+        alert('A munkamenet lejárt! Újrajelentkezés...');
+        window.location.href = 'http://localhost:8080/oauth2/authorization/authsch';
+        return;
+      }
 
       if (response.ok) {
         alert('Kérés sikeresen elküldve!');
@@ -70,12 +112,13 @@ export default function RequestingPage() {
         setLocation('');
         setComment('');
       } else {
-        const errorData = await response.text();
-        alert(`Hiba történt a küldés során: ${response.status} - ${errorData}`);
+        const errorText = await response.text();
+        console.error('Szerver hiba részletei:', errorText);
+        alert(`A szerver hibát jelzett: ${response.status}`);
       }
     } catch (error) {
-      console.error('Hálózati hiba:', error);
-      alert('Nem sikerült elérni a backend szervert.');
+      console.error('Hiba a küldés során:', error);
+      alert('Hálózati hiba történt.');
     } finally {
       setLoading(false);
     }
@@ -167,7 +210,7 @@ export default function RequestingPage() {
             label={loading ? 'Küldés...' : 'Kérés leadása'}
             variant='primary'
             onClick={handleSubmit}
-            disabled={loading}
+            disabled={loading || !currentUserId}
           />
         </div>
       </div>

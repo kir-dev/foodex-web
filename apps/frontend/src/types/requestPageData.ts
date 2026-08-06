@@ -1,7 +1,17 @@
-import { RequestEntity } from './requests';
-import { ShiftEntity } from './shift';
-
-export type RequestPageData = {
-  incomingFoodExRequests: RequestEntity[];
-  acceptedShifts: ShiftEntity[];
-};
+export interface DetailedOpeningRequestDto {
+  id: number;
+  isAccepted: boolean;
+  user: {
+    id: number;
+    nickname: string;
+    role: string;
+  };
+  cookingClub: {
+    id: number;
+    name: string;
+  };
+  opening: string;
+  closing: string;
+  place: string;
+  description: string;
+}
