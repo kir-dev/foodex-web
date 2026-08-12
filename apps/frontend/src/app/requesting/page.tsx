@@ -5,6 +5,8 @@ import { StyledInput } from '@/components/styledInput';
 import { StyledLabel } from '@/components/styledLabel';
 import { useEffect, useState } from 'react';
 
+const BACKEND_URL = 'http://localhost:8080';
+
 const COOKING_CLUB_IDS: Record<string, number> = {
   pizzásch: 223,
   americano: 403,
@@ -16,6 +18,15 @@ const COOKING_CLUB_IDS: Record<string, number> = {
   reggelisch: 490,
   dobozosch: 529,
 };
+
+// Segédfüggvény a CSRF süti kiolvasásához
+function getCookie(name: string): string | null {
+  if (typeof document === 'undefined') return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+}
 
 export default function RequestingPage() {
   const [cookingClubName, setCookingClubName] = useState('');
@@ -29,10 +40,10 @@ export default function RequestingPage() {
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('/backend-api/users', { credentials: 'include' })
+    fetch(`${BACKEND_URL}/api/users`, { credentials: 'include' })
       .then((res) => {
         if (res.status === 401 || res.status === 403 || res.type === 'opaqueredirect') {
-          window.location.href = 'http://localhost:8080/oauth2/authorization/authsch';
+          window.location.href = `${BACKEND_URL}/oauth2/authorization/authsch`;
           return null;
         }
         if (!res.ok) throw new Error('Nem sikerült betölteni a felhasználókat.');
@@ -40,9 +51,7 @@ export default function RequestingPage() {
       })
       .then((usersList) => {
         if (usersList && usersList.length > 0) {
-          // Kiszedjük a legelső aktív felhasználó ID-ját az adatbázisból
           const activeUserId = Number(usersList[0].id);
-          console.log('Sikeresen azonosított felhasználó ID:', activeUserId);
           setCurrentUserId(activeUserId);
         } else {
           console.warn('Nem található aktív felhasználó a rendszerben.');
@@ -77,7 +86,6 @@ export default function RequestingPage() {
       const formattedEndTime = endTime.length === 5 ? `${endTime}:00` : endTime;
 
       const payload = {
-        userId: Number(currentUserId),
         cookingClubId: Number(clubId),
         opening: `${date}T${formattedStartTime}`,
         closing: `${date}T${formattedEndTime}`,
@@ -85,21 +93,33 @@ export default function RequestingPage() {
         description: String(comment).trim(),
       };
 
-      // A küldésre kész adatok (payload) változatlanok maradnak!
-      console.log('Küldésre kész adatok (JSON):', JSON.stringify(payload));
+      // CSRF token beszerzése, ha szükséges
+      let xsrfToken = getCookie('XSRF-TOKEN');
+      if (!xsrfToken) {
+        await fetch(`${BACKEND_URL}/api/homepage`, { credentials: 'include' });
+        xsrfToken = getCookie('XSRF-TOKEN');
+      }
 
-      // Erre a saját belső végpontra lőjük a kérést:
-      const response = await fetch('/api/requests', {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      };
+
+      if (xsrfToken) {
+        headers['X-XSRF-TOKEN'] = xsrfToken;
+      }
+
+      // Javítva a backend URL-re és credentials-re
+      const response = await fetch(`${BACKEND_URL}/api/requests`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers,
+        credentials: 'include',
         body: JSON.stringify(payload),
       });
 
-      if (response.url && response.url.includes('oauth2/authorization/authsch')) {
+      if (response.status === 401 || response.status === 403) {
         alert('A munkamenet lejárt! Újrajelentkezés...');
-        window.location.href = 'http://localhost:8080/oauth2/authorization/authsch';
+        window.location.href = `${BACKEND_URL}/oauth2/authorization/authsch`;
         return;
       }
 
@@ -114,7 +134,7 @@ export default function RequestingPage() {
       } else {
         const errorText = await response.text();
         console.error('Szerver hiba részletei:', errorText);
-        alert(`A szerver hibát jelzett: ${response.status}`);
+        alert(`A szerver hibát jelzett (${response.status}): ${errorText}`);
       }
     } catch (error) {
       console.error('Hiba a küldés során:', error);
@@ -194,7 +214,7 @@ export default function RequestingPage() {
         </div>
 
         <div className='flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 w-full'>
-          <div className='flex flex-col sm:flex-row gap-4 sm:gap-4 w-full sm:w-auto'>
+          {/*<div className='flex flex-col sm:flex-row gap-4 sm:gap-4 w-full sm:w-auto'>
             <Button
               label='Adatok betöltése'
               variant='secondary'
@@ -205,7 +225,7 @@ export default function RequestingPage() {
               variant='secondary'
               onClick={() => alert('Ez a funkció még fejlesztés alatt áll!')}
             />
-          </div>
+          </div>*/}
           <Button
             label={loading ? 'Küldés...' : 'Kérés leadása'}
             variant='primary'

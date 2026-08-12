@@ -26,29 +26,16 @@ export default function OpeningsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // FIX: Ide az a végpont kell, ami a backendben a `getAllOpeningRequests()`-t hívja!
-    // A korábbi screenshotjaid alapján a /backend-api/incoming-requests vagy /backend-api/requests lesz az.
-    fetch('/api/requests', { credentials: 'include' })
+    fetch('/api/accepted-requests', { credentials: 'include' })
       .then((res) => {
         if (!res.ok) {
-          throw new Error('Nem sikerült lekérni a nyitásokat.');
+          throw new Error('Nem sikerült lekérni az elfogadott nyitásokat.');
         }
         return res.json();
       })
       .then((data: DetailedOpeningRequestDto[]) => {
-        // HA a backend egy sima listát ad vissza:
         if (Array.isArray(data)) {
-          // Időponttól FÜGGETLENÜL kiszűrjük az összes elfogadott kérést
-          const acceptedOnly = data.filter((req) => req.isAccepted === true);
-          setOpenings(acceptedOnly);
-        } else {
-          // Ha a backend esetleg az "OrdersResponseDto"-t küldi (ezt láttuk a DTO fájlban),
-          // amiben `incomingRequests` néven van a lista:
-          const anyData = data as any;
-          if (anyData.incomingRequests && Array.isArray(anyData.incomingRequests)) {
-            const acceptedOnly = anyData.incomingRequests.filter((req: any) => req.isAccepted === true);
-            setOpenings(acceptedOnly);
-          }
+          setOpenings(data);
         }
         setLoading(false);
       })

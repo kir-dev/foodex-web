@@ -3,9 +3,11 @@
 import Button from '@/components/button';
 import { useEffect, useState } from 'react';
 
-type Role = 'ADMIN' | 'MEMBER' | 'NEWBIE' | 'GUEST';
+const BACKEND_URL = 'http://localhost:8080';
 
-type DetailedUserDto = {
+export type Role = 'ADMIN' | 'MEMBER' | 'NEWBIE' | 'GUEST';
+
+export type DetailedUserDto = {
   id: number;
   role: Role;
   name: string;
@@ -14,6 +16,9 @@ type DetailedUserDto = {
   favouriteQuote: string | null;
   isActive: boolean;
   profilePicture: string | null;
+  leaderAt?: any[];
+  shifts?: any[];
+  requests?: any[];
 };
 
 export default function ProfilePage() {
@@ -27,38 +32,54 @@ export default function ProfilePage() {
   const [saveMessage, setSaveMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
   useEffect(() => {
-    fetch('/backend-api/homepage', { credentials: 'include' })
-      .then((res) => {
+    const fetchUserProfile = async () => {
+      try {
+        // 1. Kiolvassuk a localStorage-ban tárolt userId-t
+        const storedUserId = localStorage.getItem('userId');
+
+        if (!storedUserId) {
+          throw new Error('Nincs elmentett azonosító. Kérlek, nyisd meg először a főoldalt!');
+        }
+
+        // 2. Lekérjük a konkrét usert: GET /api/users/{userId}
+        const res = await fetch(`${BACKEND_URL}/api/users/${storedUserId}`, {
+          method: 'GET',
+          credentials: 'include',
+          headers: { Accept: 'application/json' },
+        });
+
         if (res.status === 401 || res.status === 403) {
-          window.location.href = 'http://localhost:8080/oauth2/authorization/authsch';
-          return null;
+          window.location.href = `${BACKEND_URL}/oauth2/authorization/authsch`;
+          return;
         }
-        if (!res.ok) throw new Error('Bejelentkezési ellenőrzés sikertelen.');
-        return res.json();
-      })
-      .then((homeData) => {
-        if (!homeData) return null;
-        return fetch('/backend-api/users/1', { credentials: 'include' });
-      })
-      .then((res) => {
-        if (!res) return null;
-        if (!res.ok) throw new Error('Nem sikerült lekérni a felhasználó profilját.');
-        return res.json();
-      })
-      .then((userData: DetailedUserDto | null) => {
-        if (userData) {
-          setUser(userData);
-          setNickname(userData.nickname || '');
-          setFavouriteQuote(userData.favouriteQuote || '');
+
+        if (!res.ok) {
+          throw new Error(`Nem sikerült betölteni a profil adatokat (HTTP ${res.status}).`);
         }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
+
+        const userData: DetailedUserDto = await res.json();
+        setUser(userData);
+        setNickname(userData.nickname || '');
+        setFavouriteQuote(userData.favouriteQuote || '');
+      } catch (err: any) {
+        console.error('Profil betöltési hiba:', err);
         setError(err.message);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+
+    fetchUserProfile();
   }, []);
+
+  // Segédfüggvény a süti kiolvasásához (ha még nincs a fájl tetején)
+  function getCookie(name: string): string | null {
+    if (typeof document === 'undefined') return null;
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+    return null;
+  }
 
   const handleSave = async () => {
     if (!user) return;
@@ -67,33 +88,48 @@ export default function ProfilePage() {
     setSaveMessage(null);
 
     try {
-      // JSON helyett Query stringet építünk fel
-      const params = new URLSearchParams();
-      params.append('name', user.name);
-      if (nickname) params.append('nickname', nickname);
-      params.append('email', user.email);
-      if (favouriteQuote) params.append('favouriteQuote', favouriteQuote);
-      if (user.profilePicture) params.append('profilePicture', user.profilePicture);
-
-      // Az URL végére fűzzük a paramétereket, mert a Spring így fogja tudni beolvasni a hibás import miatt
-      const res = await fetch(`/backend-api/users/${user.id}?${params.toString()}`, {
-        method: 'PATCH',
-        headers: {
-          Accept: 'application/json',
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error('Sikertelen mentés a szerveren.');
+      // 1. CSRF token beszerzése
+      let xsrfToken = getCookie('XSRF-TOKEN');
+      if (!xsrfToken) {
+        // Ha nincs süti, lekérünk egy védett oldalt/végpontot, ami beállítja a CSRF sütit
+        await fetch(`${BACKEND_URL}/api/homepage`, { credentials: 'include' });
+        xsrfToken = getCookie('XSRF-TOKEN');
       }
 
-      const updatedUser = await res.json();
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+        Accept: 'application/json',
+      };
+
+      if (xsrfToken) {
+        headers['X-XSRF-TOKEN'] = xsrfToken;
+      }
+
+      const response = await fetch(`${BACKEND_URL}/api/users/${user.id}`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers,
+        body: JSON.stringify({
+          name: user.name,
+          nickname: nickname || null,
+          email: user.email,
+          favouriteQuote: favouriteQuote || null,
+          profilePicture: user.profilePicture || null,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Szerver hiba (${response.status}): ${errorText || 'Sikertelen mentés'}`);
+      }
+
+      const updatedUser: DetailedUserDto = await response.json();
       setUser(updatedUser);
       setNickname(updatedUser.nickname || '');
       setFavouriteQuote(updatedUser.favouriteQuote || '');
       setSaveMessage({ text: 'Változtatások sikeresen mentve!', isError: false });
     } catch (err: any) {
-      console.error(err);
+      console.error('Mentési hiba:', err);
       setSaveMessage({ text: err.message || 'Hiba történt a mentés során.', isError: true });
     } finally {
       setIsSaving(false);
@@ -103,7 +139,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className='w-full min-h-screen flex items-center justify-center bg-white text-xl font-semibold text-[#332C81]'>
-        Profil ellenőrzése és betöltése...
+        Profil betöltése...
       </div>
     );
   }
@@ -121,7 +157,7 @@ export default function ProfilePage() {
   return (
     <div className='w-full flex justify-center p-4 sm:p-6'>
       <div className='rounded-xl border-2 border-[#332C81] p-4 sm:p-8 w-full max-w-6xl space-y-6'>
-        {/* Felső rész */}
+        {/* Felső rész: Profil adatok */}
         <div className='flex flex-col md:flex-row gap-6'>
           {user.profilePicture ? (
             <img
@@ -133,7 +169,7 @@ export default function ProfilePage() {
             <div className='w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 bg-gray-300 rounded-xl mx-auto md:mx-0 border-2 border-[#FF9860]' />
           )}
 
-          {/* Jobb oldali infó */}
+          {/* Jobb oldali infó block */}
           <div className='flex-1 bg-[#332C81] border-2 border-[#FF9860] rounded-xl p-4 flex flex-col justify-between'>
             <div>
               {/* Név + Becenév */}
@@ -166,7 +202,7 @@ export default function ProfilePage() {
                 <span className='text-white'>{user.role.toLowerCase()}</span>
               </div>
 
-              {/* Idézet */}
+              {/* Kedvenc Idézet */}
               <div className='mb-4'>
                 <span className='text-[#FF9860] font-semibold text-xl'>Kedvenc idézet</span>
                 <textarea
@@ -180,13 +216,19 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Alsó rész */}
+        {/* Alsó rész: Féléves tevékenységek */}
         <div className='bg-[#332C81] border-2 border-[#FF9860] rounded-xl p-4'>
           <h2 className='text-[#FF9860] font-semibold mb-2 text-2xl tracking-wide'>Féléves tevékenységek</h2>
-          <div className='h-40 bg-[#332C81]' />
+          <div className='text-white'>
+            {user.shifts && user.shifts.length > 0 ? (
+              <p className='text-lg'>Ledolgozott műszakok száma: {user.shifts.length}</p>
+            ) : (
+              <p className='text-gray-300 italic'>Nincsenek még műszakjaid ebben a félévben.</p>
+            )}
+          </div>
         </div>
 
-        {/* Mentés szekció az új Button komponenssel */}
+        {/* Mentés gomb és visszajelző üzenet */}
         <div className='flex flex-col sm:flex-row sm:items-center gap-4 pt-2'>
           <Button
             label={isSaving ? 'Mentés...' : 'Profil mentése'}
