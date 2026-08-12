@@ -106,6 +106,8 @@ On success the backend redirects to **`foodex.frontend-url`** (default `http://l
 
 Public smoke endpoint (no login): http://localhost:8080/api/homepage
 
+Session user (login required): **`GET /api/users/me`** — returns the current user’s `DetailedUserDto` (`id`, `role`, profile, …). **401** if not logged in.
+
 ### 5. Run backend tests
 
 From `apps/backend`:
@@ -195,6 +197,9 @@ Swagger: http://localhost:8080/swagger-ui/index.html
 - CORS allows `http://localhost:3000` with credentials.
 - Frontend must send cookies (`credentials: 'include'`) and on mutating requests set header  
   `X-XSRF-TOKEN` from the `XSRF-TOKEN` cookie.
+- After login, call **`GET /api/users/me`** with `credentials: 'include'` to load the
+  current user (`id`, `role`, profile fields). Use that instead of guessing the user id.
+  Safe GETs only need the session cookie; CSRF is for mutating methods.
 
 ---
 

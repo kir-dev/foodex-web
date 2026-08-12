@@ -53,6 +53,24 @@ class UserController(
         return ResponseEntity.status(HttpStatus.OK).body(users)
     }
 
+    @Operation(summary = "Get the currently authenticated user")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Current user",
+                content = [Content(schema = Schema(implementation = DetailedUserDto::class))]
+            ),
+            ApiResponse(responseCode = "401", description = "Not authenticated"),
+        ]
+    )
+    @GetMapping("/me")
+    fun getCurrentUser(): ResponseEntity<DetailedUserDto> {
+        val actor = currentUserService.requireUser()
+        val user = userService.getUserById(actor.id)
+        return ResponseEntity.status(HttpStatus.OK).body(user)
+    }
+
     @Operation(summary = "Get a user")
     @ApiResponses(
         value = [
