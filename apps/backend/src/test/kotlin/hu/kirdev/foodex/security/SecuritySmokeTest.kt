@@ -51,4 +51,12 @@ class SecuritySmokeTest {
                 status { isUnauthorized() }
             }
     }
+
+    @Test
+    fun `unauthenticated GET users me is rejected`() {
+        mockMvc.get("/api/users/me")
+            .andExpect {
+                status { isUnauthorized() }
+            }
+    }
 }
