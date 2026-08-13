@@ -42,6 +42,17 @@ export function toLocalDateTimePayload(date: string, time: string): string {
   return `${date}T${normalized}`;
 }
 
+export function toDateInputValue(value: string): string {
+  return value.slice(0, 10);
+}
+
+export function toTimeInputValue(value: string): string {
+  if (value.length < 16) {
+    return '';
+  }
+  return value.slice(11, 16);
+}
+
 export function shiftCountFromRange(opening: string, closing: string, defaultShiftHours = 2): number {
   const start = parseLocalDateTime(opening).getTime();
   const end = parseLocalDateTime(closing).getTime();

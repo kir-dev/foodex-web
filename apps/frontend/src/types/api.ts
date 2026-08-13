@@ -110,6 +110,46 @@ export type HomepageDto = {
   upcomingOpenings: DetailedOpeningRequestDto[];
 };
 
+export type ConfigurationDto = {
+  feelingOfTheWeek: string;
+  foodExLogo: string;
+  startOfSemester: string;
+  endOfSemester: string;
+};
+
+export type UpdateConfigurationDto = {
+  feelingOfTheWeek?: string;
+  foodExLogo?: string;
+  startOfSemester?: string;
+  endOfSemester?: string;
+};
+
+export type CreateShiftDto = {
+  cookingClubId: number;
+  maxMembers: number;
+  opening: string;
+  closing: string;
+  place: string;
+  comment?: string;
+};
+
+export type CreateCookingClubDto = {
+  id: number;
+  name: string;
+};
+
+export type UpdateCookingClubDto = {
+  id: number;
+  name: string;
+};
+
+export type UpdateOpeningRequestDto = {
+  opening?: string;
+  closing?: string;
+  place?: string;
+  description?: string;
+};
+
 export type CreateShiftFromOpeningRequestDto = {
   maxMembers: number;
   numberOfShifts: number;
@@ -123,6 +163,10 @@ export type UpdateShiftDto = {
   place?: string;
   comment?: string;
 };
+
+export function isAdmin(user: DetailedUserDto): boolean {
+  return user.role === 'ADMIN';
+}
 
 export function isClubLeaderOrAdmin(user: DetailedUserDto): boolean {
   return user.role === 'ADMIN' || user.leaderAt.length > 0;

@@ -7,13 +7,14 @@ import { PageState } from '@/components/page-state';
 import { RequireAuth } from '@/components/require-auth';
 import { Shift } from '@/components/ShiftTable';
 import { apiFetch, isApiError } from '@/lib/api';
-import { shiftCountFromRange } from '@/lib/dates';
+import { shiftCountFromRange, toDateInputValue, toLocalDateTimePayload, toTimeInputValue } from '@/lib/dates';
 import { requestToRow, shiftToRow } from '@/lib/shift-view';
 import {
   CreateShiftFromOpeningRequestDto,
   DetailedOpeningRequestDto,
   DetailedShiftDto,
   isClubLeaderOrAdmin,
+  UpdateOpeningRequestDto,
   UpdateShiftDto,
 } from '@/types/api';
 import { useCallback, useEffect, useState } from 'react';
@@ -39,6 +40,14 @@ function RequestsContent() {
   const [editComment, setEditComment] = useState('');
   const [isSavingShift, setIsSavingShift] = useState(false);
   const [defaultMaxMembers, setDefaultMaxMembers] = useState(20);
+
+  const [editingRequest, setEditingRequest] = useState<DetailedOpeningRequestDto | null>(null);
+  const [editRequestDate, setEditRequestDate] = useState('');
+  const [editRequestStart, setEditRequestStart] = useState('');
+  const [editRequestEnd, setEditRequestEnd] = useState('');
+  const [editRequestPlace, setEditRequestPlace] = useState('');
+  const [editRequestDescription, setEditRequestDescription] = useState('');
+  const [isSavingRequest, setIsSavingRequest] = useState(false);
 
   const loadData = useCallback(async (): Promise<void> => {
     const [requestsData, openingsData] = await Promise.all([
@@ -85,6 +94,70 @@ function RequestsContent() {
         text: isApiError(err) ? err.message : 'Nem sikerült elfogadni a kérést.',
         isError: true,
       });
+    }
+  };
+
+  const handleRejectRequest = async (requestId: number): Promise<void> => {
+    if (!confirm('Biztosan elutasítod / törlöd ezt a kérést?')) {
+      return;
+    }
+
+    setActionMessage(null);
+    try {
+      await apiFetch<void>(`/api/incoming-requests/${requestId}`, {
+        method: 'DELETE',
+        parseJson: false,
+      });
+      setRequests((prev) => prev.filter((req) => req.id !== requestId));
+      setActionMessage({ text: 'Kérés elutasítva.', isError: false });
+    } catch (err) {
+      setActionMessage({
+        text: isApiError(err) ? err.message : 'Nem sikerült elutasítani a kérést.',
+        isError: true,
+      });
+    }
+  };
+
+  const handleOpenRequestEdit = (requestId: number): void => {
+    const request = requests.find((item) => item.id === requestId);
+    if (!request) {
+      return;
+    }
+    setEditingRequest(request);
+    setEditRequestDate(toDateInputValue(request.opening));
+    setEditRequestStart(toTimeInputValue(request.opening));
+    setEditRequestEnd(toTimeInputValue(request.closing));
+    setEditRequestPlace(request.place);
+    setEditRequestDescription(request.description);
+  };
+
+  const handleSaveRequest = async (): Promise<void> => {
+    if (!editingRequest) {
+      return;
+    }
+    setIsSavingRequest(true);
+    setActionMessage(null);
+    try {
+      const payload: UpdateOpeningRequestDto = {
+        opening: toLocalDateTimePayload(editRequestDate, editRequestStart),
+        closing: toLocalDateTimePayload(editRequestDate, editRequestEnd),
+        place: editRequestPlace,
+        description: editRequestDescription,
+      };
+      const updated = await apiFetch<DetailedOpeningRequestDto>(`/api/incoming-requests/${editingRequest.id}`, {
+        method: 'PATCH',
+        body: payload,
+      });
+      setRequests((prev) => prev.map((req) => (req.id === updated.id ? updated : req)));
+      setEditingRequest(null);
+      setActionMessage({ text: 'Kérés módosítva.', isError: false });
+    } catch (err) {
+      setActionMessage({
+        text: isApiError(err) ? err.message : 'Nem sikerült módosítani a kérést.',
+        isError: true,
+      });
+    } finally {
+      setIsSavingRequest(false);
     }
   };
 
@@ -185,6 +258,8 @@ function RequestsContent() {
         <IncomingRequestsContainer
           requests={requests.map(requestToRow)}
           onAccept={(id) => void handleAcceptRequest(id)}
+          onReject={(id) => void handleRejectRequest(id)}
+          onEdit={handleOpenRequestEdit}
         />
       </div>
 
@@ -196,6 +271,75 @@ function RequestsContent() {
           onDelete={(shift) => void handleDeleteShift(shift)}
         />
       </div>
+
+      {editingRequest && (
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
+          <div className='bg-white rounded-xl border-2 border-[#332C81] p-6 max-w-md w-full space-y-4 shadow-xl'>
+            <h4 className='text-2xl font-bold text-[#332C81]'>Kérés módosítása</h4>
+            <p className='text-gray-600 font-medium'>{editingRequest.cookingClub?.name}</p>
+            <div className='flex flex-col gap-1'>
+              <label className='font-semibold text-[#332C81]'>Nap:</label>
+              <input
+                type='date'
+                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                value={editRequestDate}
+                onChange={(e) => setEditRequestDate(e.target.value)}
+              />
+            </div>
+            <div className='flex gap-3'>
+              <div className='flex flex-col gap-1 flex-1'>
+                <label className='font-semibold text-[#332C81]'>Kezdés:</label>
+                <input
+                  type='time'
+                  className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                  value={editRequestStart}
+                  onChange={(e) => setEditRequestStart(e.target.value)}
+                />
+              </div>
+              <div className='flex flex-col gap-1 flex-1'>
+                <label className='font-semibold text-[#332C81]'>Vége:</label>
+                <input
+                  type='time'
+                  className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                  value={editRequestEnd}
+                  onChange={(e) => setEditRequestEnd(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className='flex flex-col gap-1'>
+              <label className='font-semibold text-[#332C81]'>Helyszín:</label>
+              <input
+                type='text'
+                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                value={editRequestPlace}
+                onChange={(e) => setEditRequestPlace(e.target.value)}
+              />
+            </div>
+            <div className='flex flex-col gap-1'>
+              <label className='font-semibold text-[#332C81]'>Leírás:</label>
+              <textarea
+                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                value={editRequestDescription}
+                onChange={(e) => setEditRequestDescription(e.target.value)}
+              />
+            </div>
+            <div className='flex justify-end gap-3 pt-2'>
+              <Button
+                label='Mégse'
+                variant='secondary'
+                onClick={() => setEditingRequest(null)}
+                disabled={isSavingRequest}
+              />
+              <Button
+                label={isSavingRequest ? 'Mentés...' : 'Mentés'}
+                variant='primary'
+                onClick={() => void handleSaveRequest()}
+                disabled={isSavingRequest}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingShift && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>

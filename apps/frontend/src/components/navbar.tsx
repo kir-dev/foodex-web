@@ -15,12 +15,15 @@ interface NavItem {
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
-  const { user, status, canManageRequests, logout } = useAuth();
+  const { user, status, canManageRequests, isAdminUser, logout } = useAuth();
   const isLoggedIn = status === 'authenticated';
 
   const navItemsLeft: NavItem[] = [
     { href: '/home', title: 'Kezdőlap', label: 'Kezdőlap' },
     ...(canManageRequests ? [{ href: '/requesting', title: 'FoodEx kérés', label: 'FoodEx kérés' }] : []),
+    ...(isAdminUser ? [{ href: '/config', title: 'Konfiguráció', label: 'Konfig' }] : []),
+    ...(isAdminUser ? [{ href: '/clubs', title: 'Körök kezelése', label: 'Körök' }] : []),
+    ...(isAdminUser ? [{ href: '/users', title: 'Felhasználók', label: 'Tagok' }] : []),
   ];
 
   const navItemsRight: NavItem[] = isLoggedIn
