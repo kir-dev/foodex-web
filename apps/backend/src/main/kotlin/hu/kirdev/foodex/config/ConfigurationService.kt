@@ -31,8 +31,8 @@ class ConfigurationService(
                 id = 1,
                 feelingOfTheWeek = "Feeling of the week :)",
                 foodExLogo = "https://images.immediate.co.uk/production/volatile/sites/30/2020/08/chorizo-mozarella-gnocchi-bake-cropped-9ab73a3.jpg",
-                startOfSemester = LocalDateTime.of(2026, 2, 1, 0, 0),
-                endOfSemester = LocalDateTime.of(2026, 7, 8, 0, 0),
+                startOfSemester = LocalDateTime.of(2026, 8, 1, 0, 0),
+                endOfSemester = LocalDateTime.of(2027, 2, 1, 0, 0),
             )
             return ConfigurationDto(configurationRepository.save(configuration))
         }
