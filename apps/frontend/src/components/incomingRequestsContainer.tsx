@@ -1,10 +1,9 @@
 'use client';
+
 import { Shift, ShiftTable } from '@/components/ShiftTable';
 
-type ExtendedShift = Shift & { id?: number };
-
 type RequestsProps = {
-  requests: ExtendedShift[];
+  requests: Shift[];
   onAccept: (id: number) => void;
 };
 
@@ -15,11 +14,7 @@ export function IncomingRequestsContainer({ requests, onAccept }: RequestsProps)
       buttons={[
         {
           label: 'Elfogadás',
-          onClick: (s: ExtendedShift) => {
-            if (s.id !== undefined) {
-              onAccept(s.id);
-            }
-          },
+          onClick: (shift) => onAccept(shift.id),
         },
       ]}
     />

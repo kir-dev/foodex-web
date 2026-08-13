@@ -1,4 +1,5 @@
 type Member = {
+  id: number;
   name: string;
   quote: string;
 };
@@ -13,7 +14,7 @@ export function MembersContainer({ members }: Props) {
       <div className='flex flex-col gap-2 max-h-44 overflow-y-auto pr-1'>
         {members.map((member) => (
           <div
-            key={member.name}
+            key={member.id}
             className='border-2 border-[#332C81] bg-[#332C81] rounded-xl p-2 flex items-center gap-2 text-white text-lg'
           >
             <span className='font-semibold text-[#FF9860]'>{member.name}</span>

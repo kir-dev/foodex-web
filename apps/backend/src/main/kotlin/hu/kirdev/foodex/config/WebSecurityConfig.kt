@@ -11,6 +11,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
 import org.springframework.security.web.SecurityFilterChain
 import org.springframework.security.web.csrf.CookieCsrfTokenRepository
+import org.springframework.security.web.csrf.CsrfFilter
 import org.springframework.security.web.csrf.CsrfTokenRequestAttributeHandler
 import org.springframework.web.cors.CorsConfiguration
 import org.springframework.web.cors.CorsConfigurationSource
@@ -43,6 +44,7 @@ class WebSecurityConfig(
                     .csrfTokenRepository(csrfRepository)
                     .csrfTokenRequestHandler(csrfRequestHandler)
             }
+            .addFilterAfter(CsrfHeaderFilter(), CsrfFilter::class.java)
             .cors { }
             .authorizeHttpRequests { authorize ->
                 authorize

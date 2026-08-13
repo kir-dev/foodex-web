@@ -1,90 +1,147 @@
 'use client';
 
 import { ActiveShiftsContainer } from '@/components/activeShiftsContainer';
+import { useAuth } from '@/components/auth-provider';
+import { PageState } from '@/components/page-state';
+import { RequireAuth } from '@/components/require-auth';
+import { Shift } from '@/components/ShiftTable';
 import { SubmitShiftsContainer } from '@/components/submitShiftsContainer';
-import { ShiftsPageData } from '@/types/shiftsPageData';
-import { useEffect, useState } from 'react';
+import { apiFetch, isApiError, shiftActionErrorMessage } from '@/lib/api';
+import { shiftToRow } from '@/lib/shift-view';
+import { ActiveAndFullShifts, canJoinShifts, DetailedShiftDto } from '@/types/api';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function ShiftsPage() {
-  const [data, setData] = useState<ShiftsPageData | null>(null);
+  return (
+    <RequireAuth loadingLabel='Műszakok betöltése...'>
+      <ShiftsContent />
+    </RequireAuth>
+  );
+}
+
+function ShiftsContent() {
+  const { user } = useAuth();
+  const [data, setData] = useState<ActiveAndFullShifts | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [actionMessage, setActionMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
-  useEffect(() => {
-    fetch('/backend-api/shifts', { credentials: 'include' })
-      .then((res) => {
-        if (res.status === 401 || res.status === 403) {
-          window.location.href = 'http://localhost:8080/oauth2/authorization/authsch';
-          return null;
-        }
-        if (!res.ok) throw new Error('Nem sikerült betölteni a műszakok adatait.');
-        return res.json();
-      })
-      .then((shiftsData: ShiftsPageData | null) => {
-        if (shiftsData) {
-          setData(shiftsData);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setError(err.message);
-        setLoading(false);
-      });
+  const loadShifts = useCallback(async (): Promise<void> => {
+    const shiftsData = await apiFetch<ActiveAndFullShifts>('/api/shifts');
+    setData({
+      activeShifts: Array.isArray(shiftsData.activeShifts) ? shiftsData.activeShifts : [],
+      fullShifts: Array.isArray(shiftsData.fullShifts) ? shiftsData.fullShifts : [],
+    });
   }, []);
 
+  useEffect(() => {
+    const load = async (): Promise<void> => {
+      try {
+        await loadShifts();
+      } catch (err) {
+        setError(isApiError(err) ? err.message : 'Nem sikerült betölteni a műszakok adatait.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void load();
+  }, [loadShifts]);
+
   if (loading) {
-    return (
-      <div className='w-full min-h-screen flex items-center justify-center bg-white text-xl font-semibold text-[#332C81]'>
-        Műszakok betöltése...
-      </div>
-    );
+    return <PageState>Műszakok betöltése...</PageState>;
   }
 
   if (error) {
-    return (
-      <div className='w-full min-h-screen flex items-center justify-center bg-white text-xl font-semibold text-red-500'>
-        Hiba történt: {error}
-      </div>
-    );
+    return <PageState variant='error'>Hiba történt: {error}</PageState>;
   }
 
-  if (!data) return null;
+  if (!data || !user) {
+    return null;
+  }
 
   const now = new Date();
-  const filteredActiveShifts = (data.activeShifts || []).filter((shift) => new Date(shift.opening) > now);
-  const inProgressActiveShifts = (data.activeShifts || []).filter((shift) => new Date(shift.opening) <= now);
-  const combinedFullAndInProgressShifts = [...inProgressActiveShifts, ...(data.fullShifts || [])];
+  const filteredActiveShifts = data.activeShifts.filter((shift) => new Date(shift.opening) > now);
+  const inProgressActiveShifts = data.activeShifts.filter((shift) => new Date(shift.opening) <= now);
+  const combinedFullAndInProgressShifts = [...inProgressActiveShifts, ...data.fullShifts];
+  const allowJoin = canJoinShifts(user);
+  const toRow = (shift: DetailedShiftDto): Shift => shiftToRow(shift, user);
+
+  const handleJoin = async (shiftRow: Shift): Promise<void> => {
+    if (!shiftRow.canJoin) {
+      return;
+    }
+    setActionMessage(null);
+    try {
+      await apiFetch<DetailedShiftDto>(`/api/shifts/${shiftRow.id}/${user.id}`, { method: 'POST' });
+      await loadShifts();
+      setActionMessage({ text: 'Sikeres jelentkezés.', isError: false });
+    } catch (err) {
+      await loadShifts();
+      setActionMessage({
+        text: shiftActionErrorMessage(err, 'join'),
+        isError: true,
+      });
+    }
+  };
+
+  const handleLeave = async (shiftRow: Shift): Promise<void> => {
+    if (!shiftRow.canLeave) {
+      return;
+    }
+
+    setActionMessage(null);
+    try {
+      await apiFetch<DetailedShiftDto>(`/api/shifts/${shiftRow.id}/${user.id}`, { method: 'DELETE' });
+      await loadShifts();
+      setActionMessage({ text: 'Műszak leadva.', isError: false });
+    } catch (err) {
+      await loadShifts();
+      setActionMessage({
+        text: shiftActionErrorMessage(err, 'leave'),
+        isError: true,
+      });
+    }
+  };
 
   return (
     <main className='p-6 flex flex-col items-center gap-6 bg-white min-h-screen'>
+      {actionMessage && (
+        <p
+          className={`w-full max-w-5xl text-lg font-medium ${actionMessage.isError ? 'text-red-500' : 'text-green-600'}`}
+        >
+          {actionMessage.text}
+        </p>
+      )}
+
+      <p className='w-full max-w-5xl text-[#332C81]'>
+        A <span className='font-semibold'>Jelentkezés</span> gomb csak akkor jelenik meg, ha van hely a szerepednek. A{' '}
+        <span className='font-semibold'>Leadás</span> gomb csak a saját műszakjaidon látszik. A narancssárga keret és a
+        „Jelentkeztél” címke mutatja, ha már fel vagy véve.
+      </p>
+      {user.role === 'NEWBIE' && (
+        <p className='w-full max-w-5xl text-[#332C81]'>
+          Újoncként akkor tudsz jelentkezni, ha már van legalább egy tag a műszakban, és kevesebb újonc van, mint tag.
+        </p>
+      )}
+
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
         <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Aktív műszakok</h3>
         <ActiveShiftsContainer
-          shifts={filteredActiveShifts.map((shift) => ({
-            groupName: shift.cookingClub?.name || `Kör #${shift.cookingClub?.id}`,
-            day: new Date(shift.opening).toLocaleDateString('hu-HU', { weekday: 'long' }),
-            time: `${new Date(shift.opening).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })} - ${new Date(shift.closing).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`,
-            location: shift.place,
-            date: new Date(shift.opening)
-              .toLocaleDateString('hu-HU', { month: '2-digit', day: '2-digit' })
-              .replace('.', '-'),
-          }))}
+          shifts={filteredActiveShifts.map(toRow)}
+          onJoin={allowJoin ? (shift) => void handleJoin(shift) : undefined}
+          onLeave={(shift) => void handleLeave(shift)}
+          emptyLabel='Nincs közelgő, szabad helyes műszak.'
         />
       </div>
 
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
         <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Betelt és folyamatban lévő műszakok</h3>
         <SubmitShiftsContainer
-          shifts={combinedFullAndInProgressShifts.map((shift) => ({
-            groupName: shift.cookingClub?.name || `Kör #${shift.cookingClub?.id}`,
-            day: new Date(shift.opening).toLocaleDateString('hu-HU', { weekday: 'long' }),
-            time: `${new Date(shift.opening).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })} - ${new Date(shift.closing).toLocaleTimeString('hu-HU', { hour: '2-digit', minute: '2-digit' })}`,
-            location: shift.place,
-            date: new Date(shift.opening)
-              .toLocaleDateString('hu-HU', { month: '2-digit', day: '2-digit' })
-              .replace('.', '-'),
-          }))}
+          shifts={combinedFullAndInProgressShifts.map(toRow)}
+          onJoin={allowJoin ? (shift) => void handleJoin(shift) : undefined}
+          onLeave={(shift) => void handleLeave(shift)}
+          emptyLabel='Nincs betelt vagy folyamatban lévő műszak.'
         />
       </div>
     </main>

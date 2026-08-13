@@ -1,10 +1,15 @@
 'use client';
-import { Shift, ShiftTable } from '@/components/ShiftTable';
+
+import { ActiveShiftsContainer } from '@/components/activeShiftsContainer';
+import { Shift } from '@/components/ShiftTable';
 
 type ShiftsProps = {
   shifts: Shift[];
+  onJoin?: (shift: Shift) => void;
+  onLeave?: (shift: Shift) => void;
+  emptyLabel?: string;
 };
 
-export function SubmitShiftsContainer({ shifts }: ShiftsProps) {
-  return <ShiftTable shifts={shifts} buttons={[{ label: 'Leadás', onClick: (s) => console.log('Leadás:', s) }]} />;
+export function SubmitShiftsContainer({ shifts, onJoin, onLeave, emptyLabel }: ShiftsProps) {
+  return <ActiveShiftsContainer shifts={shifts} onJoin={onJoin} onLeave={onLeave} emptyLabel={emptyLabel} />;
 }

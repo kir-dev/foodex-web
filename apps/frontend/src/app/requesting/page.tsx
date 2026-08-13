@@ -1,144 +1,105 @@
 'use client';
 
+import { useAuth } from '@/components/auth-provider';
 import Button from '@/components/button';
+import { PageState } from '@/components/page-state';
+import { RequireAuth } from '@/components/require-auth';
 import { StyledInput } from '@/components/styledInput';
 import { StyledLabel } from '@/components/styledLabel';
-import { useEffect, useState } from 'react';
-
-const BACKEND_URL = 'http://localhost:8080';
-
-const COOKING_CLUB_IDS: Record<string, number> = {
-  pizzásch: 223,
-  americano: 403,
-  vödör: 179,
-  lángosch: 473,
-  kakas: 31,
-  paschta: 528,
-  palacsintázó: 395,
-  reggelisch: 490,
-  dobozosch: 529,
-};
-
-// Segédfüggvény a CSRF süti kiolvasásához
-function getCookie(name: string): string | null {
-  if (typeof document === 'undefined') return null;
-  const value = `; ${document.cookie}`;
-  const parts = value.split(`; ${name}=`);
-  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
-  return null;
-}
+import { apiFetch, isApiError } from '@/lib/api';
+import { toLocalDateTimePayload } from '@/lib/dates';
+import {
+  CookingClubDto,
+  CreateOpeningRequestDto,
+  DetailedCookingClubDto,
+  DetailedOpeningRequestDto,
+  isClubLeaderOrAdmin,
+} from '@/types/api';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function RequestingPage() {
-  const [cookingClubName, setCookingClubName] = useState('');
+  return (
+    <RequireAuth allow={isClubLeaderOrAdmin} loadingLabel='Űrlap betöltése...'>
+      <RequestingContent />
+    </RequireAuth>
+  );
+}
+
+function RequestingContent() {
+  const { user } = useAuth();
+  const [clubs, setClubs] = useState<CookingClubDto[]>([]);
+  const [clubsError, setClubsError] = useState<string | null>(null);
+  const [cookingClubId, setCookingClubId] = useState<number | ''>('');
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
   const [endTime, setEndTime] = useState('');
   const [location, setLocation] = useState('');
   const [comment, setComment] = useState('');
   const [loading, setLoading] = useState(false);
+  const [formMessage, setFormMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const selectableClubs = useMemo(() => {
+    if (!user) {
+      return clubs;
+    }
+    if (user.role === 'ADMIN') {
+      return clubs;
+    }
+    return user.leaderAt;
+  }, [clubs, user]);
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/users`, { credentials: 'include' })
-      .then((res) => {
-        if (res.status === 401 || res.status === 403 || res.type === 'opaqueredirect') {
-          window.location.href = `${BACKEND_URL}/oauth2/authorization/authsch`;
-          return null;
-        }
-        if (!res.ok) throw new Error('Nem sikerült betölteni a felhasználókat.');
-        return res.json();
-      })
-      .then((usersList) => {
-        if (usersList && usersList.length > 0) {
-          const activeUserId = Number(usersList[0].id);
-          setCurrentUserId(activeUserId);
-        } else {
-          console.warn('Nem található aktív felhasználó a rendszerben.');
-        }
-      })
-      .catch((err) => {
-        console.error('Hiba a felhasználó lekérdezése során:', err);
-      });
+    const loadClubs = async (): Promise<void> => {
+      try {
+        const data = await apiFetch<DetailedCookingClubDto[]>('/api/cooking-clubs');
+        setClubs(Array.isArray(data) ? data.map((club) => ({ id: club.id, name: club.name })) : []);
+      } catch (err) {
+        setClubsError(isApiError(err) ? err.message : 'Nem sikerült betölteni a köröket.');
+      }
+    };
+
+    void loadClubs();
   }, []);
 
-  const handleSubmit = async () => {
-    if (!currentUserId) {
-      alert('A felhasználói adatok még töltődnek, vagy nem vagy bejelentkezve!');
-      return;
-    }
+  if (!user) {
+    return <PageState>Űrlap betöltése...</PageState>;
+  }
 
-    if (!cookingClubName || !date || !startTime || !endTime || !location) {
-      alert('Kérlek tölts ki minden kötelező mezőt!');
-      return;
-    }
+  const handleSubmit = async (): Promise<void> => {
+    setFormMessage(null);
 
-    const clubId = COOKING_CLUB_IDS[cookingClubName.toLowerCase().trim()];
-    if (!clubId) {
-      alert('Ismeretlen kör név! Kérlek a listából válassz (pl. Pizzásch, Vödör...)');
+    if (cookingClubId === '' || !date || !startTime || !endTime || !location) {
+      setFormMessage({ text: 'Kérlek tölts ki minden kötelező mezőt!', isError: true });
       return;
     }
 
     setLoading(true);
-
     try {
-      const formattedStartTime = startTime.length === 5 ? `${startTime}:00` : startTime;
-      const formattedEndTime = endTime.length === 5 ? `${endTime}:00` : endTime;
-
-      const payload = {
-        cookingClubId: Number(clubId),
-        opening: `${date}T${formattedStartTime}`,
-        closing: `${date}T${formattedEndTime}`,
-        place: String(location).trim(),
-        description: String(comment).trim(),
+      const payload: CreateOpeningRequestDto = {
+        cookingClubId: Number(cookingClubId),
+        opening: toLocalDateTimePayload(date, startTime),
+        closing: toLocalDateTimePayload(date, endTime),
+        place: location.trim(),
+        description: comment.trim(),
       };
 
-      // CSRF token beszerzése, ha szükséges
-      let xsrfToken = getCookie('XSRF-TOKEN');
-      if (!xsrfToken) {
-        await fetch(`${BACKEND_URL}/api/homepage`, { credentials: 'include' });
-        xsrfToken = getCookie('XSRF-TOKEN');
-      }
-
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      };
-
-      if (xsrfToken) {
-        headers['X-XSRF-TOKEN'] = xsrfToken;
-      }
-
-      // Javítva a backend URL-re és credentials-re
-      const response = await fetch(`${BACKEND_URL}/api/requests`, {
+      await apiFetch<DetailedOpeningRequestDto>('/api/requests', {
         method: 'POST',
-        headers,
-        credentials: 'include',
-        body: JSON.stringify(payload),
+        body: payload,
       });
 
-      if (response.status === 401 || response.status === 403) {
-        alert('A munkamenet lejárt! Újrajelentkezés...');
-        window.location.href = `${BACKEND_URL}/oauth2/authorization/authsch`;
-        return;
-      }
-
-      if (response.ok) {
-        alert('Kérés sikeresen elküldve!');
-        setCookingClubName('');
-        setDate('');
-        setStartTime('');
-        setEndTime('');
-        setLocation('');
-        setComment('');
-      } else {
-        const errorText = await response.text();
-        console.error('Szerver hiba részletei:', errorText);
-        alert(`A szerver hibát jelzett (${response.status}): ${errorText}`);
-      }
+      setFormMessage({ text: 'Kérés sikeresen elküldve!', isError: false });
+      setCookingClubId('');
+      setDate('');
+      setStartTime('');
+      setEndTime('');
+      setLocation('');
+      setComment('');
     } catch (error) {
-      console.error('Hiba a küldés során:', error);
-      alert('Hálózati hiba történt.');
+      setFormMessage({
+        text: isApiError(error) ? error.message : 'Hálózati hiba történt.',
+        isError: true,
+      });
     } finally {
       setLoading(false);
     }
@@ -147,16 +108,23 @@ export default function RequestingPage() {
   return (
     <div className='px-4 sm:px-8 py-8 flex flex-col items-center'>
       <div className='w-full max-w-[1280px] border-2 border-[#332C81] rounded-2xl p-4 sm:p-8'>
+        {clubsError && <p className='mb-4 text-red-500 font-semibold'>{clubsError}</p>}
+
         <div className='flex flex-col md:flex-row gap-4 md:gap-6 pb-5 w-full'>
           <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860] w-full md:w-1/4'>
             <StyledLabel>Kör neve</StyledLabel>
-            <StyledInput
-              type='text'
-              placeholder='pl. Pizzásch, Vödör, Kakas...'
-              size='full'
-              value={cookingClubName}
-              onChange={(e) => setCookingClubName(e.target.value)}
-            />
+            <select
+              className='bg-white p-2 rounded-2xl text-black text-xl mt-2 w-full'
+              value={cookingClubId}
+              onChange={(e) => setCookingClubId(e.target.value ? Number(e.target.value) : '')}
+            >
+              <option value=''>Válassz kört</option>
+              {selectableClubs.map((club) => (
+                <option key={club.id} value={club.id}>
+                  {club.name}
+                </option>
+              ))}
+            </select>
           </div>
 
           <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860] flex-1 md:w-3/4'>
@@ -213,25 +181,18 @@ export default function RequestingPage() {
           />
         </div>
 
-        <div className='flex flex-col sm:flex-row justify-between items-center gap-4 sm:gap-0 w-full'>
-          {/*<div className='flex flex-col sm:flex-row gap-4 sm:gap-4 w-full sm:w-auto'>
-            <Button
-              label='Adatok betöltése'
-              variant='secondary'
-              onClick={() => alert('Ez a funkció még fejlesztés alatt áll!')}
-            />
-            <Button
-              label='Adatok mentése'
-              variant='secondary'
-              onClick={() => alert('Ez a funkció még fejlesztés alatt áll!')}
-            />
-          </div>*/}
+        <div className='flex flex-col sm:flex-row justify-between items-center gap-4 w-full'>
           <Button
             label={loading ? 'Küldés...' : 'Kérés leadása'}
             variant='primary'
-            onClick={handleSubmit}
-            disabled={loading || !currentUserId}
+            onClick={() => void handleSubmit()}
+            disabled={loading}
           />
+          {formMessage && (
+            <span className={`text-lg font-medium ${formMessage.isError ? 'text-red-500' : 'text-green-600'}`}>
+              {formMessage.text}
+            </span>
+          )}
         </div>
       </div>
     </div>

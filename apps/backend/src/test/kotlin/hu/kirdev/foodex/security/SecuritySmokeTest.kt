@@ -21,6 +21,7 @@ class SecuritySmokeTest {
         mockMvc.get("/api/homepage")
             .andExpect {
                 status { isOk() }
+                header { exists("X-XSRF-TOKEN") }
             }
     }
 

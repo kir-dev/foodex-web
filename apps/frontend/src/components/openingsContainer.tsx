@@ -1,4 +1,5 @@
 type Opening = {
+  id: number;
   groupName: string;
   day: string;
   time: string;
@@ -13,9 +14,9 @@ export function OpeningsContainer({ openings }: OpeningsProps) {
   return (
     <div className='w-full max-w-2xl rounded-xl p-3'>
       <div className='flex flex-col gap-1 pr-1 max-h-44 overflow-y-auto'>
-        {openings.map((opening, index) => (
+        {openings.map((opening) => (
           <div
-            key={`${opening.groupName}-${opening.day}-${index}`}
+            key={opening.id}
             className='border-2 border-[#332C81] bg-[#332C81] rounded-xl px-3 py-2 grid
     sm:grid-cols-[minmax(6rem,auto)_minmax(6rem,auto)_minmax(6rem,auto)_1fr]
     gap-x-3 items-center text-white text-lg'
