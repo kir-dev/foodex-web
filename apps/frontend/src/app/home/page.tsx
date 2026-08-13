@@ -6,9 +6,20 @@ import { OpeningsContainer } from '@/components/openingsContainer';
 import { PageState } from '@/components/page-state';
 import { apiFetch, isApiError } from '@/lib/api';
 import { formatTimeRange, formatWeekday } from '@/lib/dates';
-import { HomepageDto } from '@/types/api';
+import { HomepageDto, Role } from '@/types/api';
 import Image from 'next/image';
 import { useEffect, useState } from 'react';
+
+const ROLE_TITLES: Record<Role, string> = {
+  ADMIN: 'admin',
+  MEMBER: 'tag',
+  NEWBIE: 'újonc',
+  GUEST: 'vendég',
+};
+
+function roleTitle(role: Role): string {
+  return ROLE_TITLES[role] ?? role.toLowerCase();
+}
 
 export default function HomePage() {
   const [data, setData] = useState<HomepageDto | null>(null);
@@ -70,14 +81,14 @@ export default function HomePage() {
         </p>
       </div>
 
-      <div className='w-full max-w-7xl grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-6'>
+      <div className='w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-6'>
         <div className='w-full border-2 border-[#332C81] rounded-xl p-2'>
           <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Aktív tagok</h3>
           <MembersContainer
             members={(data.activeMembers || []).map((member) => ({
               id: member.id,
               name: member.nickname || 'Névtelen tag',
-              quote: `Rang: ${member.role}`,
+              title: roleTitle(member.role),
             }))}
           />
         </div>

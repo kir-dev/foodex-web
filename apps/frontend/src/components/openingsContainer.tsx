@@ -12,8 +12,8 @@ type OpeningsProps = {
 
 export function OpeningsContainer({ openings }: OpeningsProps) {
   return (
-    <div className='w-full max-w-2xl rounded-xl p-3'>
-      <div className='flex flex-col gap-1 pr-1 max-h-44 overflow-y-auto'>
+    <div className='w-full rounded-xl p-3'>
+      <div className='flex flex-col gap-1 pr-1 min-h-72 max-h-[32rem] overflow-y-auto'>
         {openings.map((opening) => (
           <div
             key={opening.id}
