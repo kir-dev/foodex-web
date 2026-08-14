@@ -4,8 +4,6 @@ import { useAuth } from '@/components/auth-provider';
 import Button from '@/components/button';
 import { PageState } from '@/components/page-state';
 import { RequireAuth } from '@/components/require-auth';
-import { StyledInput } from '@/components/styledInput';
-import { StyledLabel } from '@/components/styledLabel';
 import { apiFetch, isApiError } from '@/lib/api';
 import {
   formatLongDate,
@@ -14,14 +12,8 @@ import {
   toLocalDateTimePayload,
   toTimeInputValue,
 } from '@/lib/dates';
-import {
-  CookingClubDto,
-  CreateShiftDto,
-  DetailedCookingClubDto,
-  DetailedShiftDto,
-  UpdateShiftDto,
-} from '@/types/api';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DetailedShiftDto, UpdateShiftDto } from '@/types/api';
+import { useCallback, useEffect, useState } from 'react';
 
 export default function OpeningsPage() {
   return (
@@ -32,21 +24,10 @@ export default function OpeningsPage() {
 }
 
 function OpeningsContent() {
-  const { user, canManageRequests, isAdminUser } = useAuth();
+  const { isAdminUser } = useAuth();
   const [openings, setOpenings] = useState<DetailedShiftDto[]>([]);
-  const [clubs, setClubs] = useState<CookingClubDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  const [cookingClubId, setCookingClubId] = useState<number | ''>('');
-  const [date, setDate] = useState('');
-  const [startTime, setStartTime] = useState('');
-  const [endTime, setEndTime] = useState('');
-  const [location, setLocation] = useState('');
-  const [comment, setComment] = useState('');
-  const [maxMembers, setMaxMembers] = useState(20);
-  const [saving, setSaving] = useState(false);
-  const [formMessage, setFormMessage] = useState<{ text: string; isError: boolean } | null>(null);
   const [listMessage, setListMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
   const [editingShift, setEditingShift] = useState<DetailedShiftDto | null>(null);
@@ -58,16 +39,6 @@ function OpeningsContent() {
   const [editMaxMembers, setEditMaxMembers] = useState(20);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
 
-  const selectableClubs = useMemo(() => {
-    if (!user) {
-      return clubs;
-    }
-    if (user.role === 'ADMIN') {
-      return clubs;
-    }
-    return user.leaderAt;
-  }, [clubs, user]);
-
   const loadOpenings = useCallback(async (): Promise<void> => {
     const data = await apiFetch<DetailedShiftDto[]>('/api/openings');
     setOpenings(Array.isArray(data) ? data : []);
@@ -77,10 +48,6 @@ function OpeningsContent() {
     const load = async (): Promise<void> => {
       try {
         await loadOpenings();
-        if (canManageRequests) {
-          const clubData = await apiFetch<DetailedCookingClubDto[]>('/api/cooking-clubs');
-          setClubs(Array.isArray(clubData) ? clubData.map((club) => ({ id: club.id, name: club.name })) : []);
-        }
       } catch (err) {
         setError(isApiError(err) ? err.message : 'Nem sikerült lekérni az elfogadott nyitásokat.');
       } finally {
@@ -89,50 +56,7 @@ function OpeningsContent() {
     };
 
     void load();
-  }, [canManageRequests, loadOpenings]);
-
-  const handleCreate = async (): Promise<void> => {
-    setFormMessage(null);
-    if (cookingClubId === '' || !date || !startTime || !endTime || !location.trim() || maxMembers < 1) {
-      setFormMessage({ text: 'Kérlek tölts ki minden kötelező mezőt!', isError: true });
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const payload: CreateShiftDto = {
-        cookingClubId: Number(cookingClubId),
-        maxMembers,
-        opening: toLocalDateTimePayload(date, startTime),
-        closing: toLocalDateTimePayload(date, endTime),
-        place: location.trim(),
-        comment: comment.trim(),
-      };
-      await apiFetch<DetailedShiftDto>('/api/openings', {
-        method: 'POST',
-        body: payload,
-      });
-      setCookingClubId('');
-      setDate('');
-      setStartTime('');
-      setEndTime('');
-      setLocation('');
-      setComment('');
-      setMaxMembers(20);
-      await loadOpenings();
-      setFormMessage({
-        text: 'Műszak létrehozva. Ha nem jelenik meg a listában, ellenőrizd a félév dátumait a Konfig oldalon.',
-        isError: false,
-      });
-    } catch (err) {
-      setFormMessage({
-        text: isApiError(err) ? err.message : 'Nem sikerült létrehozni a műszakot.',
-        isError: true,
-      });
-    } finally {
-      setSaving(false);
-    }
-  };
+  }, [loadOpenings]);
 
   const handleOpenEdit = (shift: DetailedShiftDto): void => {
     setEditingShift(shift);
@@ -215,89 +139,6 @@ function OpeningsContent() {
 
   return (
     <main className='p-4 sm:p-8 flex flex-col items-center bg-white min-h-screen gap-6'>
-      {canManageRequests && (
-        <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-6 space-y-4'>
-          <h2 className='text-2xl font-bold text-[#332C81]'>Új műszak létrehozása</h2>
-          <p className='text-[#332C81]'>
-            Közvetlen műszak (nem kérésből). Csak a saját köreidhez, adminnak az összeshez.
-          </p>
-
-          <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
-              <StyledLabel>Kör</StyledLabel>
-              <select
-                className='bg-white p-2 rounded-2xl text-black text-xl mt-2 w-full'
-                value={cookingClubId}
-                onChange={(e) => setCookingClubId(e.target.value ? Number(e.target.value) : '')}
-              >
-                <option value=''>Válassz kört</option>
-                {selectableClubs.map((club) => (
-                  <option key={club.id} value={club.id}>
-                    {club.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
-              <StyledLabel>Max. létszám</StyledLabel>
-              <StyledInput
-                type='number'
-                min={1}
-                value={maxMembers}
-                onChange={(e) => setMaxMembers(Number(e.target.value))}
-              />
-            </div>
-          </div>
-
-          <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860] flex flex-col sm:flex-row sm:flex-wrap gap-4'>
-            <div>
-              <StyledLabel>Napja</StyledLabel>
-              <StyledInput type='date' size='large' value={date} onChange={(e) => setDate(e.target.value)} />
-            </div>
-            <div>
-              <StyledLabel>Kezdés</StyledLabel>
-              <StyledInput type='time' step={900} value={startTime} onChange={(e) => setStartTime(e.target.value)} />
-            </div>
-            <div>
-              <StyledLabel>Vége</StyledLabel>
-              <StyledInput type='time' step={900} value={endTime} onChange={(e) => setEndTime(e.target.value)} />
-            </div>
-            <div>
-              <StyledLabel>Helye</StyledLabel>
-              <StyledInput
-                type='text'
-                placeholder='pl. 13. konyha'
-                value={location}
-                onChange={(e) => setLocation(e.target.value)}
-              />
-            </div>
-          </div>
-
-          <div className='bg-[#2f2173] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
-            <StyledLabel>Megjegyzés</StyledLabel>
-            <textarea
-              className='bg-white w-full p-3 rounded-2xl text-black text-xl h-24 mt-3'
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-            />
-          </div>
-
-          <div className='flex flex-col sm:flex-row sm:items-center gap-4'>
-            <Button
-              label={saving ? 'Létrehozás...' : 'Műszak létrehozása'}
-              variant='primary'
-              onClick={() => void handleCreate()}
-              disabled={saving}
-            />
-            {formMessage && (
-              <span className={`text-lg font-medium ${formMessage.isError ? 'text-red-500' : 'text-green-600'}`}>
-                {formMessage.text}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-6'>
         <h1 className='text-3xl font-bold text-[#332C81] mb-6 pl-2'>Minden Elfogadott Nyitás (Múlt és Jövő)</h1>
 

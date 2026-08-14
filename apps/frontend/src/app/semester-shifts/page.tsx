@@ -4,10 +4,15 @@ import Button from '@/components/button';
 import { PageState } from '@/components/page-state';
 import { RequireAuth } from '@/components/require-auth';
 import { Shift, ShiftTable } from '@/components/ShiftTable';
+import { StyledInput } from '@/components/styledInput';
+import { StyledLabel } from '@/components/styledLabel';
 import { apiFetch, isApiError } from '@/lib/api';
 import { toDateInputValue, toLocalDateTimePayload, toTimeInputValue } from '@/lib/dates';
 import { shiftToRow } from '@/lib/shift-view';
 import {
+  CookingClubDto,
+  CreateShiftDto,
+  DetailedCookingClubDto,
   DetailedShiftDto,
   DetailedUserDto,
   isAdmin,
@@ -35,9 +40,20 @@ export default function SemesterShiftsPage() {
 function SemesterShiftsContent() {
   const [shifts, setShifts] = useState<DetailedShiftDto[]>([]);
   const [users, setUsers] = useState<DetailedUserDto[]>([]);
+  const [clubs, setClubs] = useState<CookingClubDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ text: string; isError: boolean } | null>(null);
+
+  const [cookingClubId, setCookingClubId] = useState<number | ''>('');
+  const [date, setDate] = useState('');
+  const [startTime, setStartTime] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [location, setLocation] = useState('');
+  const [comment, setComment] = useState('');
+  const [maxMembers, setMaxMembers] = useState(20);
+  const [creating, setCreating] = useState(false);
+  const [formMessage, setFormMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
   const [editingShift, setEditingShift] = useState<DetailedShiftDto | null>(null);
   const [editDate, setEditDate] = useState('');
@@ -51,12 +67,14 @@ function SemesterShiftsContent() {
   const [draftWorkers, setDraftWorkers] = useState<UserDto[]>([]);
 
   const loadData = useCallback(async (): Promise<void> => {
-    const [shiftData, userData] = await Promise.all([
+    const [shiftData, userData, clubData] = await Promise.all([
       apiFetch<DetailedShiftDto[]>('/api/openings'),
       apiFetch<DetailedUserDto[]>('/api/users'),
+      apiFetch<DetailedCookingClubDto[]>('/api/cooking-clubs'),
     ]);
     setShifts(Array.isArray(shiftData) ? shiftData : []);
     setUsers(Array.isArray(userData) ? userData : []);
+    setClubs(Array.isArray(clubData) ? clubData.map((club) => ({ id: club.id, name: club.name })) : []);
   }, []);
 
   useEffect(() => {
@@ -72,6 +90,49 @@ function SemesterShiftsContent() {
 
     void load();
   }, [loadData]);
+
+  const handleCreate = async (): Promise<void> => {
+    setFormMessage(null);
+    if (cookingClubId === '' || !date || !startTime || !endTime || !location.trim() || maxMembers < 1) {
+      setFormMessage({ text: 'Kérlek tölts ki minden kötelező mezőt!', isError: true });
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const payload: CreateShiftDto = {
+        cookingClubId: Number(cookingClubId),
+        maxMembers,
+        opening: toLocalDateTimePayload(date, startTime),
+        closing: toLocalDateTimePayload(date, endTime),
+        place: location.trim(),
+        comment: comment.trim(),
+      };
+      await apiFetch<DetailedShiftDto>('/api/openings', {
+        method: 'POST',
+        body: payload,
+      });
+      setCookingClubId('');
+      setDate('');
+      setStartTime('');
+      setEndTime('');
+      setLocation('');
+      setComment('');
+      setMaxMembers(20);
+      await loadData();
+      setFormMessage({
+        text: 'Műszak létrehozva. Ha nem jelenik meg a listában, ellenőrizd a félév dátumait a Konfig oldalon.',
+        isError: false,
+      });
+    } catch (err) {
+      setFormMessage({
+        text: isApiError(err) ? err.message : 'Nem sikerült létrehozni a műszakot.',
+        isError: true,
+      });
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const replaceShift = (updated: DetailedShiftDto): void => {
     setShifts((prev) => prev.map((shift) => (shift.id === updated.id ? updated : shift)));
@@ -213,6 +274,85 @@ function SemesterShiftsContent() {
 
   return (
     <main className='p-6 flex flex-col items-center gap-6 bg-white min-h-screen'>
+      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-6 space-y-4'>
+        <h2 className='text-2xl font-bold text-[#332C81]'>Új műszak létrehozása</h2>
+        <p className='text-[#332C81]'>Közvetlen műszak (nem kérésből).</p>
+
+        <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
+          <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
+            <StyledLabel>Kör</StyledLabel>
+            <select
+              className='bg-white p-2 rounded-2xl text-black text-xl mt-2 w-full'
+              value={cookingClubId}
+              onChange={(e) => setCookingClubId(e.target.value ? Number(e.target.value) : '')}
+            >
+              <option value=''>Válassz kört</option>
+              {clubs.map((club) => (
+                <option key={club.id} value={club.id}>
+                  {club.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
+            <StyledLabel>Max. létszám</StyledLabel>
+            <StyledInput
+              type='number'
+              min={1}
+              value={maxMembers}
+              onChange={(e) => setMaxMembers(Number(e.target.value))}
+            />
+          </div>
+        </div>
+
+        <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860] flex flex-col sm:flex-row sm:flex-wrap gap-4'>
+          <div>
+            <StyledLabel>Napja</StyledLabel>
+            <StyledInput type='date' size='large' value={date} onChange={(e) => setDate(e.target.value)} />
+          </div>
+          <div>
+            <StyledLabel>Kezdés</StyledLabel>
+            <StyledInput type='time' step={900} value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+          </div>
+          <div>
+            <StyledLabel>Vége</StyledLabel>
+            <StyledInput type='time' step={900} value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+          </div>
+          <div>
+            <StyledLabel>Helye</StyledLabel>
+            <StyledInput
+              type='text'
+              placeholder='pl. 13. konyha'
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+            />
+          </div>
+        </div>
+
+        <div className='bg-[#2f2173] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
+          <StyledLabel>Megjegyzés</StyledLabel>
+          <textarea
+            className='bg-white w-full p-3 rounded-2xl text-black text-xl h-24 mt-3'
+            value={comment}
+            onChange={(e) => setComment(e.target.value)}
+          />
+        </div>
+
+        <div className='flex flex-col sm:flex-row sm:items-center gap-4'>
+          <Button
+            label={creating ? 'Létrehozás...' : 'Műszak létrehozása'}
+            variant='primary'
+            onClick={() => void handleCreate()}
+            disabled={creating}
+          />
+          {formMessage && (
+            <span className={`text-lg font-medium ${formMessage.isError ? 'text-red-500' : 'text-green-600'}`}>
+              {formMessage.text}
+            </span>
+          )}
+        </div>
+      </div>
+
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 mb-2'>
           <h1 className='text-2xl font-bold text-[#332C81]'>Féléves műszakok</h1>
