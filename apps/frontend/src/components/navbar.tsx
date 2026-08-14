@@ -6,15 +6,23 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
-interface NavItem {
+interface NavLink {
   href: string;
+  title: string;
+  label: string;
+}
+
+interface NavItem {
+  href?: string;
   title: string;
   label?: string;
   isProfile?: boolean;
+  children?: NavLink[];
 }
 
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const { user, status, canManageRequests, isAdminUser, logout } = useAuth();
   const isLoggedIn = status === 'authenticated';
 
@@ -26,9 +34,14 @@ function Navbar() {
     ...(isAdminUser ? [{ href: '/users', title: 'Felhasználók', label: 'Tagok' }] : []),
   ];
 
+  const semesterChildren: NavLink[] = [
+    { href: '/openings', title: 'Nyitások', label: 'Nyitások' },
+    ...(isAdminUser ? [{ href: '/semester-shifts', title: 'Műszakok', label: 'Műszakok' }] : []),
+  ];
+
   const navItemsRight: NavItem[] = isLoggedIn
     ? [
-        { href: '/openings', title: 'Nyitások', label: 'Nyitások' },
+        { title: 'Félév', label: 'Félév', children: semesterChildren },
         ...(canManageRequests ? [{ href: '/requests', title: 'Kérések', label: 'Kérések' }] : []),
         { href: '/shifts', title: 'Műszakok', label: 'Műszakok' },
         { href: '/profile', title: 'Profil', isProfile: true },
@@ -52,14 +65,7 @@ function Navbar() {
         <div className='hidden sm:flex justify-between w-full'>
           <div className='flex space-x-4'>
             {navItemsLeft.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                title={item.title}
-                className='px-3 py-1 border-2 border-[#332C81] rounded-md text-[#332C81] text-2xl font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
-              >
-                {item.label}
-              </Link>
+              <NavItemView key={item.href ?? item.title} item={item} />
             ))}
           </div>
 
@@ -77,7 +83,7 @@ function Navbar() {
               <>
                 {navItemsRight.map((item) =>
                   item.isProfile ? (
-                    <Link key={item.href} href={item.href} title={item.title}>
+                    <Link key={item.href} href={item.href ?? '/profile'} title={item.title}>
                       <Image
                         src='/profile.png'
                         alt={user?.nickname || 'Profil'}
@@ -87,14 +93,7 @@ function Navbar() {
                       />
                     </Link>
                   ) : (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      title={item.title}
-                      className='px-3 py-1 border-2 border-[#332C81] rounded-md text-[#332C81] text-2xl font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
-                    >
-                      {item.label}
-                    </Link>
+                    <NavItemView key={item.href ?? item.title} item={item} />
                   )
                 )}
                 <button
@@ -113,15 +112,13 @@ function Navbar() {
       {isOpen && (
         <div className='sm:hidden mt-2 flex flex-col space-y-2'>
           {navItemsLeft.map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={item.title}
-              onClick={() => setIsOpen(false)}
-              className='px-3 py-2 border-2 border-[#332C81] rounded-md text-[#332C81] text-lg font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
-            >
-              {item.label}
-            </Link>
+            <MobileNavItem
+              key={item.href ?? item.title}
+              item={item}
+              openDropdown={openDropdown}
+              setOpenDropdown={setOpenDropdown}
+              onNavigate={() => setIsOpen(false)}
+            />
           ))}
 
           {status === 'loading' ? (
@@ -139,7 +136,7 @@ function Navbar() {
                 item.isProfile ? (
                   <Link
                     key={item.href}
-                    href={item.href}
+                    href={item.href ?? '/profile'}
                     title={item.title}
                     onClick={() => setIsOpen(false)}
                     className='flex items-center space-x-2 px-3 py-2 border-2 border-[#332C81] rounded-md text-[#332C81] text-lg font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
@@ -154,15 +151,13 @@ function Navbar() {
                     <span>Profil</span>
                   </Link>
                 ) : (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    title={item.title}
-                    onClick={() => setIsOpen(false)}
-                    className='px-3 py-2 border-2 border-[#332C81] rounded-md text-[#332C81] text-lg font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
-                  >
-                    {item.label}
-                  </Link>
+                  <MobileNavItem
+                    key={item.href ?? item.title}
+                    item={item}
+                    openDropdown={openDropdown}
+                    setOpenDropdown={setOpenDropdown}
+                    onNavigate={() => setIsOpen(false)}
+                  />
                 )
               )}
               <button
@@ -177,6 +172,98 @@ function Navbar() {
         </div>
       )}
     </nav>
+  );
+}
+
+const linkClassName =
+  'px-3 py-1 border-2 border-[#332C81] rounded-md text-[#332C81] text-2xl font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all';
+
+function NavItemView({ item }: { item: NavItem }) {
+  if (item.children && item.children.length > 0) {
+    return (
+      <div className='relative group'>
+        <button type='button' title={item.title} className={linkClassName}>
+          {item.label}
+        </button>
+        <div className='absolute right-0 top-full z-20 hidden min-w-44 pt-1 group-hover:block group-focus-within:block'>
+          <div className='flex flex-col gap-1 rounded-md border-2 border-[#332C81] bg-white p-1 shadow-lg'>
+            {item.children.map((child) => (
+              <Link
+                key={child.href}
+                href={child.href}
+                title={child.title}
+                className='px-3 py-1 rounded-md text-[#332C81] text-xl font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
+              >
+                {child.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (!item.href) {
+    return null;
+  }
+
+  return (
+    <Link href={item.href} title={item.title} className={linkClassName}>
+      {item.label}
+    </Link>
+  );
+}
+
+function MobileNavItem({
+  item,
+  openDropdown,
+  setOpenDropdown,
+  onNavigate,
+}: {
+  item: NavItem;
+  openDropdown: string | null;
+  setOpenDropdown: (value: string | null) => void;
+  onNavigate: () => void;
+}) {
+  const mobileClassName =
+    'px-3 py-2 border-2 border-[#332C81] rounded-md text-[#332C81] text-lg font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all';
+
+  if (item.children && item.children.length > 0) {
+    const isExpanded = openDropdown === item.title;
+    return (
+      <div className='flex flex-col gap-1'>
+        <button
+          type='button'
+          title={item.title}
+          className={`${mobileClassName} text-left`}
+          onClick={() => setOpenDropdown(isExpanded ? null : item.title)}
+        >
+          {item.label}
+        </button>
+        {isExpanded &&
+          item.children.map((child) => (
+            <Link
+              key={child.href}
+              href={child.href}
+              title={child.title}
+              onClick={onNavigate}
+              className='ml-3 px-3 py-2 border-2 border-[#332C81] rounded-md text-[#332C81] text-lg font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
+            >
+              {child.label}
+            </Link>
+          ))}
+      </div>
+    );
+  }
+
+  if (!item.href) {
+    return null;
+  }
+
+  return (
+    <Link href={item.href} title={item.title} onClick={onNavigate} className={mobileClassName}>
+      {item.label}
+    </Link>
   );
 }
 

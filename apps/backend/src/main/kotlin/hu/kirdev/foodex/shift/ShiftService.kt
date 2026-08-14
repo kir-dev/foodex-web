@@ -115,7 +115,7 @@ class ShiftService(
         when {
             user.role == Role.GUEST ->
                 throw ResponseStatusException(HttpStatus.FORBIDDEN, "Guests cannot join shifts")
-            !canJoin(user, shift) ->
+            actor.role != Role.ADMIN && !canJoin(user, shift) ->
                 throw ResponseStatusException(HttpStatus.CONFLICT, "Shift capacity full for this role")
         }
 

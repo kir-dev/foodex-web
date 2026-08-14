@@ -119,6 +119,23 @@ class ShiftServiceCapacityTest {
     }
 
     @Test
+    fun `addWorkerToShift admin can add member when capacity is full`() {
+        val admin = user(1, Role.ADMIN)
+        val newMember = user(3, Role.MEMBER)
+        val shift = shift(
+            maxMembers = 1,
+            workers = mutableListOf(user(2, Role.MEMBER)),
+        )
+        every { userRepository.findById(3) } returns Optional.of(newMember)
+        every { shiftRepository.findById(1) } returns Optional.of(shift)
+        every { shiftRepository.save(shift) } returns shift
+
+        val result = service.addWorkerToShift(3, 1, admin)
+
+        assertTrue(result.members.any { it.id == 3 })
+    }
+
+    @Test
     fun `addWorkerToShift rejects duplicate with 409`() {
         val member = user(2, Role.MEMBER)
         val actor = user(2, Role.MEMBER)
