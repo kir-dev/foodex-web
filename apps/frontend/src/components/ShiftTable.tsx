@@ -27,7 +27,7 @@ const DEFAULT_BUTTONS: { label: string; onClick: (shift: Shift) => void }[] = []
 export function ShiftTable({
   shifts,
   buttons = DEFAULT_BUTTONS,
-  maxHeight = 'max-h-60',
+  maxHeight = 'max-h-[70vh]',
   showNamesColumn = false,
   emptyLabel = 'Nincs megjeleníthető műszak.',
 }: ShiftTableProps) {
