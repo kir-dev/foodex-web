@@ -139,7 +139,6 @@ function ShiftsContent() {
         <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Betelt és folyamatban lévő műszakok</h3>
         <SubmitShiftsContainer
           shifts={combinedFullAndInProgressShifts.map(toRow)}
-          onJoin={allowJoin ? (shift) => void handleJoin(shift) : undefined}
           onLeave={(shift) => void handleLeave(shift)}
           emptyLabel='Nincs betelt vagy folyamatban lévő műszak.'
         />
