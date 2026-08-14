@@ -31,6 +31,7 @@ class ConfigurationService(
                 id = 1,
                 feelingOfTheWeek = "Feeling of the week :)",
                 foodExLogo = "https://images.immediate.co.uk/production/volatile/sites/30/2020/08/chorizo-mozarella-gnocchi-bake-cropped-9ab73a3.jpg",
+                homepageDescription = DEFAULT_HOMEPAGE_DESCRIPTION,
                 startOfSemester = LocalDateTime.of(2026, 8, 1, 0, 0),
                 endOfSemester = LocalDateTime.of(2027, 2, 1, 0, 0),
             )
@@ -50,6 +51,7 @@ class ConfigurationService(
 
         updateTo.feelingOfTheWeek?.let { config.feelingOfTheWeek = it }
         updateTo.foodExLogo?.let { config.foodExLogo = it }
+        updateTo.homepageDescription?.let { config.homepageDescription = it }
         updateTo.startOfSemester?.let { config.startOfSemester = it }
         updateTo.endOfSemester?.let { config.endOfSemester = it }
 
@@ -71,8 +73,14 @@ class ConfigurationService(
         return HomepageDto(
             feelingOfTheWeek = config.feelingOfTheWeek,
             foodExLogo = config.foodExLogo,
+            homepageDescription = config.homepageDescription,
             activeMembers = activeMembers,
             upcomingOpenings = openingRequestService.getUpcomingOpeningRequestsByIsAcceptedTrue()
         )
+    }
+
+    companion object {
+        const val DEFAULT_HOMEPAGE_DESCRIPTION =
+            "A FoodEx kör 2003-ban alakult meg, azóta aktívan tevékenykedik a Schönherz koliban..."
     }
 }

@@ -106,6 +106,7 @@ export type ActiveAndFullShifts = {
 export type HomepageDto = {
   feelingOfTheWeek: string;
   foodExLogo: string;
+  homepageDescription: string;
   activeMembers: UserDto[];
   upcomingOpenings: DetailedOpeningRequestDto[];
 };
@@ -113,6 +114,7 @@ export type HomepageDto = {
 export type ConfigurationDto = {
   feelingOfTheWeek: string;
   foodExLogo: string;
+  homepageDescription: string;
   startOfSemester: string;
   endOfSemester: string;
 };
@@ -120,6 +122,7 @@ export type ConfigurationDto = {
 export type UpdateConfigurationDto = {
   feelingOfTheWeek?: string;
   foodExLogo?: string;
+  homepageDescription?: string;
   startOfSemester?: string;
   endOfSemester?: string;
 };

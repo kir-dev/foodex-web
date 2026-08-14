@@ -69,9 +69,7 @@ export default function HomePage() {
 
         <div className='flex flex-col justify-start w-full bg-[#332C81] text-[#FF9860] rounded-xl px-6 py-6'>
           <h2 className='text-3xl sm:text-4xl md:text-5xl mb-4 font-semibold'>FoodEx</h2>
-          <p className='text-base sm:text-lg'>
-            A FoodEx kör 2003-ban alakult meg, azóta aktívan tevékenykedik a Schönherz koliban...
-          </p>
+          <p className='text-base sm:text-lg whitespace-pre-wrap'>{data.homepageDescription}</p>
         </div>
       </div>
 

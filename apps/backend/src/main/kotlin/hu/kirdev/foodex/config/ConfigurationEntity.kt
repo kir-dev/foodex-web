@@ -17,6 +17,9 @@ data class ConfigurationEntity(
     @Column(nullable = false)
     var foodExLogo: String,
 
+    @Column(nullable = false, length = 2000)
+    var homepageDescription: String,
+
     @Column(nullable = false)
     var startOfSemester: LocalDateTime,
 
@@ -27,6 +30,7 @@ data class ConfigurationEntity(
         id = 1,
         feelingOfTheWeek = config.feelingOfTheWeek,
         foodExLogo = config.foodExLogo,
+        homepageDescription = config.homepageDescription,
         startOfSemester = config.startOfSemester,
         endOfSemester = config.endOfSemester,
     )

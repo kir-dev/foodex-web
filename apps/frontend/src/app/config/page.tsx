@@ -21,6 +21,7 @@ export default function ConfigPage() {
 function ConfigContent() {
   const [feelingOfTheWeek, setFeelingOfTheWeek] = useState('');
   const [foodExLogo, setFoodExLogo] = useState('');
+  const [homepageDescription, setHomepageDescription] = useState('');
   const [startOfSemester, setStartOfSemester] = useState('');
   const [endOfSemester, setEndOfSemester] = useState('');
   const [loading, setLoading] = useState(true);
@@ -34,6 +35,7 @@ function ConfigContent() {
         const config = await apiFetch<ConfigurationDto>('/api/config');
         setFeelingOfTheWeek(config.feelingOfTheWeek);
         setFoodExLogo(config.foodExLogo);
+        setHomepageDescription(config.homepageDescription);
         setStartOfSemester(toDateInputValue(config.startOfSemester));
         setEndOfSemester(toDateInputValue(config.endOfSemester));
       } catch (err) {
@@ -48,7 +50,13 @@ function ConfigContent() {
 
   const handleSave = async (): Promise<void> => {
     setMessage(null);
-    if (!feelingOfTheWeek.trim() || !foodExLogo.trim() || !startOfSemester || !endOfSemester) {
+    if (
+      !feelingOfTheWeek.trim() ||
+      !foodExLogo.trim() ||
+      !homepageDescription.trim() ||
+      !startOfSemester ||
+      !endOfSemester
+    ) {
       setMessage({ text: 'Minden mező kitöltése kötelező.', isError: true });
       return;
     }
@@ -62,6 +70,7 @@ function ConfigContent() {
       const payload: UpdateConfigurationDto = {
         feelingOfTheWeek: feelingOfTheWeek.trim(),
         foodExLogo: foodExLogo.trim(),
+        homepageDescription: homepageDescription.trim(),
         startOfSemester: `${startOfSemester}T00:00:00`,
         endOfSemester: `${endOfSemester}T23:59:59`,
       };
@@ -71,6 +80,7 @@ function ConfigContent() {
       });
       setFeelingOfTheWeek(updated.feelingOfTheWeek);
       setFoodExLogo(updated.foodExLogo);
+      setHomepageDescription(updated.homepageDescription);
       setStartOfSemester(toDateInputValue(updated.startOfSemester));
       setEndOfSemester(toDateInputValue(updated.endOfSemester));
       setMessage({ text: 'Konfiguráció mentve.', isError: false });
@@ -97,8 +107,8 @@ function ConfigContent() {
       <div className='w-full max-w-3xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-8 space-y-5'>
         <h1 className='text-3xl font-bold text-[#332C81]'>Oldal konfiguráció</h1>
         <p className='text-[#332C81]'>
-          A félév dátumai határozzák meg, mely műszakok jelennek meg a Nyitások oldalon. A feeling és a logó a
-          kezdőlapon látszik.
+          A félév dátumai határozzák meg, mely műszakok jelennek meg a Nyitások oldalon. A feeling, a logó és a
+          leírás a kezdőlapon látszik.
         </p>
 
         <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860] space-y-3'>
@@ -109,6 +119,14 @@ function ConfigContent() {
           <div>
             <StyledLabel>FoodEx logó URL</StyledLabel>
             <StyledInput type='url' value={foodExLogo} onChange={(e) => setFoodExLogo(e.target.value)} />
+          </div>
+          <div>
+            <StyledLabel>Kezdőlap leírása</StyledLabel>
+            <textarea
+              className='bg-white w-full p-3 rounded-2xl text-black text-xl h-32 mt-3'
+              value={homepageDescription}
+              onChange={(e) => setHomepageDescription(e.target.value)}
+            />
           </div>
           <div className='flex flex-col sm:flex-row gap-4'>
             <div>
