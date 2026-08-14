@@ -121,7 +121,9 @@ function ProfileContent() {
     return [...(user.requests ?? [])]
       .filter((request) => isWithinSemester(request.opening, request.closing, semester.start, semester.end))
       .sort(compareByOpeningDesc)
-      .map((request) => toActivityItem(request, clubNames, isRequestAccepted(request) ? 'accepted' : 'pending'));
+      .map((request) =>
+        toActivityItem(request, clubNames, isRequestAccepted(request) ? 'accepted' : undefined)
+      );
   }, [user, semester, clubNames]);
 
   if (!user) {
