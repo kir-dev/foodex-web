@@ -129,20 +129,22 @@ function ConfigContent() {
             />
           </div>
           <div className='flex flex-col sm:flex-row gap-4'>
-            <div>
+            <div className='flex flex-col sm:flex-row sm:items-center gap-3'>
               <StyledLabel>Félév kezdete</StyledLabel>
               <StyledInput
                 type='date'
                 size='large'
+                className='!mt-0'
                 value={startOfSemester}
                 onChange={(e) => setStartOfSemester(e.target.value)}
               />
             </div>
-            <div>
+            <div className='flex flex-col sm:flex-row sm:items-center gap-3'>
               <StyledLabel>Félév vége</StyledLabel>
               <StyledInput
                 type='date'
                 size='large'
+                className='!mt-0'
                 value={endOfSemester}
                 onChange={(e) => setEndOfSemester(e.target.value)}
               />
