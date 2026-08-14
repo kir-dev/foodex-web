@@ -7,7 +7,14 @@ import { PageState } from '@/components/page-state';
 import { RequireAuth } from '@/components/require-auth';
 import { Shift } from '@/components/ShiftTable';
 import { apiFetch, isApiError } from '@/lib/api';
-import { shiftCountFromRange, toDateInputValue, toLocalDateTimePayload, toTimeInputValue } from '@/lib/dates';
+import {
+  formatLongDate,
+  formatTimeRange,
+  shiftCountFromRange,
+  toDateInputValue,
+  toLocalDateTimePayload,
+  toTimeInputValue,
+} from '@/lib/dates';
 import { requestToRow, shiftToRow } from '@/lib/shift-view';
 import {
   CreateShiftFromOpeningRequestDto,
@@ -49,6 +56,11 @@ function RequestsContent() {
   const [editRequestDescription, setEditRequestDescription] = useState('');
   const [isSavingRequest, setIsSavingRequest] = useState(false);
 
+  const [acceptingRequest, setAcceptingRequest] = useState<DetailedOpeningRequestDto | null>(null);
+  const [acceptShiftCount, setAcceptShiftCount] = useState(1);
+  const [acceptMaxMembers, setAcceptMaxMembers] = useState(20);
+  const [isAccepting, setIsAccepting] = useState(false);
+
   const loadData = useCallback(async (): Promise<void> => {
     const [requestsData, openingsData] = await Promise.all([
       apiFetch<DetailedOpeningRequestDto[]>('/api/incoming-requests'),
@@ -72,28 +84,54 @@ function RequestsContent() {
     void fetchData();
   }, [loadData]);
 
-  const handleAcceptRequest = async (requestId: number): Promise<void> => {
+  const handleOpenAccept = (requestId: number): void => {
+    const request = requests.find((item) => item.id === requestId);
+    if (!request) {
+      return;
+    }
+    setAcceptingRequest(request);
+    setAcceptShiftCount(shiftCountFromRange(request.opening, request.closing));
+    setAcceptMaxMembers(20);
+    setActionMessage(null);
+  };
+
+  const handleConfirmAccept = async (): Promise<void> => {
+    if (!acceptingRequest) {
+      return;
+    }
+    if (!Number.isFinite(acceptShiftCount) || acceptShiftCount < 1) {
+      setActionMessage({ text: 'A műszakok száma legalább 1 legyen.', isError: true });
+      return;
+    }
+    if (!Number.isFinite(acceptMaxMembers) || acceptMaxMembers < 1) {
+      setActionMessage({ text: 'A max. létszám legalább 1 legyen.', isError: true });
+      return;
+    }
+
+    setIsAccepting(true);
     setActionMessage(null);
     try {
-      const targetRequest = requests.find((request) => request.id === requestId);
       const payload: CreateShiftFromOpeningRequestDto = {
-        maxMembers: Math.max(1, defaultMaxMembers),
-        numberOfShifts: targetRequest ? shiftCountFromRange(targetRequest.opening, targetRequest.closing) : 1,
+        maxMembers: Math.floor(acceptMaxMembers),
+        numberOfShifts: Math.floor(acceptShiftCount),
       };
 
-      const newShifts = await apiFetch<DetailedShiftDto[]>(`/api/requests/${requestId}`, {
+      const newShifts = await apiFetch<DetailedShiftDto[]>(`/api/requests/${acceptingRequest.id}`, {
         method: 'POST',
         body: payload,
       });
 
-      setRequests((prev) => prev.filter((req) => req.id !== requestId));
+      setRequests((prev) => prev.filter((req) => req.id !== acceptingRequest.id));
       setAcceptedShifts((prev) => [...prev, ...(Array.isArray(newShifts) ? newShifts : [])]);
+      setAcceptingRequest(null);
       setActionMessage({ text: 'Kérés elfogadva, műszakok létrehozva.', isError: false });
     } catch (err) {
       setActionMessage({
         text: isApiError(err) ? err.message : 'Nem sikerült elfogadni a kérést.',
         isError: true,
       });
+    } finally {
+      setIsAccepting(false);
     }
   };
 
@@ -257,7 +295,7 @@ function RequestsContent() {
         <h3 className='text-2xl font-bold text-[#332C81] pl-3 mb-2'>Bejövő kérések</h3>
         <IncomingRequestsContainer
           requests={requests.map(requestToRow)}
-          onAccept={(id) => void handleAcceptRequest(id)}
+          onAccept={handleOpenAccept}
           onReject={(id) => void handleRejectRequest(id)}
           onEdit={handleOpenRequestEdit}
         />
@@ -271,6 +309,53 @@ function RequestsContent() {
           onDelete={(shift) => void handleDeleteShift(shift)}
         />
       </div>
+
+      {acceptingRequest && (
+        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
+          <div className='bg-white rounded-xl border-2 border-[#332C81] p-6 max-w-md w-full space-y-4 shadow-xl'>
+            <h4 className='text-2xl font-bold text-[#332C81]'>Kérés elfogadása</h4>
+            <p className='text-gray-600 font-medium'>{acceptingRequest.cookingClub?.name}</p>
+            <p className='text-gray-600'>
+              {formatLongDate(acceptingRequest.opening)} · {formatTimeRange(acceptingRequest.opening, acceptingRequest.closing)}
+            </p>
+            <div className='flex flex-col gap-1'>
+              <label className='font-semibold text-[#332C81]'>Műszakok száma:</label>
+              <input
+                type='number'
+                min={1}
+                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                value={acceptShiftCount}
+                onChange={(e) => setAcceptShiftCount(Number(e.target.value))}
+              />
+            </div>
+            <div className='flex flex-col gap-1'>
+              <label className='font-semibold text-[#332C81]'>Max. létszám:</label>
+              <input
+                type='number'
+                min={1}
+                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                value={acceptMaxMembers}
+                onChange={(e) => setAcceptMaxMembers(Number(e.target.value))}
+              />
+            </div>
+            {actionMessage?.isError && <p className='text-red-500 font-medium'>{actionMessage.text}</p>}
+            <div className='flex justify-end gap-3 pt-2'>
+              <Button
+                label='Mégse'
+                variant='secondary'
+                onClick={() => setAcceptingRequest(null)}
+                disabled={isAccepting}
+              />
+              <Button
+                label={isAccepting ? 'Elfogadás...' : 'Elfogadás'}
+                variant='primary'
+                onClick={() => void handleConfirmAccept()}
+                disabled={isAccepting}
+              />
+            </div>
+          </div>
+        </div>
+      )}
 
       {editingRequest && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
