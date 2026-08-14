@@ -3,10 +3,20 @@
 import { useAuth } from '@/components/auth-provider';
 import Button from '@/components/button';
 import { PageState } from '@/components/page-state';
+import { ProfileActivityItem, ProfileActivityList } from '@/components/profileActivityList';
 import { RequireAuth } from '@/components/require-auth';
 import { apiFetch, isApiError } from '@/lib/api';
-import { DetailedUserDto, UpdateUserDto } from '@/types/api';
-import { useEffect, useState } from 'react';
+import { compareByOpeningDesc, formatShortDate, formatTimeRange, formatWeekday, isWithinSemester } from '@/lib/dates';
+import {
+  ConfigurationDto,
+  DetailedCookingClubDto,
+  DetailedUserDto,
+  OpeningRequestDto,
+  ShiftDto,
+  UpdateUserDto,
+} from '@/types/api';
+import { usePathname } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
 
 export default function ProfilePage() {
   return (
@@ -16,17 +26,103 @@ export default function ProfilePage() {
   );
 }
 
+function clubLabel(clubId: number, clubNames: Record<number, string>): string {
+  return clubNames[clubId] || `Kör #${clubId}`;
+}
+
+function isRequestAccepted(request: OpeningRequestDto): boolean {
+  return request.accepted ?? request.isAccepted ?? false;
+}
+
+function toActivityItem(
+  item: ShiftDto | OpeningRequestDto,
+  clubNames: Record<number, string>,
+  status?: ProfileActivityItem['status']
+): ProfileActivityItem {
+  return {
+    id: item.id,
+    groupName: clubLabel(item.cookingClubId, clubNames),
+    day: formatWeekday(item.opening),
+    time: formatTimeRange(item.opening, item.closing),
+    location: item.place,
+    date: formatShortDate(item.opening),
+    status,
+  };
+}
+
 function ProfileContent() {
   const { user, refresh } = useAuth();
+  const pathname = usePathname();
   const [nickname, setNickname] = useState(user?.nickname || '');
   const [favouriteQuote, setFavouriteQuote] = useState(user?.favouriteQuote || '');
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState<{ text: string; isError: boolean } | null>(null);
+  const [semester, setSemester] = useState<{ start: string; end: string } | null>(null);
+  const [clubNames, setClubNames] = useState<Record<number, string>>({});
+  const [activitiesError, setActivitiesError] = useState<string | null>(null);
+  const [activitiesLoading, setActivitiesLoading] = useState(true);
 
   useEffect(() => {
     setNickname(user?.nickname || '');
     setFavouriteQuote(user?.favouriteQuote || '');
   }, [user]);
+
+  useEffect(() => {
+    const loadActivities = async (): Promise<void> => {
+      setActivitiesLoading(true);
+
+      const [configResult, clubsResult] = await Promise.allSettled([
+        apiFetch<ConfigurationDto>('/api/config'),
+        apiFetch<DetailedCookingClubDto[]>('/api/cooking-clubs'),
+        refresh(),
+      ]);
+
+      if (configResult.status === 'fulfilled') {
+        setSemester({
+          start: configResult.value.startOfSemester,
+          end: configResult.value.endOfSemester,
+        });
+        setActivitiesError(null);
+      } else {
+        setActivitiesError(
+          isApiError(configResult.reason) ? configResult.reason.message : 'Nem sikerült betölteni a félév adatait.'
+        );
+      }
+
+      if (clubsResult.status === 'fulfilled' && Array.isArray(clubsResult.value)) {
+        setClubNames(
+          clubsResult.value.reduce<Record<number, string>>((names, club) => {
+            names[club.id] = club.name;
+            return names;
+          }, {})
+        );
+      }
+
+      setActivitiesLoading(false);
+    };
+
+    void loadActivities();
+  }, [pathname, refresh]);
+
+  const semesterShifts = useMemo(() => {
+    if (!user || !semester) {
+      return [];
+    }
+    return [...(user.shifts ?? [])]
+      .filter((shift) => isWithinSemester(shift.opening, shift.closing, semester.start, semester.end))
+      .sort(compareByOpeningDesc)
+      .map((shift) => toActivityItem(shift, clubNames));
+  }, [user, semester, clubNames]);
+
+  const semesterRequests = useMemo(() => {
+    if (!user || !semester) {
+      return [];
+    }
+    return [...(user.requests ?? [])]
+      .filter((request) => isWithinSemester(request.opening, request.closing, semester.start, semester.end))
+      .sort(compareByOpeningDesc)
+      .map((request) => toActivityItem(request, clubNames, isRequestAccepted(request) ? 'accepted' : 'pending'));
+  }, [user, semester, clubNames]);
 
   if (!user) {
     return <PageState>Profil betöltése...</PageState>;
@@ -113,15 +209,32 @@ function ProfileContent() {
           </div>
         </div>
 
-        <div className='bg-[#332C81] border-2 border-[#FF9860] rounded-xl p-4'>
-          <h2 className='text-[#FF9860] font-semibold mb-2 text-2xl tracking-wide'>Féléves tevékenységek</h2>
-          <div className='text-white'>
-            {user.shifts && user.shifts.length > 0 ? (
-              <p className='text-lg'>Ledolgozott műszakok száma: {user.shifts.length}</p>
-            ) : (
-              <p className='text-gray-300 italic'>Nincsenek még műszakjaid ebben a félévben.</p>
-            )}
-          </div>
+        <div className='bg-[#332C81] border-2 border-[#FF9860] rounded-xl p-4 space-y-5'>
+          <h2 className='text-[#FF9860] font-semibold text-2xl tracking-wide'>Féléves tevékenységek</h2>
+
+          {activitiesLoading ? (
+            <p className='text-gray-300 italic'>Tevékenységek betöltése...</p>
+          ) : activitiesError ? (
+            <p className='text-red-300'>{activitiesError}</p>
+          ) : (
+            <>
+              <div className='space-y-2'>
+                <h3 className='text-white font-semibold text-xl'>Műszakok ({semesterShifts.length})</h3>
+                <ProfileActivityList
+                  items={semesterShifts}
+                  emptyLabel='Nincsenek még műszakjaid ebben a félévben.'
+                />
+              </div>
+
+              <div className='space-y-2'>
+                <h3 className='text-white font-semibold text-xl'>Nyitási kérések ({semesterRequests.length})</h3>
+                <ProfileActivityList
+                  items={semesterRequests}
+                  emptyLabel='Nincsenek még nyitási kéréseid ebben a félévben.'
+                />
+              </div>
+            </>
+          )}
         </div>
 
         <div className='flex flex-col sm:flex-row sm:items-center gap-4 pt-2'>

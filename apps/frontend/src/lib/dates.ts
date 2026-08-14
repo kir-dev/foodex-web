@@ -59,3 +59,23 @@ export function shiftCountFromRange(opening: string, closing: string, defaultShi
   const totalHours = (end - start) / (1000 * 60 * 60);
   return Math.max(1, Math.round(totalHours / defaultShiftHours));
 }
+
+/** Same overlap rule as ShiftRepository.findOverlappingSemester: closing > start AND opening < end. */
+export function isWithinSemester(opening: string, closing: string, start: string, end: string): boolean {
+  const openingTime = parseLocalDateTime(opening).getTime();
+  const closingTime = parseLocalDateTime(closing).getTime();
+  const startTime = parseLocalDateTime(start).getTime();
+  const endTime = parseLocalDateTime(end).getTime();
+  return closingTime > startTime && openingTime < endTime;
+}
+
+export function compareByOpeningDesc(
+  a: { id: number; opening: string },
+  b: { id: number; opening: string }
+): number {
+  const byDate = parseLocalDateTime(b.opening).getTime() - parseLocalDateTime(a.opening).getTime();
+  if (byDate !== 0) {
+    return byDate;
+  }
+  return b.id - a.id;
+}
