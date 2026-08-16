@@ -3,10 +3,11 @@ package hu.kirdev.foodex.user
 import hu.kirdev.foodex.cookingclub.CookingClubDto
 import hu.kirdev.foodex.openingrequest.OpeningRequestDto
 import hu.kirdev.foodex.shift.ShiftDto
+import jakarta.validation.constraints.Size
 
 data class UpdateUserDto (
     val name: String?,
-    val nickname: String?,
+    @field:Size(max = 10) val nickname: String?,
     val email: String?,
     val favouriteQuote: String?,
     val profilePicture: String?,

@@ -137,6 +137,12 @@ export function ProfileView({ user, editable, onSaved }: ProfileViewProps) {
     setIsSaving(true);
     setSaveMessage(null);
 
+    if (nickname.length > 10) {
+      setSaveMessage({ text: 'A becenév legfeljebb 10 karakter lehet.', isError: true });
+      setIsSaving(false);
+      return;
+    }
+
     try {
       const payload: UpdateUserDto = {
         nickname: nickname || null,
@@ -194,6 +200,7 @@ export function ProfileView({ user, editable, onSaved }: ProfileViewProps) {
                       type='text'
                       className='rounded-xl px-2 py-1 w-full md:w-48 bg-white text-black placeholder-gray-300'
                       value={nickname}
+                      maxLength={10}
                       onChange={(e) => setNickname(e.target.value)}
                       placeholder='Add meg a beceneved'
                     />

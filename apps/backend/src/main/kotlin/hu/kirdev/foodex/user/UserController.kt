@@ -6,6 +6,7 @@ import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
 import io.swagger.v3.oas.annotations.responses.ApiResponses
+import jakarta.validation.Valid
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.GetMapping
@@ -102,7 +103,7 @@ class UserController(
     @PatchMapping("/{userId}")
     fun updateUser(
         @PathVariable userId: Int,
-        @RequestBody toUpdate: UpdateUserDto
+        @Valid @RequestBody toUpdate: UpdateUserDto
     ): ResponseEntity<DetailedUserDto> {
         val actor = currentUserService.requireUser()
         val user = userService.updateUser(userId, toUpdate, actor)

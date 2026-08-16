@@ -58,7 +58,12 @@ class UserService(private val userRepository: UserRepository) {
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
 
         updateTo.name?.let { user.name = it }
-        updateTo.nickname?.let { user.nickname = it }
+        updateTo.nickname?.let {
+            if (it.length > 10) {
+                throw ResponseStatusException(HttpStatus.BAD_REQUEST, "nickname must be at most 10 characters")
+            }
+            user.nickname = it
+        }
         updateTo.email?.let { user.email = it }
         updateTo.favouriteQuote?.let { user.favouriteQuote = it }
         updateTo.profilePicture?.let { user.profilePicture = it }
