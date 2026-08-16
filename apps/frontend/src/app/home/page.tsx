@@ -5,7 +5,7 @@ import { MembersContainer } from '@/components/membersContainer';
 import { OpeningsContainer } from '@/components/openingsContainer';
 import { PageState } from '@/components/page-state';
 import { apiFetch, isApiError } from '@/lib/api';
-import { formatTimeRange, formatWeekday } from '@/lib/dates';
+import { formatShortDate, formatTimeRange, formatWeekday } from '@/lib/dates';
 import { useRefetchOnPath } from '@/lib/use-refetch-on-path';
 import { HomepageDto, Role } from '@/types/api';
 import Image from 'next/image';
@@ -95,6 +95,7 @@ export default function HomePage() {
               id: openingReq.id,
               groupName: openingReq.cookingClub?.name || 'Ismeretlen kör',
               day: formatWeekday(openingReq.opening),
+              date: formatShortDate(openingReq.opening),
               time: formatTimeRange(openingReq.opening, openingReq.closing),
               location: openingReq.place || 'Nincs megadva',
             }))}
