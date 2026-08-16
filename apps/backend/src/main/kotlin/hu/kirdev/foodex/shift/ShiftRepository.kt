@@ -54,4 +54,6 @@ interface ShiftRepository : JpaRepository<ShiftEntity, Int> {
     fun findAllByOpeningRequestIdWithClub(@Param("requestId") requestId: Int): List<ShiftEntity>
 
     fun findAllByOpeningRequestId(openingRequestId: Int): List<ShiftEntity>
+
+    fun countByOpeningRequestId(openingRequestId: Int): Long
 }

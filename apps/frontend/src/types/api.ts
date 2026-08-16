@@ -131,6 +131,7 @@ export type UpdateConfigurationDto = {
 
 export type CreateShiftDto = {
   cookingClubId: number;
+  openingRequestId: number;
   maxMembers: number;
   opening: string;
   closing: string;

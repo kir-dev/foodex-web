@@ -93,10 +93,18 @@ class ShiftService(
 
     @Transactional(readOnly = false)
     fun createShift(shift: CreateShiftDto, actor: UserEntity): DetailedShiftDto {
-        val club = cookingClubRepository.findById(shift.cookingClubId)
-            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Club not found") }
+        val request = openingRequestRepository.findById(shift.openingRequestId)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Opening request not found") }
+        val club = request.cookingClub
 
         requireLeaderOrAdmin(actor, club.id)
+
+        if (shiftRepository.countByOpeningRequestId(request.id) >= MAX_SHIFTS_PER_OPENING_REQUEST) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Opening request already has the maximum of $MAX_SHIFTS_PER_OPENING_REQUEST shifts",
+            )
+        }
 
         if (!shift.opening.isBefore(shift.closing)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Closing must be after opening")
@@ -116,6 +124,7 @@ class ShiftService(
                 closing = shift.closing,
                 place = shift.place,
                 comment = shift.comment,
+                openingRequest = request,
             )
         ).let { DetailedShiftDto(it) }
     }
@@ -216,8 +225,11 @@ class ShiftService(
         if (createRequest.numberOfShifts < 1) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "numberOfShifts must be positive")
         }
-        if (createRequest.numberOfShifts > 4) {
-            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "numberOfShifts must be at most 4")
+        if (createRequest.numberOfShifts > MAX_SHIFTS_PER_OPENING_REQUEST) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "numberOfShifts must be at most $MAX_SHIFTS_PER_OPENING_REQUEST",
+            )
         }
         if (createRequest.maxMembers < 1) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be positive")
@@ -233,6 +245,14 @@ class ShiftService(
 
         if (request.isAccepted) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Opening request already accepted")
+        }
+
+        val existing = shiftRepository.countByOpeningRequestId(openingRequestId)
+        if (existing + createRequest.numberOfShifts > MAX_SHIFTS_PER_OPENING_REQUEST) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "Opening request already has the maximum of $MAX_SHIFTS_PER_OPENING_REQUEST shifts",
+            )
         }
 
         val lengthOfEachShift: Duration = Duration.between(request.opening, request.closing)
@@ -296,5 +316,9 @@ class ShiftService(
         if (!cookingClubService.isLeaderOfCookingClub(actor.id, cookingClubId)) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to modify this worker")
         }
+    }
+
+    companion object {
+        const val MAX_SHIFTS_PER_OPENING_REQUEST = 4
     }
 }

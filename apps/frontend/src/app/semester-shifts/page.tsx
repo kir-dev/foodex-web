@@ -8,13 +8,20 @@ import { StyledInput } from '@/components/styledInput';
 import { StyledLabel } from '@/components/styledLabel';
 import { TimeInput } from '@/components/timeInput';
 import { apiFetch, isApiError } from '@/lib/api';
-import { toDateInputValue, toLocalDateTimePayload, toTimeInputValue } from '@/lib/dates';
+import {
+  compareByOpeningDesc,
+  formatShortDate,
+  formatTimeRange,
+  formatWeekday,
+  toDateInputValue,
+  toLocalDateTimePayload,
+  toTimeInputValue,
+} from '@/lib/dates';
 import { shiftToRow } from '@/lib/shift-view';
 import { useRefetchOnPath } from '@/lib/use-refetch-on-path';
 import {
-  CookingClubDto,
   CreateShiftDto,
-  DetailedCookingClubDto,
+  DetailedOpeningRequestDto,
   DetailedShiftDto,
   DetailedUserDto,
   isAdmin,
@@ -42,11 +49,12 @@ export default function SemesterShiftsPage() {
 function SemesterShiftsContent() {
   const [shifts, setShifts] = useState<DetailedShiftDto[]>([]);
   const [users, setUsers] = useState<DetailedUserDto[]>([]);
-  const [clubs, setClubs] = useState<CookingClubDto[]>([]);
+  const [openingRequests, setOpeningRequests] = useState<DetailedOpeningRequestDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
+  const [openingRequestId, setOpeningRequestId] = useState<number | ''>('');
   const [cookingClubId, setCookingClubId] = useState<number | ''>('');
   const [date, setDate] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -69,14 +77,14 @@ function SemesterShiftsContent() {
   const [draftWorkers, setDraftWorkers] = useState<UserDto[]>([]);
 
   const loadData = useCallback(async (): Promise<void> => {
-    const [shiftData, userData, clubData] = await Promise.all([
+    const [shiftData, userData, requestData] = await Promise.all([
       apiFetch<DetailedShiftDto[]>('/api/semester-shifts'),
       apiFetch<DetailedUserDto[]>('/api/users'),
-      apiFetch<DetailedCookingClubDto[]>('/api/cooking-clubs'),
+      apiFetch<DetailedOpeningRequestDto[]>('/api/semester-openings'),
     ]);
     setShifts(Array.isArray(shiftData) ? shiftData : []);
     setUsers(Array.isArray(userData) ? userData : []);
-    setClubs(Array.isArray(clubData) ? clubData.map((club) => ({ id: club.id, name: club.name })) : []);
+    setOpeningRequests(Array.isArray(requestData) ? requestData : []);
   }, []);
 
   useRefetchOnPath(async () => {
@@ -91,8 +99,23 @@ function SemesterShiftsContent() {
 
   const handleCreate = async (): Promise<void> => {
     setFormMessage(null);
-    if (cookingClubId === '' || !date || !startTime || !endTime || !location.trim() || maxMembers < 1 || maxMembers > 6) {
+    if (
+      openingRequestId === '' ||
+      cookingClubId === '' ||
+      !date ||
+      !startTime ||
+      !endTime ||
+      !location.trim() ||
+      maxMembers < 1 ||
+      maxMembers > 6
+    ) {
       setFormMessage({ text: 'Kérlek tölts ki minden kötelező mezőt! A max. létszám 1 és 6 között legyen.', isError: true });
+      return;
+    }
+
+    const linkedCount = shifts.filter((shift) => shift.openingRequestId === openingRequestId).length;
+    if (linkedCount >= 4) {
+      setFormMessage({ text: 'Ehhez a nyitáshoz már 4 műszak tartozik.', isError: true });
       return;
     }
 
@@ -100,6 +123,7 @@ function SemesterShiftsContent() {
     try {
       const payload: CreateShiftDto = {
         cookingClubId: Number(cookingClubId),
+        openingRequestId: Number(openingRequestId),
         maxMembers,
         opening: toLocalDateTimePayload(date, startTime),
         closing: toLocalDateTimePayload(date, endTime),
@@ -110,6 +134,7 @@ function SemesterShiftsContent() {
         method: 'POST',
         body: payload,
       });
+      setOpeningRequestId('');
       setCookingClubId('');
       setDate('');
       setStartTime('');
@@ -124,7 +149,12 @@ function SemesterShiftsContent() {
       });
     } catch (err) {
       setFormMessage({
-        text: isApiError(err) ? err.message : 'Nem sikerült létrehozni a műszakot.',
+        text:
+          isApiError(err) && err.message.toLowerCase().includes('maximum')
+            ? 'Ehhez a nyitáshoz már 4 műszak tartozik.'
+            : isApiError(err)
+              ? err.message
+              : 'Nem sikerült létrehozni a műszakot.',
         isError: true,
       });
     } finally {
@@ -262,6 +292,25 @@ function SemesterShiftsContent() {
     return users.filter((user) => user.role !== 'GUEST' && !draftIds.has(user.id));
   }, [draftWorkers, users]);
 
+  const linkableRequests = useMemo(() => {
+    return openingRequests
+      .filter((request) => {
+        const linked = shifts.filter((shift) => shift.openingRequestId === request.id).length;
+        return linked < 4;
+      })
+      .sort(compareByOpeningDesc);
+  }, [openingRequests, shifts]);
+
+  const handleSelectOpeningRequest = (requestId: number | ''): void => {
+    setOpeningRequestId(requestId);
+    if (requestId === '') {
+      setCookingClubId('');
+      return;
+    }
+    const request = openingRequests.find((item) => item.id === requestId);
+    setCookingClubId(request?.cookingClub?.id ?? '');
+  };
+
   if (loading) {
     return <PageState>Féléves műszakok betöltése...</PageState>;
   }
@@ -274,22 +323,27 @@ function SemesterShiftsContent() {
     <main className='p-6 flex flex-col items-center gap-6 bg-white min-h-screen'>
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-6 space-y-4'>
         <h2 className='text-2xl font-bold text-[#332C81]'>Új műszak létrehozása</h2>
-        <p className='text-[#332C81]'>Közvetlen műszak (nem kérésből).</p>
+        <p className='text-[#332C81]'>A műszakot egy nyitási kéréshez kell rendelni (legfeljebb 4 műszak / nyitás).</p>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
           <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
-            <StyledLabel>Kör</StyledLabel>
+            <StyledLabel>Nyitási kérés</StyledLabel>
             <select
               className='bg-white p-2 rounded-2xl text-black text-xl mt-2 w-full'
-              value={cookingClubId}
-              onChange={(e) => setCookingClubId(e.target.value ? Number(e.target.value) : '')}
+              value={openingRequestId}
+              onChange={(e) => handleSelectOpeningRequest(e.target.value ? Number(e.target.value) : '')}
             >
-              <option value=''>Válassz kört</option>
-              {clubs.map((club) => (
-                <option key={club.id} value={club.id}>
-                  {club.name}
-                </option>
-              ))}
+              <option value=''>Válassz nyitási kérést</option>
+              {linkableRequests.map((request) => {
+                const linked = shifts.filter((shift) => shift.openingRequestId === request.id).length;
+                return (
+                  <option key={request.id} value={request.id}>
+                    {request.cookingClub?.name || `Kör #${request.cookingClub?.id ?? request.id}`} ·{' '}
+                    {formatWeekday(request.opening)} {formatShortDate(request.opening)} ·{' '}
+                    {formatTimeRange(request.opening, request.closing)} ({linked}/4)
+                  </option>
+                );
+              })}
             </select>
           </div>
           <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
@@ -304,27 +358,33 @@ function SemesterShiftsContent() {
           </div>
         </div>
 
-        <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860] flex flex-col sm:flex-row sm:flex-wrap gap-4'>
-          <div>
-            <StyledLabel>Napja</StyledLabel>
-            <StyledInput type='date' size='large' value={date} onChange={(e) => setDate(e.target.value)} />
-          </div>
-          <div>
-            <StyledLabel>Kezdés</StyledLabel>
-            <TimeInput className='text-[#ff9860]' value={startTime} onChange={setStartTime} />
-          </div>
-          <div>
-            <StyledLabel>Vége</StyledLabel>
-            <TimeInput className='text-[#ff9860]' value={endTime} onChange={setEndTime} />
-          </div>
-          <div>
-            <StyledLabel>Helye</StyledLabel>
-            <StyledInput
-              type='text'
-              placeholder='pl. 13. konyha'
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-            />
+        <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
+          <StyledLabel>Műszak</StyledLabel>
+          <div className='flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6 items-start sm:items-center w-full'>
+            <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3.5 w-full sm:w-auto'>
+              <StyledLabel>Napja:</StyledLabel>
+              <StyledInput type='date' size='large' value={date} onChange={(e) => setDate(e.target.value)} />
+            </div>
+
+            <div className='flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto'>
+              <StyledLabel>Ideje:</StyledLabel>
+              <div className='flex items-center gap-2 w-full sm:w-auto text-black'>
+                <TimeInput className='text-[#ff9860]' value={startTime} onChange={setStartTime} />
+                <span className='mx-1 text-[#ff9860] font-semibold'>–</span>
+                <TimeInput className='text-[#ff9860]' value={endTime} onChange={setEndTime} />
+              </div>
+            </div>
+
+            <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3.5 w-full sm:w-auto'>
+              <StyledLabel>Helye:</StyledLabel>
+              <StyledInput
+                type='text'
+                placeholder='pl. 13. konyha'
+                size='medium'
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+              />
+            </div>
           </div>
         </div>
 
