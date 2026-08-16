@@ -6,9 +6,10 @@ import { OpeningsContainer } from '@/components/openingsContainer';
 import { PageState } from '@/components/page-state';
 import { apiFetch, isApiError } from '@/lib/api';
 import { formatTimeRange, formatWeekday } from '@/lib/dates';
+import { useRefetchOnPath } from '@/lib/use-refetch-on-path';
 import { HomepageDto, Role } from '@/types/api';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 
 const ROLE_TITLES: Record<Role, string> = {
   ADMIN: 'admin',
@@ -26,20 +27,16 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const load = async (): Promise<void> => {
-      try {
-        const homePageData = await apiFetch<HomepageDto>('/api/homepage');
-        setData(homePageData);
-      } catch (err) {
-        setError(isApiError(err) ? err.message : 'Nem sikerült lekérni a főoldal adatait.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, []);
+  useRefetchOnPath(async () => {
+    try {
+      const homePageData = await apiFetch<HomepageDto>('/api/homepage');
+      setData(homePageData);
+    } catch (err) {
+      setError(isApiError(err) ? err.message : 'Nem sikerült lekérni a főoldal adatait.');
+    } finally {
+      setLoading(false);
+    }
+  });
 
   if (loading) {
     return <PageState>Adatok betöltése...</PageState>;

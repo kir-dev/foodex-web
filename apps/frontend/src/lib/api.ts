@@ -52,6 +52,7 @@ export async function apiFetch<T>(path: string, options: ApiFetchOptions = {}): 
   const response = await fetch(resolveApiUrl(path), {
     ...requestInit,
     method,
+    cache: 'no-store',
     credentials: 'include',
     headers,
     body: serializeBody(body),

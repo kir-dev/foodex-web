@@ -27,7 +27,7 @@ export default function RequestingPage() {
 }
 
 function RequestingContent() {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
   const [clubs, setClubs] = useState<CookingClubDto[]>([]);
   const [clubsError, setClubsError] = useState<string | null>(null);
   const [cookingClubId, setCookingClubId] = useState<number | ''>('');
@@ -88,6 +88,7 @@ function RequestingContent() {
         method: 'POST',
         body: payload,
       });
+      await refresh();
 
       setFormMessage({ text: 'Kérés sikeresen elküldve!', isError: false });
       setCookingClubId('');

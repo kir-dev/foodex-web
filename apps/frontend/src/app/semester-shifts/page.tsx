@@ -10,6 +10,7 @@ import { TimeInput } from '@/components/timeInput';
 import { apiFetch, isApiError } from '@/lib/api';
 import { toDateInputValue, toLocalDateTimePayload, toTimeInputValue } from '@/lib/dates';
 import { shiftToRow } from '@/lib/shift-view';
+import { useRefetchOnPath } from '@/lib/use-refetch-on-path';
 import {
   CookingClubDto,
   CreateShiftDto,
@@ -21,7 +22,7 @@ import {
   UpdateShiftDto,
   UserDto,
 } from '@/types/api';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 const ROLE_LABEL: Record<Role, string> = {
   ADMIN: 'admin',
@@ -78,19 +79,15 @@ function SemesterShiftsContent() {
     setClubs(Array.isArray(clubData) ? clubData.map((club) => ({ id: club.id, name: club.name })) : []);
   }, []);
 
-  useEffect(() => {
-    const load = async (): Promise<void> => {
-      try {
-        await loadData();
-      } catch (err) {
-        setError(isApiError(err) ? err.message : 'Nem sikerült betölteni a féléves műszakokat.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, [loadData]);
+  useRefetchOnPath(async () => {
+    try {
+      await loadData();
+    } catch (err) {
+      setError(isApiError(err) ? err.message : 'Nem sikerült betölteni a féléves műszakokat.');
+    } finally {
+      setLoading(false);
+    }
+  });
 
   const handleCreate = async (): Promise<void> => {
     setFormMessage(null);

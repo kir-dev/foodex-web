@@ -8,14 +8,16 @@ import { RequireAuth } from '@/components/require-auth';
 import { TimeInput } from '@/components/timeInput';
 import { apiFetch, isApiError } from '@/lib/api';
 import {
+  compareByOpeningDesc,
   formatLongDate,
   formatTime,
   toDateInputValue,
   toLocalDateTimePayload,
   toTimeInputValue,
 } from '@/lib/dates';
+import { useRefetchOnPath } from '@/lib/use-refetch-on-path';
 import { DetailedOpeningRequestDto, UpdateOpeningRequestDto } from '@/types/api';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 
 function isRequestAccepted(request: DetailedOpeningRequestDto): boolean {
   return request.accepted ?? request.isAccepted ?? false;
@@ -30,7 +32,7 @@ export default function OpeningsPage() {
 }
 
 function OpeningsContent() {
-  const { isAdminUser } = useAuth();
+  const { isAdminUser, refresh } = useAuth();
   const [openings, setOpenings] = useState<DetailedOpeningRequestDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -50,19 +52,20 @@ function OpeningsContent() {
     setOpenings(Array.isArray(data) ? data : []);
   }, []);
 
-  useEffect(() => {
-    const load = async (): Promise<void> => {
-      try {
-        await loadOpenings();
-      } catch (err) {
-        setError(isApiError(err) ? err.message : 'Nem sikerült lekérni a féléves nyitásokat.');
-      } finally {
-        setLoading(false);
-      }
-    };
+  const orderedOpenings = useMemo(
+    () => [...openings].sort(compareByOpeningDesc),
+    [openings]
+  );
 
-    void load();
-  }, [loadOpenings]);
+  useRefetchOnPath(async () => {
+    try {
+      await loadOpenings();
+    } catch (err) {
+      setError(isApiError(err) ? err.message : 'Nem sikerült lekérni a féléves nyitásokat.');
+    } finally {
+      setLoading(false);
+    }
+  });
 
   const handleOpenEdit = (request: DetailedOpeningRequestDto): void => {
     setEditingRequest(request);
@@ -124,6 +127,7 @@ function OpeningsContent() {
       if (editingRequest?.id === request.id) {
         setEditingRequest(null);
       }
+      await refresh();
       setListMessage({ text: 'Nyitás törölve.', isError: false });
     } catch (err) {
       setListMessage({
@@ -156,7 +160,7 @@ function OpeningsContent() {
           <p className='text-gray-500 text-lg pl-2'>Nincsenek nyitási kérések ebben a félévben.</p>
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-            {openings.map((request) => {
+            {orderedOpenings.map((request) => {
               const accepted = isRequestAccepted(request);
               return (
                 <div

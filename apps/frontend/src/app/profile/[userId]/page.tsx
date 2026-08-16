@@ -6,6 +6,7 @@ import { ProfileView } from '@/components/profileView';
 import { RequireAuth } from '@/components/require-auth';
 import { apiFetch, isApiError } from '@/lib/api';
 import { DetailedUserDto } from '@/types/api';
+import { useRefetchOnPath } from '@/lib/use-refetch-on-path';
 import { useParams, useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 
@@ -31,7 +32,7 @@ function OtherProfileContent() {
     }
   }, [me, router, userId]);
 
-  useEffect(() => {
+  useRefetchOnPath(async () => {
     if (!Number.isFinite(userId)) {
       setError('Érvénytelen felhasználó.');
       return;
@@ -40,17 +41,13 @@ function OtherProfileContent() {
       return;
     }
 
-    const load = async (): Promise<void> => {
-      try {
-        const data = await apiFetch<DetailedUserDto>(`/api/users/${userId}`);
-        setUser(data);
-      } catch (err) {
-        setError(isApiError(err) ? err.message : 'Nem sikerült betölteni a profilt.');
-      }
-    };
-
-    void load();
-  }, [me, userId]);
+    try {
+      const data = await apiFetch<DetailedUserDto>(`/api/users/${userId}`);
+      setUser(data);
+    } catch (err) {
+      setError(isApiError(err) ? err.message : 'Nem sikerült betölteni a profilt.');
+    }
+  });
 
   if (!Number.isFinite(userId) || error) {
     return <PageState variant='error'>{error ?? 'Érvénytelen felhasználó.'}</PageState>;

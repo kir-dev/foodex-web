@@ -8,8 +8,9 @@ import { Shift } from '@/components/ShiftTable';
 import { SubmitShiftsContainer } from '@/components/submitShiftsContainer';
 import { apiFetch, isApiError, shiftActionErrorMessage } from '@/lib/api';
 import { shiftToRow } from '@/lib/shift-view';
+import { useRefetchOnPath } from '@/lib/use-refetch-on-path';
 import { ActiveAndFullShifts, canJoinShifts, DetailedShiftDto } from '@/types/api';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export default function ShiftsPage() {
   return (
@@ -20,7 +21,7 @@ export default function ShiftsPage() {
 }
 
 function ShiftsContent() {
-  const { user } = useAuth();
+  const { user, refresh } = useAuth();
   const [data, setData] = useState<ActiveAndFullShifts | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,19 +35,15 @@ function ShiftsContent() {
     });
   }, []);
 
-  useEffect(() => {
-    const load = async (): Promise<void> => {
-      try {
-        await loadShifts();
-      } catch (err) {
-        setError(isApiError(err) ? err.message : 'Nem sikerült betölteni a műszakok adatait.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void load();
-  }, [loadShifts]);
+  useRefetchOnPath(async () => {
+    try {
+      await loadShifts();
+    } catch (err) {
+      setError(isApiError(err) ? err.message : 'Nem sikerült betölteni a műszakok adatait.');
+    } finally {
+      setLoading(false);
+    }
+  });
 
   if (loading) {
     return <PageState>Műszakok betöltése...</PageState>;
@@ -71,6 +68,7 @@ function ShiftsContent() {
     try {
       await apiFetch<DetailedShiftDto>(`/api/shifts/${shiftRow.id}/${user.id}`, { method: 'POST' });
       await loadShifts();
+      await refresh();
       setActionMessage({ text: 'Sikeres jelentkezés.', isError: false });
     } catch (err) {
       await loadShifts();
@@ -90,6 +88,7 @@ function ShiftsContent() {
     try {
       await apiFetch<DetailedShiftDto>(`/api/shifts/${shiftRow.id}/${user.id}`, { method: 'DELETE' });
       await loadShifts();
+      await refresh();
       setActionMessage({ text: 'Műszak leadva.', isError: false });
     } catch (err) {
       await loadShifts();
@@ -122,7 +121,7 @@ function ShiftsContent() {
           shifts={data.activeShifts.map(toRow)}
           onJoin={allowJoin ? (shift) => void handleJoin(shift) : undefined}
           onLeave={(shift) => void handleLeave(shift)}
-          emptyLabel='Nincs közelgő, szabad helyes műszak.'
+          emptyLabel='Nincs közelgő, szabad műszak.'
         />
       </div>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { ApprovedShiftsContainer } from '@/components/approvedShiftsContainer';
+import { useAuth } from '@/components/auth-provider';
 import Button from '@/components/button';
 import { IncomingRequestsContainer } from '@/components/incomingRequestsContainer';
 import { PageState } from '@/components/page-state';
@@ -17,6 +18,7 @@ import {
   toTimeInputValue,
 } from '@/lib/dates';
 import { requestToRow } from '@/lib/shift-view';
+import { useRefetchOnPath } from '@/lib/use-refetch-on-path';
 import {
   CreateShiftFromOpeningRequestDto,
   DetailedOpeningRequestDto,
@@ -24,7 +26,7 @@ import {
   isClubLeaderOrAdmin,
   UpdateOpeningRequestDto,
 } from '@/types/api';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 
 export default function RequestsPage() {
   return (
@@ -35,6 +37,7 @@ export default function RequestsPage() {
 }
 
 function RequestsContent() {
+  const { refresh } = useAuth();
   const [requests, setRequests] = useState<DetailedOpeningRequestDto[]>([]);
   const [acceptedRequests, setAcceptedRequests] = useState<DetailedOpeningRequestDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -63,19 +66,15 @@ function RequestsContent() {
     setAcceptedRequests(Array.isArray(acceptedData) ? acceptedData : []);
   }, []);
 
-  useEffect(() => {
-    const fetchData = async (): Promise<void> => {
-      try {
-        await loadData();
-      } catch (err) {
-        setError(isApiError(err) ? err.message : 'Nem sikerült betölteni a kéréseket.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    void fetchData();
-  }, [loadData]);
+  useRefetchOnPath(async () => {
+    try {
+      await loadData();
+    } catch (err) {
+      setError(isApiError(err) ? err.message : 'Nem sikerült betölteni a kéréseket.');
+    } finally {
+      setLoading(false);
+    }
+  });
 
   const findRequest = (requestId: number): DetailedOpeningRequestDto | undefined =>
     requests.find((item) => item.id === requestId) ?? acceptedRequests.find((item) => item.id === requestId);
@@ -120,6 +119,7 @@ function RequestsContent() {
       setRequests((prev) => prev.filter((req) => req.id !== acceptingRequest.id));
       setAcceptedRequests((prev) => [...prev, { ...acceptingRequest, accepted: true, isAccepted: true }]);
       setAcceptingRequest(null);
+      await refresh();
       setActionMessage({ text: 'Kérés elfogadva, műszakok létrehozva.', isError: false });
     } catch (err) {
       setActionMessage({
@@ -143,6 +143,7 @@ function RequestsContent() {
         parseJson: false,
       });
       setRequests((prev) => prev.filter((req) => req.id !== requestId));
+      await refresh();
       setActionMessage({ text: 'Kérés elutasítva.', isError: false });
     } catch (err) {
       setActionMessage({
@@ -212,6 +213,7 @@ function RequestsContent() {
       if (editingRequest?.id === row.id) {
         setEditingRequest(null);
       }
+      await refresh();
       setActionMessage({ text: 'Kérés törölve.', isError: false });
     } catch (err) {
       setActionMessage({
