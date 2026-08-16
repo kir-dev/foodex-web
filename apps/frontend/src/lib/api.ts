@@ -181,6 +181,9 @@ export function shiftActionErrorMessage(error: unknown, action: 'join' | 'leave'
   if (raw.includes('guests cannot')) {
     return 'Vendégként nem jelentkezhetsz műszakra.';
   }
+  if (raw.includes('already started')) {
+    return 'Folyamatban lévő műszakra nem lehet jelentkezni.';
+  }
   if (error.status === 409 || raw === 'conflict') {
     return action === 'join'
       ? 'Nem sikerült jelentkezni: már fel vagy véve, vagy nincs hely a szerepednek.'

@@ -6,6 +6,7 @@ import { IncomingRequestsContainer } from '@/components/incomingRequestsContaine
 import { PageState } from '@/components/page-state';
 import { RequireAuth } from '@/components/require-auth';
 import { Shift } from '@/components/ShiftTable';
+import { TimeInput } from '@/components/timeInput';
 import { apiFetch, isApiError } from '@/lib/api';
 import {
   formatLongDate,
@@ -15,20 +16,19 @@ import {
   toLocalDateTimePayload,
   toTimeInputValue,
 } from '@/lib/dates';
-import { requestToRow, shiftToRow } from '@/lib/shift-view';
+import { requestToRow } from '@/lib/shift-view';
 import {
   CreateShiftFromOpeningRequestDto,
   DetailedOpeningRequestDto,
   DetailedShiftDto,
   isClubLeaderOrAdmin,
   UpdateOpeningRequestDto,
-  UpdateShiftDto,
 } from '@/types/api';
 import { useCallback, useEffect, useState } from 'react';
 
 export default function RequestsPage() {
   return (
-    <RequireAuth allow={isClubLeaderOrAdmin} loadingLabel='Kérések és műszakok betöltése...'>
+    <RequireAuth allow={isClubLeaderOrAdmin} loadingLabel='Kérések betöltése...'>
       <RequestsContent />
     </RequireAuth>
   );
@@ -36,17 +36,10 @@ export default function RequestsPage() {
 
 function RequestsContent() {
   const [requests, setRequests] = useState<DetailedOpeningRequestDto[]>([]);
-  const [acceptedShifts, setAcceptedShifts] = useState<DetailedShiftDto[]>([]);
+  const [acceptedRequests, setAcceptedRequests] = useState<DetailedOpeningRequestDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<{ text: string; isError: boolean } | null>(null);
-
-  const [editingShift, setEditingShift] = useState<DetailedShiftDto | null>(null);
-  const [editMaxMembers, setEditMaxMembers] = useState(20);
-  const [editPlace, setEditPlace] = useState('');
-  const [editComment, setEditComment] = useState('');
-  const [isSavingShift, setIsSavingShift] = useState(false);
-  const [defaultMaxMembers, setDefaultMaxMembers] = useState(20);
 
   const [editingRequest, setEditingRequest] = useState<DetailedOpeningRequestDto | null>(null);
   const [editRequestDate, setEditRequestDate] = useState('');
@@ -62,12 +55,12 @@ function RequestsContent() {
   const [isAccepting, setIsAccepting] = useState(false);
 
   const loadData = useCallback(async (): Promise<void> => {
-    const [requestsData, openingsData] = await Promise.all([
+    const [requestsData, acceptedData] = await Promise.all([
       apiFetch<DetailedOpeningRequestDto[]>('/api/incoming-requests'),
-      apiFetch<DetailedShiftDto[]>('/api/openings'),
+      apiFetch<DetailedOpeningRequestDto[]>('/api/accepted-requests'),
     ]);
     setRequests(Array.isArray(requestsData) ? requestsData : []);
-    setAcceptedShifts(Array.isArray(openingsData) ? openingsData : []);
+    setAcceptedRequests(Array.isArray(acceptedData) ? acceptedData : []);
   }, []);
 
   useEffect(() => {
@@ -84,13 +77,16 @@ function RequestsContent() {
     void fetchData();
   }, [loadData]);
 
+  const findRequest = (requestId: number): DetailedOpeningRequestDto | undefined =>
+    requests.find((item) => item.id === requestId) ?? acceptedRequests.find((item) => item.id === requestId);
+
   const handleOpenAccept = (requestId: number): void => {
     const request = requests.find((item) => item.id === requestId);
     if (!request) {
       return;
     }
     setAcceptingRequest(request);
-    setAcceptShiftCount(shiftCountFromRange(request.opening, request.closing));
+    setAcceptShiftCount(Math.min(4, shiftCountFromRange(request.opening, request.closing)));
     setAcceptMaxMembers(20);
     setActionMessage(null);
   };
@@ -99,8 +95,8 @@ function RequestsContent() {
     if (!acceptingRequest) {
       return;
     }
-    if (!Number.isFinite(acceptShiftCount) || acceptShiftCount < 1) {
-      setActionMessage({ text: 'A műszakok száma legalább 1 legyen.', isError: true });
+    if (!Number.isFinite(acceptShiftCount) || acceptShiftCount < 1 || acceptShiftCount > 4) {
+      setActionMessage({ text: 'A műszakok száma 1 és 4 között legyen.', isError: true });
       return;
     }
     if (!Number.isFinite(acceptMaxMembers) || acceptMaxMembers < 1) {
@@ -116,13 +112,13 @@ function RequestsContent() {
         numberOfShifts: Math.floor(acceptShiftCount),
       };
 
-      const newShifts = await apiFetch<DetailedShiftDto[]>(`/api/requests/${acceptingRequest.id}`, {
+      await apiFetch<DetailedShiftDto[]>(`/api/requests/${acceptingRequest.id}`, {
         method: 'POST',
         body: payload,
       });
 
       setRequests((prev) => prev.filter((req) => req.id !== acceptingRequest.id));
-      setAcceptedShifts((prev) => [...prev, ...(Array.isArray(newShifts) ? newShifts : [])]);
+      setAcceptedRequests((prev) => [...prev, { ...acceptingRequest, accepted: true, isAccepted: true }]);
       setAcceptingRequest(null);
       setActionMessage({ text: 'Kérés elfogadva, műszakok létrehozva.', isError: false });
     } catch (err) {
@@ -157,7 +153,7 @@ function RequestsContent() {
   };
 
   const handleOpenRequestEdit = (requestId: number): void => {
-    const request = requests.find((item) => item.id === requestId);
+    const request = findRequest(requestId);
     if (!request) {
       return;
     }
@@ -167,6 +163,7 @@ function RequestsContent() {
     setEditRequestEnd(toTimeInputValue(request.closing));
     setEditRequestPlace(request.place);
     setEditRequestDescription(request.description);
+    setActionMessage(null);
   };
 
   const handleSaveRequest = async (): Promise<void> => {
@@ -187,6 +184,7 @@ function RequestsContent() {
         body: payload,
       });
       setRequests((prev) => prev.map((req) => (req.id === updated.id ? updated : req)));
+      setAcceptedRequests((prev) => prev.map((req) => (req.id === updated.id ? updated : req)));
       setEditingRequest(null);
       setActionMessage({ text: 'Kérés módosítva.', isError: false });
     } catch (err) {
@@ -199,62 +197,22 @@ function RequestsContent() {
     }
   };
 
-  const handleOpenEditModal = (shiftRow: Shift): void => {
-    const fullShift = acceptedShifts.find((shift) => shift.id === shiftRow.id);
-    if (!fullShift) {
-      return;
-    }
-
-    setEditingShift(fullShift);
-    setEditMaxMembers(fullShift.maxMembers || 20);
-    setEditPlace(fullShift.place || '');
-    setEditComment(fullShift.comment || '');
-  };
-
-  const handleSaveShift = async (): Promise<void> => {
-    if (!editingShift) {
-      return;
-    }
-
-    setIsSavingShift(true);
-    setActionMessage(null);
-    try {
-      const payload: UpdateShiftDto = {
-        maxMembers: editMaxMembers,
-        place: editPlace,
-        comment: editComment,
-      };
-      const updatedShift = await apiFetch<DetailedShiftDto>(`/api/openings/${editingShift.id}`, {
-        method: 'PATCH',
-        body: payload,
-      });
-
-      setAcceptedShifts((prev) => prev.map((shift) => (shift.id === updatedShift.id ? updatedShift : shift)));
-      setEditingShift(null);
-      setActionMessage({ text: 'Műszak mentve.', isError: false });
-    } catch (err) {
-      setActionMessage({
-        text: isApiError(err) ? err.message : 'Hiba a mentés során.',
-        isError: true,
-      });
-    } finally {
-      setIsSavingShift(false);
-    }
-  };
-
-  const handleDeleteShift = async (shiftRow: Shift): Promise<void> => {
-    if (!confirm('Biztosan törölni szeretnéd ezt a műszakot?')) {
+  const handleDeleteAcceptedRequest = async (row: Shift): Promise<void> => {
+    if (!confirm('Biztosan törölni szeretnéd ezt a nyitást? A hozzá tartozó műszakok is törlődnek.')) {
       return;
     }
 
     setActionMessage(null);
     try {
-      await apiFetch<void>(`/api/openings/${shiftRow.id}`, {
+      await apiFetch<void>(`/api/incoming-requests/${row.id}`, {
         method: 'DELETE',
         parseJson: false,
       });
-      setAcceptedShifts((prev) => prev.filter((shift) => shift.id !== shiftRow.id));
-      setActionMessage({ text: 'Műszak törölve.', isError: false });
+      setAcceptedRequests((prev) => prev.filter((request) => request.id !== row.id));
+      if (editingRequest?.id === row.id) {
+        setEditingRequest(null);
+      }
+      setActionMessage({ text: 'Kérés törölve.', isError: false });
     } catch (err) {
       setActionMessage({
         text: isApiError(err) ? err.message : 'Hiba a törlés során.',
@@ -264,7 +222,7 @@ function RequestsContent() {
   };
 
   if (loading) {
-    return <PageState>Kérések és műszakok betöltése...</PageState>;
+    return <PageState>Kérések betöltése...</PageState>;
   }
 
   if (error) {
@@ -273,23 +231,15 @@ function RequestsContent() {
 
   return (
     <main className='p-6 flex flex-col items-center gap-6 bg-white min-h-screen'>
-      <div className='w-full max-w-5xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3'>
-        <label className='font-semibold text-[#332C81] flex items-center gap-2'>
-          Alapértelmezett max. létszám:
-          <input
-            type='number'
-            min={1}
-            className='border-2 border-gray-300 rounded-lg p-2 text-black w-24'
-            value={defaultMaxMembers}
-            onChange={(e) => setDefaultMaxMembers(Number(e.target.value))}
-          />
-        </label>
-        {actionMessage && (
-          <span className={`text-lg font-medium ${actionMessage.isError ? 'text-red-500' : 'text-green-600'}`}>
-            {actionMessage.text}
-          </span>
-        )}
-      </div>
+      {actionMessage && (
+        <span
+          className={`w-full max-w-5xl text-lg font-medium ${
+            actionMessage.isError ? 'text-red-500' : 'text-green-600'
+          }`}
+        >
+          {actionMessage.text}
+        </span>
+      )}
 
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
         <h3 className='text-2xl font-bold text-[#332C81] pl-3 mb-2'>Bejövő kérések</h3>
@@ -302,11 +252,11 @@ function RequestsContent() {
       </div>
 
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
-        <h3 className='text-2xl font-bold text-[#332C81] pl-3 mb-2'>Elfogadott műszakok</h3>
+        <h3 className='text-2xl font-bold text-[#332C81] pl-3 mb-2'>Elfogadott kérések</h3>
         <ApprovedShiftsContainer
-          shifts={acceptedShifts.map((shift) => shiftToRow(shift))}
-          onEdit={handleOpenEditModal}
-          onDelete={(shift) => void handleDeleteShift(shift)}
+          shifts={acceptedRequests.map(requestToRow)}
+          onEdit={(row) => handleOpenRequestEdit(row.id)}
+          onDelete={(row) => void handleDeleteAcceptedRequest(row)}
         />
       </div>
 
@@ -316,13 +266,15 @@ function RequestsContent() {
             <h4 className='text-2xl font-bold text-[#332C81]'>Kérés elfogadása</h4>
             <p className='text-gray-600 font-medium'>{acceptingRequest.cookingClub?.name}</p>
             <p className='text-gray-600'>
-              {formatLongDate(acceptingRequest.opening)} · {formatTimeRange(acceptingRequest.opening, acceptingRequest.closing)}
+              {formatLongDate(acceptingRequest.opening)} ·{' '}
+              {formatTimeRange(acceptingRequest.opening, acceptingRequest.closing)}
             </p>
             <div className='flex flex-col gap-1'>
               <label className='font-semibold text-[#332C81]'>Műszakok száma:</label>
               <input
                 type='number'
                 min={1}
+                max={4}
                 className='border-2 border-gray-300 rounded-lg p-2 text-black'
                 value={acceptShiftCount}
                 onChange={(e) => setAcceptShiftCount(Number(e.target.value))}
@@ -374,21 +326,11 @@ function RequestsContent() {
             <div className='flex gap-3'>
               <div className='flex flex-col gap-1 flex-1'>
                 <label className='font-semibold text-[#332C81]'>Kezdés:</label>
-                <input
-                  type='time'
-                  className='border-2 border-gray-300 rounded-lg p-2 text-black'
-                  value={editRequestStart}
-                  onChange={(e) => setEditRequestStart(e.target.value)}
-                />
+                <TimeInput value={editRequestStart} onChange={setEditRequestStart} />
               </div>
               <div className='flex flex-col gap-1 flex-1'>
                 <label className='font-semibold text-[#332C81]'>Vége:</label>
-                <input
-                  type='time'
-                  className='border-2 border-gray-300 rounded-lg p-2 text-black'
-                  value={editRequestEnd}
-                  onChange={(e) => setEditRequestEnd(e.target.value)}
-                />
+                <TimeInput value={editRequestEnd} onChange={setEditRequestEnd} />
               </div>
             </div>
             <div className='flex flex-col gap-1'>
@@ -420,61 +362,6 @@ function RequestsContent() {
                 variant='primary'
                 onClick={() => void handleSaveRequest()}
                 disabled={isSavingRequest}
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {editingShift && (
-        <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
-          <div className='bg-white rounded-xl border-2 border-[#332C81] p-6 max-w-md w-full space-y-4 shadow-xl'>
-            <h4 className='text-2xl font-bold text-[#332C81]'>Műszak módosítása</h4>
-            <p className='text-gray-600 font-medium'>
-              {editingShift.cookingClub?.name} – {new Date(editingShift.opening).toLocaleDateString('hu-HU')}
-            </p>
-
-            <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Max. létszám:</label>
-              <input
-                type='number'
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
-                value={editMaxMembers}
-                onChange={(e) => setEditMaxMembers(Number(e.target.value))}
-              />
-            </div>
-
-            <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Helyszín:</label>
-              <input
-                type='text'
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
-                value={editPlace}
-                onChange={(e) => setEditPlace(e.target.value)}
-              />
-            </div>
-
-            <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Megjegyzés:</label>
-              <textarea
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
-                value={editComment}
-                onChange={(e) => setEditComment(e.target.value)}
-              />
-            </div>
-
-            <div className='flex justify-end gap-3 pt-2'>
-              <Button
-                label='Mégse'
-                variant='secondary'
-                onClick={() => setEditingShift(null)}
-                disabled={isSavingShift}
-              />
-              <Button
-                label={isSavingShift ? 'Mentés...' : 'Mentés'}
-                variant='primary'
-                onClick={() => void handleSaveShift()}
-                disabled={isSavingShift}
               />
             </div>
           </div>

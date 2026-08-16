@@ -1,5 +1,12 @@
 'use client';
 
+import { UserNameLink } from '@/components/userNameLink';
+
+export type ShiftWorker = {
+  id: number;
+  nickname: string;
+};
+
 export type Shift = {
   id: number;
   groupName: string;
@@ -8,7 +15,7 @@ export type Shift = {
   location: string;
   date: string;
   occupancy?: string;
-  names?: string;
+  workers?: ShiftWorker[];
   joined?: boolean;
   canJoin?: boolean;
   canLeave?: boolean;
@@ -43,8 +50,8 @@ export function ShiftTable({
             key={shift.id}
             className={`grid grid-cols-1 ${
               showNamesColumn
-                ? 'sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_1.4fr_auto]'
-                : 'sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto]'
+                ? 'sm:grid-cols-[1fr_1fr_1fr_1fr_1.6fr_auto]'
+                : 'sm:grid-cols-[1fr_1fr_1fr_1fr_auto]'
             } items-center bg-[#332C81] text-[#FF9860] font-semibold text-base sm:text-lg rounded-xl w-full ${
               shift.joined ? 'ring-2 ring-[#FF9860]' : ''
             }`}
@@ -57,15 +64,26 @@ export function ShiftTable({
                 </span>
               )}
             </span>
-            <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full'>{shift.day}</span>
+            <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full'>
+              <span className='block'>{shift.day}</span>
+              <span className='block text-sm font-medium text-white'>{shift.date}</span>
+            </span>
             <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full'>{shift.time}</span>
             <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full'>{shift.location}</span>
-            <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full'>{shift.date}</span>
 
             {showNamesColumn && (
               <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full text-sm sm:text-base font-medium text-white'>
                 {shift.occupancy && <span className='block text-[#FF9860]'>{shift.occupancy}</span>}
-                <span className='italic font-normal'>{shift.names}</span>
+                <span className='italic font-normal'>
+                  {shift.workers && shift.workers.length > 0
+                    ? shift.workers.map((worker, index) => (
+                        <span key={worker.id}>
+                          {index > 0 ? ', ' : ''}
+                          <UserNameLink userId={worker.id}>{worker.nickname}</UserNameLink>
+                        </span>
+                      ))
+                    : 'Még senki'}
+                </span>
               </span>
             )}
 

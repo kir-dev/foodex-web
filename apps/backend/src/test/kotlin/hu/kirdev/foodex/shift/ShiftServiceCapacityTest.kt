@@ -4,6 +4,7 @@ import hu.kirdev.foodex.config.ConfigurationService
 import hu.kirdev.foodex.cookingclub.CookingClubEntity
 import hu.kirdev.foodex.cookingclub.CookingClubRepository
 import hu.kirdev.foodex.cookingclub.CookingClubService
+import hu.kirdev.foodex.openingrequest.OpeningRequestEntity
 import hu.kirdev.foodex.openingrequest.OpeningRequestRepository
 import hu.kirdev.foodex.openingrequest.OpeningRequestService
 import hu.kirdev.foodex.user.Role
@@ -11,6 +12,8 @@ import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.user.UserRepository
 import io.mockk.every
 import io.mockk.mockk
+import io.mockk.slot
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertFalse
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.jupiter.api.BeforeEach
@@ -122,7 +125,7 @@ class ShiftServiceCapacityTest {
     fun `addWorkerToShift admin can add member when capacity is full`() {
         val admin = user(1, Role.ADMIN)
         val newMember = user(3, Role.MEMBER)
-        val shift = shift(
+        val shift = happeningShift(
             maxMembers = 1,
             workers = mutableListOf(user(2, Role.MEMBER)),
         )
@@ -149,15 +152,125 @@ class ShiftServiceCapacityTest {
         assertTrue(ex.statusCode == HttpStatus.CONFLICT)
     }
 
-    private fun shift(maxMembers: Int, workers: MutableList<UserEntity>) = ShiftEntity(
-        id = 1,
+    @Test
+    fun `addWorkerToShift rejects non-admin after shift started`() {
+        val member = user(3, Role.MEMBER)
+        val actor = user(3, Role.MEMBER)
+        val shift = happeningShift(maxMembers = 5, workers = mutableListOf())
+        every { userRepository.findById(3) } returns Optional.of(member)
+        every { shiftRepository.findById(1) } returns Optional.of(shift)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.addWorkerToShift(3, 1, actor)
+        }
+        assertEquals(HttpStatus.CONFLICT, ex.statusCode)
+    }
+
+    @Test
+    fun `createShiftsFromOpeningRequest rejects more than 4 shifts`() {
+        val admin = user(1, Role.ADMIN)
+        val request = openingRequest(admin)
+        every { openingRequestRepository.findById(10) } returns Optional.of(request)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.createShiftsFromOpeningRequest(
+                10,
+                CreateShiftFromOpeningRequestDto(maxMembers = 4, numberOfShifts = 5),
+                admin,
+            )
+        }
+        assertEquals(HttpStatus.BAD_REQUEST, ex.statusCode)
+    }
+
+    @Test
+    fun `createShiftsFromOpeningRequest sets openingRequest on each shift`() {
+        val admin = user(1, Role.ADMIN)
+        val request = openingRequest(admin)
+        every { openingRequestRepository.findById(10) } returns Optional.of(request)
+        every { cookingClubService.isLeaderOfCookingClub(1, 403) } returns true
+        val saved = slot<ShiftEntity>()
+        every { shiftRepository.save(capture(saved)) } answers {
+            saved.captured.copy(id = 99)
+        }
+        every { openingRequestService.acceptOpeningRequest(10, admin) } returns mockk()
+
+        val result = service.createShiftsFromOpeningRequest(
+            10,
+            CreateShiftFromOpeningRequestDto(maxMembers = 4, numberOfShifts = 2),
+            admin,
+        )
+
+        assertEquals(2, result.size)
+        assertEquals(10, saved.captured.openingRequest?.id)
+    }
+
+    @Test
+    fun `getUpcomingActiveAndFullShifts splits by member slot and start time`() {
+        val notStartedOpen = shift(
+            maxMembers = 2,
+            workers = mutableListOf(user(1, Role.MEMBER)),
+        )
+        val notStartedMemberFull = shift(
+            id = 2,
+            maxMembers = 1,
+            workers = mutableListOf(user(1, Role.MEMBER)),
+        )
+        val happeningOpen = happeningShift(
+            id = 3,
+            maxMembers = 4,
+            workers = mutableListOf(user(1, Role.MEMBER)),
+        )
+        val nowSlot = slot<LocalDateTime>()
+        every { shiftRepository.findUpcomingWithClub(capture(nowSlot)) } returns listOf(
+            notStartedOpen,
+            notStartedMemberFull,
+            happeningOpen,
+        )
+
+        val result = service.getUpcomingActiveAndFullShifts()
+
+        assertEquals(listOf(1), result.activeShifts.map { it.id })
+        assertEquals(listOf(2, 3), result.fullShifts.map { it.id })
+    }
+
+    private fun shift(
+        id: Int = 1,
+        maxMembers: Int,
+        workers: MutableList<UserEntity>,
+        opening: LocalDateTime = now.plusHours(2),
+        closing: LocalDateTime = now.plusHours(4),
+    ) = ShiftEntity(
+        id = id,
         cookingClub = club,
         maxMembers = maxMembers,
-        opening = now.minusHours(1),
-        closing = now.plusHours(2),
+        opening = opening,
+        closing = closing,
         place = "kitchen",
         comment = "",
         workers = workers,
+    )
+
+    private fun happeningShift(
+        id: Int = 1,
+        maxMembers: Int,
+        workers: MutableList<UserEntity>,
+    ) = shift(
+        id = id,
+        maxMembers = maxMembers,
+        workers = workers,
+        opening = now.minusHours(1),
+        closing = now.plusHours(2),
+    )
+
+    private fun openingRequest(owner: UserEntity) = OpeningRequestEntity(
+        id = 10,
+        isAccepted = false,
+        user = owner,
+        cookingClub = club,
+        opening = now.plusHours(2),
+        closing = now.plusHours(6),
+        place = "kitchen",
+        description = "desc",
     )
 
     private fun user(id: Int, role: Role) = UserEntity(

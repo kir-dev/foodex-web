@@ -3,6 +3,7 @@
 import { PageState } from '@/components/page-state';
 import { RequireAuth } from '@/components/require-auth';
 import { StyledInput } from '@/components/styledInput';
+import { UserNameLink } from '@/components/userNameLink';
 import { apiFetch, isApiError } from '@/lib/api';
 import { DetailedUserDto, isAdmin } from '@/types/api';
 import { useEffect, useMemo, useState } from 'react';
@@ -67,6 +68,7 @@ function UsersContent() {
           placeholder='Keresés név, becenév, email vagy szerep szerint...'
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          className='border-2 border-[#332C81]'
         />
 
         <div className='flex flex-col gap-3'>
@@ -77,7 +79,10 @@ function UsersContent() {
               <div key={user.id} className='border-2 border-[#332C81] rounded-xl p-3'>
                 <div className='flex flex-col sm:flex-row sm:justify-between gap-1'>
                   <p className='text-xl font-semibold text-[#332C81]'>
-                    {user.name} <span className='font-normal text-gray-600'>({user.nickname})</span>
+                    <UserNameLink userId={user.id}>{user.name}</UserNameLink>{' '}
+                    <span className='font-normal text-gray-600'>
+                      (<UserNameLink userId={user.id}>{user.nickname}</UserNameLink>)
+                    </span>
                   </p>
                   <span className='text-sm font-bold text-[#FF9860]'>{user.role}</span>
                 </div>

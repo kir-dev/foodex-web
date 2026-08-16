@@ -31,6 +31,34 @@ interface OpeningRequestRepository : JpaRepository<OpeningRequestEntity, Int> {
         SELECT r FROM OpeningRequestEntity r
         JOIN FETCH r.user
         JOIN FETCH r.cookingClub
+        WHERE r.isAccepted = :accepted AND r.closing > :now
+        ORDER BY r.opening
+        """
+    )
+    fun findCurrentOrUpcomingByAccepted(
+        @Param("accepted") accepted: Boolean,
+        @Param("now") now: LocalDateTime,
+    ): List<OpeningRequestEntity>
+
+    @Query(
+        """
+        SELECT r FROM OpeningRequestEntity r
+        JOIN FETCH r.user
+        JOIN FETCH r.cookingClub
+        WHERE r.closing > :start AND r.opening < :end
+        ORDER BY r.opening
+        """
+    )
+    fun findOverlappingSemester(
+        @Param("start") start: LocalDateTime,
+        @Param("end") end: LocalDateTime,
+    ): List<OpeningRequestEntity>
+
+    @Query(
+        """
+        SELECT r FROM OpeningRequestEntity r
+        JOIN FETCH r.user
+        JOIN FETCH r.cookingClub
         WHERE r.id = :id
         """
     )

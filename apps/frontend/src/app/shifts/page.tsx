@@ -60,10 +60,6 @@ function ShiftsContent() {
     return null;
   }
 
-  const now = new Date();
-  const filteredActiveShifts = data.activeShifts.filter((shift) => new Date(shift.opening) > now);
-  const inProgressActiveShifts = data.activeShifts.filter((shift) => new Date(shift.opening) <= now);
-  const combinedFullAndInProgressShifts = [...inProgressActiveShifts, ...data.fullShifts];
   const allowJoin = canJoinShifts(user);
   const toRow = (shift: DetailedShiftDto): Shift => shiftToRow(shift, user);
 
@@ -114,11 +110,6 @@ function ShiftsContent() {
         </p>
       )}
 
-      <p className='w-full max-w-5xl text-[#332C81]'>
-        A <span className='font-semibold'>Jelentkezés</span> gomb csak akkor jelenik meg, ha van hely a szerepednek. A{' '}
-        <span className='font-semibold'>Leadás</span> gomb csak a saját műszakjaidon látszik. A narancssárga keret és a
-        „Jelentkeztél” címke mutatja, ha már fel vagy véve.
-      </p>
       {user.role === 'NEWBIE' && (
         <p className='w-full max-w-5xl text-[#332C81]'>
           Újoncként akkor tudsz jelentkezni, ha már van legalább egy tag a műszakban, és kevesebb újonc van, mint tag.
@@ -128,7 +119,7 @@ function ShiftsContent() {
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
         <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Aktív műszakok</h3>
         <ActiveShiftsContainer
-          shifts={filteredActiveShifts.map(toRow)}
+          shifts={data.activeShifts.map(toRow)}
           onJoin={allowJoin ? (shift) => void handleJoin(shift) : undefined}
           onLeave={(shift) => void handleLeave(shift)}
           emptyLabel='Nincs közelgő, szabad helyes műszak.'
@@ -138,7 +129,8 @@ function ShiftsContent() {
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
         <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Betelt és folyamatban lévő műszakok</h3>
         <SubmitShiftsContainer
-          shifts={combinedFullAndInProgressShifts.map(toRow)}
+          shifts={data.fullShifts.map(toRow)}
+          onJoin={allowJoin ? (shift) => void handleJoin(shift) : undefined}
           onLeave={(shift) => void handleLeave(shift)}
           emptyLabel='Nincs betelt vagy folyamatban lévő műszak.'
         />

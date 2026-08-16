@@ -6,6 +6,7 @@ import { RequireAuth } from '@/components/require-auth';
 import { Shift, ShiftTable } from '@/components/ShiftTable';
 import { StyledInput } from '@/components/styledInput';
 import { StyledLabel } from '@/components/styledLabel';
+import { TimeInput } from '@/components/timeInput';
 import { apiFetch, isApiError } from '@/lib/api';
 import { toDateInputValue, toLocalDateTimePayload, toTimeInputValue } from '@/lib/dates';
 import { shiftToRow } from '@/lib/shift-view';
@@ -68,7 +69,7 @@ function SemesterShiftsContent() {
 
   const loadData = useCallback(async (): Promise<void> => {
     const [shiftData, userData, clubData] = await Promise.all([
-      apiFetch<DetailedShiftDto[]>('/api/openings'),
+      apiFetch<DetailedShiftDto[]>('/api/semester-shifts'),
       apiFetch<DetailedUserDto[]>('/api/users'),
       apiFetch<DetailedCookingClubDto[]>('/api/cooking-clubs'),
     ]);
@@ -108,7 +109,7 @@ function SemesterShiftsContent() {
         place: location.trim(),
         comment: comment.trim(),
       };
-      await apiFetch<DetailedShiftDto>('/api/openings', {
+      await apiFetch<DetailedShiftDto>('/api/semester-shifts', {
         method: 'POST',
         body: payload,
       });
@@ -199,7 +200,7 @@ function SemesterShiftsContent() {
         place: editPlace.trim(),
         comment: editComment.trim(),
       };
-      latest = await apiFetch<DetailedShiftDto>(`/api/openings/${editingShift.id}`, {
+      latest = await apiFetch<DetailedShiftDto>(`/api/semester-shifts/${editingShift.id}`, {
         method: 'PATCH',
         body: payload,
       });
@@ -223,7 +224,7 @@ function SemesterShiftsContent() {
 
     setActionMessage(null);
     try {
-      await apiFetch<void>(`/api/openings/${shiftRow.id}`, {
+      await apiFetch<void>(`/api/semester-shifts/${shiftRow.id}`, {
         method: 'DELETE',
         parseJson: false,
       });
@@ -312,11 +313,11 @@ function SemesterShiftsContent() {
           </div>
           <div>
             <StyledLabel>Kezdés</StyledLabel>
-            <StyledInput type='time' step={900} value={startTime} onChange={(e) => setStartTime(e.target.value)} />
+            <TimeInput value={startTime} onChange={setStartTime} />
           </div>
           <div>
             <StyledLabel>Vége</StyledLabel>
-            <StyledInput type='time' step={900} value={endTime} onChange={(e) => setEndTime(e.target.value)} />
+            <TimeInput value={endTime} onChange={setEndTime} />
           </div>
           <div>
             <StyledLabel>Helye</StyledLabel>
@@ -391,21 +392,11 @@ function SemesterShiftsContent() {
             <div className='flex gap-3'>
               <div className='flex flex-col gap-1 flex-1'>
                 <label className='font-semibold text-[#332C81]'>Kezdés:</label>
-                <input
-                  type='time'
-                  className='border-2 border-gray-300 rounded-lg p-2 text-black'
-                  value={editStartTime}
-                  onChange={(e) => setEditStartTime(e.target.value)}
-                />
+                <TimeInput value={editStartTime} onChange={setEditStartTime} />
               </div>
               <div className='flex flex-col gap-1 flex-1'>
                 <label className='font-semibold text-[#332C81]'>Vége:</label>
-                <input
-                  type='time'
-                  className='border-2 border-gray-300 rounded-lg p-2 text-black'
-                  value={editEndTime}
-                  onChange={(e) => setEditEndTime(e.target.value)}
-                />
+                <TimeInput value={editEndTime} onChange={setEditEndTime} />
               </div>
             </div>
             <div className='flex flex-col gap-1'>

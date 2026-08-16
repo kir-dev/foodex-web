@@ -6,6 +6,7 @@ export type ProfileActivityItem = {
   location: string;
   date: string;
   status?: 'accepted' | 'pending';
+  onShowShifts?: () => void;
 };
 
 type ProfileActivityListProps = {
@@ -15,7 +16,7 @@ type ProfileActivityListProps = {
 
 const STATUS_LABEL: Record<NonNullable<ProfileActivityItem['status']>, string> = {
   accepted: 'Elfogadva',
-  pending: 'Folyamatban',
+  pending: 'Függőben',
 };
 
 export function ProfileActivityList({ items, emptyLabel }: ProfileActivityListProps) {
@@ -35,15 +36,26 @@ export function ProfileActivityList({ items, emptyLabel }: ProfileActivityListPr
           <span>{item.time}</span>
           <span className='italic'>{item.location}</span>
           <span>{item.date}</span>
-          {item.status && (
-            <span
-              className={`justify-self-start sm:justify-self-end text-xs font-bold px-2 py-0.5 rounded-full ${
-                item.status === 'accepted' ? 'bg-green-200 text-green-900' : 'bg-white text-[#332C81]'
-              }`}
-            >
-              {STATUS_LABEL[item.status]}
-            </span>
-          )}
+          <span className='flex items-center gap-2 justify-self-start sm:justify-self-end'>
+            {item.status && (
+              <span
+                className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                  item.status === 'accepted' ? 'bg-green-200 text-green-900' : 'bg-white text-[#332C81]'
+                }`}
+              >
+                {STATUS_LABEL[item.status]}
+              </span>
+            )}
+            {item.onShowShifts && (
+              <button
+                type='button'
+                className='bg-white text-[#332C81] font-bold px-3 py-1 rounded-xl text-sm'
+                onClick={item.onShowShifts}
+              >
+                Műszakok
+              </button>
+            )}
+          </span>
         </div>
       ))}
     </div>

@@ -3,6 +3,7 @@ package hu.kirdev.foodex.shift
 import hu.kirdev.foodex.cookingclub.CookingClubDto
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserDto
+import jakarta.validation.constraints.Max
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Positive
 import java.time.LocalDateTime
@@ -33,6 +34,7 @@ data class ShiftDto(
     val closing: LocalDateTime,
     val place: String,
     val comment: String,
+    val openingRequestId: Int?,
 ) {
     constructor(shift: ShiftEntity) : this(
         id = shift.id,
@@ -42,6 +44,7 @@ data class ShiftDto(
         closing = shift.closing,
         place = shift.place,
         comment = shift.comment,
+        openingRequestId = shift.openingRequest?.id,
     )
 }
 
@@ -53,6 +56,7 @@ data class DetailedShiftDto(
     val closing: LocalDateTime,
     val place: String,
     val comment: String,
+    val openingRequestId: Int?,
     val members: List<UserDto>,
     val newbies: List<UserDto>,
 ) {
@@ -64,6 +68,7 @@ data class DetailedShiftDto(
         closing = shift.closing,
         place = shift.place,
         comment = shift.comment,
+        openingRequestId = shift.openingRequest?.id,
         members = shift.workers.filter { it.role == Role.MEMBER || it.role == Role.ADMIN }.map { UserDto(it) },
         newbies = shift.workers.filter { it.role == Role.NEWBIE }.map { UserDto(it) },
     )
@@ -71,7 +76,7 @@ data class DetailedShiftDto(
 
 data class CreateShiftFromOpeningRequestDto(
     @field:Positive val maxMembers: Int,
-    @field:Positive val numberOfShifts: Int,
+    @field:Positive @field:Max(4) val numberOfShifts: Int,
 )
 
 data class ActiveAndFullShifts(

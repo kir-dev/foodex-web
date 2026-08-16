@@ -26,9 +26,9 @@ class SecuritySmokeTest {
     }
 
     @Test
-    fun `unauthenticated POST openings is rejected`() {
+    fun `unauthenticated POST semester-shifts is rejected`() {
         // Without login: 401 (API entry point) or 403 (CSRF). Must not be 200.
-        mockMvc.post("/api/openings") {
+        mockMvc.post("/api/semester-shifts") {
             contentType = MediaType.APPLICATION_JSON
             content = """
                 {

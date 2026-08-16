@@ -75,7 +75,7 @@ class ConfigurationService(
             foodExLogo = config.foodExLogo,
             homepageDescription = config.homepageDescription,
             activeMembers = activeMembers,
-            upcomingOpenings = openingRequestService.getUpcomingOpeningRequestsByIsAcceptedTrue()
+            upcomingOpenings = openingRequestService.getCurrentOrUpcomingAcceptedOpeningRequests()
         )
     }
 

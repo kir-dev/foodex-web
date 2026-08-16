@@ -6,6 +6,7 @@ import { PageState } from '@/components/page-state';
 import { RequireAuth } from '@/components/require-auth';
 import { StyledInput } from '@/components/styledInput';
 import { StyledLabel } from '@/components/styledLabel';
+import { TimeInput } from '@/components/timeInput';
 import { apiFetch, isApiError } from '@/lib/api';
 import { toLocalDateTimePayload } from '@/lib/dates';
 import {
@@ -138,21 +139,9 @@ function RequestingContent() {
               <div className='flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto'>
                 <StyledLabel>Ideje:</StyledLabel>
                 <div className='flex items-center gap-2 w-full sm:w-auto text-black'>
-                  <input
-                    type='time'
-                    className='rounded-2xl p-2 text-xl bg-white w-full sm:w-auto'
-                    step={900}
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                  />
-                  <span className='mx-1 text-[#ff9860] font-semibold mt-2'>–</span>
-                  <input
-                    type='time'
-                    className='rounded-2xl p-2 text-xl bg-white w-full sm:w-auto'
-                    step={900}
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                  />
+                  <TimeInput value={startTime} onChange={setStartTime} />
+                  <span className='mx-1 text-[#ff9860] font-semibold'>–</span>
+                  <TimeInput value={endTime} onChange={setEndTime} />
                 </div>
               </div>
 

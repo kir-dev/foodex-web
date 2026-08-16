@@ -11,10 +11,18 @@ import {
   newbieCount,
 } from '@/types/api';
 
-export function shiftToRow(shift: DetailedShiftDto, user?: DetailedUserDto): Shift {
-  const names = [...shift.members, ...shift.newbies].map((person) =>
-    user && person.id === user.id ? `${person.nickname} (te)` : person.nickname
+export function shiftOccupancyLabel(shift: DetailedShiftDto): string {
+  return (
+    `${memberCount(shift)}/${shift.maxMembers} tag` +
+    (newbieCount(shift) > 0 ? `, ${newbieCount(shift)} újonc` : '')
   );
+}
+
+export function shiftToRow(shift: DetailedShiftDto, user?: DetailedUserDto): Shift {
+  const workers = [...shift.members, ...shift.newbies].map((person) => ({
+    id: person.id,
+    nickname: user && person.id === user.id ? `${person.nickname} (te)` : person.nickname,
+  }));
 
   return {
     id: shift.id,
@@ -23,9 +31,8 @@ export function shiftToRow(shift: DetailedShiftDto, user?: DetailedUserDto): Shi
     time: formatTimeRange(shift.opening, shift.closing),
     location: shift.place,
     date: formatShortDate(shift.opening),
-    occupancy:
-      `${memberCount(shift)}/${shift.maxMembers} tag` + (newbieCount(shift) > 0 ? `, ${newbieCount(shift)} újonc` : ''),
-    names: names.length > 0 ? names.join(', ') : 'Még senki',
+    occupancy: shiftOccupancyLabel(shift),
+    workers,
     joined: user ? isOnShift(shift, user.id) : false,
     canJoin: user ? canJoinShift(user, shift) : false,
     canLeave: user ? canLeaveShift(user, shift) : false,

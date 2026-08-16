@@ -33,10 +33,10 @@ class ShiftController(
             content = [Content(schema = Schema(implementation = DetailedShiftDto::class))]
         )
     )
-    @GetMapping("/openings")
-    fun getOpenings(): ResponseEntity<List<DetailedShiftDto>> {
-        val openings = shiftService.getAllShiftsInSemester()
-        return ResponseEntity.status(HttpStatus.OK).body(openings)
+    @GetMapping("/semester-shifts")
+    fun getSemesterShifts(): ResponseEntity<List<DetailedShiftDto>> {
+        val shifts = shiftService.getAllShiftsInSemester()
+        return ResponseEntity.status(HttpStatus.OK).body(shifts)
     }
 
     @Operation(summary = "Create a shift")
@@ -50,7 +50,7 @@ class ShiftController(
             ApiResponse(responseCode = "404", description = "Cooking club not found"),
         ]
     )
-    @PostMapping("/openings")
+    @PostMapping("/semester-shifts")
     fun createShift(@Valid @RequestBody createRequest: CreateShiftDto): ResponseEntity<DetailedShiftDto> {
         val actor = currentUserService.requireUser()
         val shift = shiftService.createShift(createRequest, actor)
@@ -68,7 +68,7 @@ class ShiftController(
             ApiResponse(responseCode = "404", description = "Shift not found"),
         ]
     )
-    @PatchMapping("/openings/{shiftId}")
+    @PatchMapping("/semester-shifts/{shiftId}")
     fun updateShift(
         @PathVariable shiftId: Int,
         @Valid @RequestBody updateShift: UpdateShiftDto
@@ -88,7 +88,7 @@ class ShiftController(
             ApiResponse(responseCode = "404", description = "Shift not found"),
         ]
     )
-    @DeleteMapping("/openings/{shiftId}")
+    @DeleteMapping("/semester-shifts/{shiftId}")
     fun deleteShift(@PathVariable shiftId: Int): ResponseEntity<Void> {
         val actor = currentUserService.requireUser()
         shiftService.deleteShift(shiftId, actor)

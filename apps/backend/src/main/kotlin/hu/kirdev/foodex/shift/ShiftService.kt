@@ -66,11 +66,29 @@ class ShiftService(
 
     @Transactional(readOnly = true)
     fun getUpcomingActiveAndFullShifts(): ActiveAndFullShifts {
+        val now = LocalDateTime.now()
         val upcoming = getUpcomingShiftEntities()
+        val active = mutableListOf<ShiftEntity>()
+        val fullOrHappening = mutableListOf<ShiftEntity>()
+        for (shift in upcoming) {
+            val notStarted = shift.opening.isAfter(now)
+            if (notStarted && hasMemberSlot(shift)) {
+                active.add(shift)
+            } else {
+                fullOrHappening.add(shift)
+            }
+        }
         return ActiveAndFullShifts(
-            activeShifts = upcoming.filter { hasOpenSlot(it) }.map { DetailedShiftDto(it) },
-            fullShifts = upcoming.filter { !hasOpenSlot(it) }.map { DetailedShiftDto(it) },
+            activeShifts = active.map { DetailedShiftDto(it) },
+            fullShifts = fullOrHappening.map { DetailedShiftDto(it) },
         )
+    }
+
+    @Transactional(readOnly = true)
+    fun getShiftsForOpeningRequest(openingRequestId: Int): List<DetailedShiftDto> {
+        openingRequestService.getOpeningRequestEntity(openingRequestId)
+        return shiftRepository.findAllByOpeningRequestIdWithClub(openingRequestId)
+            .map { DetailedShiftDto(it) }
     }
 
     @Transactional(readOnly = false)
@@ -107,6 +125,10 @@ class ShiftService(
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Shift not found") }
 
         requireSelfLeaderOrAdmin(actor, userId, shift.cookingClub.id)
+
+        if (actor.role != Role.ADMIN && !shift.opening.isAfter(LocalDateTime.now())) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Shift has already started")
+        }
 
         if (shift.workers.any { it.id == user.id }) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "User already added")
@@ -190,6 +212,9 @@ class ShiftService(
         if (createRequest.numberOfShifts < 1) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "numberOfShifts must be positive")
         }
+        if (createRequest.numberOfShifts > 4) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "numberOfShifts must be at most 4")
+        }
         if (createRequest.maxMembers < 1) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be positive")
         }
@@ -214,6 +239,7 @@ class ShiftService(
                 opening = request.opening.plus(lengthOfEachShift.multipliedBy(i.toLong())),
                 closing = request.opening.plus(lengthOfEachShift.multipliedBy((i + 1).toLong())),
                 place = request.place,
+                openingRequest = request,
             )
             shifts.add(shiftRepository.save(shift))
         }
@@ -240,12 +266,14 @@ class ShiftService(
         }
     }
 
+    fun hasMemberSlot(shift: ShiftEntity): Boolean =
+        memberCount(shift) < shift.maxMembers
+
     fun hasOpenSlot(shift: ShiftEntity): Boolean {
         val members = memberCount(shift)
         val newbies = newbieCount(shift)
-        val memberSlot = members < shift.maxMembers
         val newbieSlot = members > 0 && newbies < members
-        return memberSlot || newbieSlot
+        return hasMemberSlot(shift) || newbieSlot
     }
 
     private fun requireLeaderOrAdmin(actor: UserEntity, cookingClubId: Int) {

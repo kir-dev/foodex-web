@@ -19,6 +19,7 @@ export type ShiftDto = {
   closing: string;
   place: string;
   comment: string;
+  openingRequestId?: number | null;
 };
 
 export type OpeningRequestDto = {
@@ -94,6 +95,7 @@ export type DetailedShiftDto = {
   closing: string;
   place: string;
   comment: string;
+  openingRequestId?: number | null;
   members: UserDto[];
   newbies: UserDto[];
 };
@@ -191,7 +193,7 @@ export function newbieCount(shift: DetailedShiftDto): number {
   return shift.newbies.length;
 }
 
-/** Mirrors ShiftService.canJoin, plus "already signed up" / already closed. */
+/** Mirrors ShiftService.canJoin, plus "already signed up" / already started. */
 export function canJoinShift(user: DetailedUserDto, shift: DetailedShiftDto): boolean {
   if (user.role === 'GUEST') {
     return false;
@@ -199,7 +201,7 @@ export function canJoinShift(user: DetailedUserDto, shift: DetailedShiftDto): bo
   if (isOnShift(shift, user.id)) {
     return false;
   }
-  if (new Date(shift.closing).getTime() <= Date.now()) {
+  if (new Date(shift.opening).getTime() <= Date.now()) {
     return false;
   }
   if (user.role === 'NEWBIE') {

@@ -1,8 +1,10 @@
 package hu.kirdev.foodex.openingrequest
 
 import hu.kirdev.foodex.cookingclub.CookingClubEntity
+import hu.kirdev.foodex.shift.ShiftEntity
 import hu.kirdev.foodex.user.UserEntity
 import jakarta.persistence.*
+import org.hibernate.annotations.BatchSize
 import java.time.LocalDateTime
 
 @Entity
@@ -36,6 +38,14 @@ data class OpeningRequestEntity(
 
     @Column(nullable = false)
     var description: String,
+
+    @OneToMany(
+        mappedBy = "openingRequest",
+        cascade = [CascadeType.REMOVE],
+        orphanRemoval = true,
+    )
+    @BatchSize(size = 32)
+    var shifts: MutableList<ShiftEntity> = mutableListOf(),
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

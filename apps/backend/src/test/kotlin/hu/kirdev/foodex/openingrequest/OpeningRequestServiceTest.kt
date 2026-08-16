@@ -2,6 +2,8 @@ package hu.kirdev.foodex.openingrequest
 
 import hu.kirdev.foodex.cookingclub.CookingClubEntity
 import hu.kirdev.foodex.cookingclub.CookingClubService
+import hu.kirdev.foodex.shift.ShiftEntity
+import hu.kirdev.foodex.shift.ShiftRepository
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
 import io.mockk.every
@@ -14,11 +16,13 @@ import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDateTime
+import java.util.Optional
 
 class OpeningRequestServiceTest {
 
     private lateinit var repository: OpeningRequestRepository
     private lateinit var cookingClubService: CookingClubService
+    private lateinit var shiftRepository: ShiftRepository
     private lateinit var service: OpeningRequestService
 
     private val club = CookingClubEntity(id = 403, name = "Americano")
@@ -29,7 +33,8 @@ class OpeningRequestServiceTest {
     fun setUp() {
         repository = mockk()
         cookingClubService = mockk()
-        service = OpeningRequestService(repository, cookingClubService)
+        shiftRepository = mockk()
+        service = OpeningRequestService(repository, cookingClubService, shiftRepository)
         every { cookingClubService.getCookingClubEntity(403) } returns club
     }
 
@@ -129,6 +134,83 @@ class OpeningRequestServiceTest {
             )
         }
         assertEquals(HttpStatus.BAD_REQUEST, ex.statusCode)
+    }
+
+    @Test
+    fun `updateOpeningRequest copies place onto child shifts and leaves their times`() {
+        val admin = user(3, Role.ADMIN)
+        val request = OpeningRequestEntity(
+            id = 20,
+            isAccepted = true,
+            user = admin,
+            cookingClub = club,
+            opening = opening,
+            closing = closing,
+            place = "old kitchen",
+            description = "desc",
+        )
+        val child = ShiftEntity(
+            id = 5,
+            cookingClub = club,
+            maxMembers = 4,
+            opening = opening,
+            closing = opening.plusHours(1),
+            place = "old kitchen",
+            openingRequest = request,
+        )
+        every { repository.findById(20) } returns Optional.of(request)
+        every { shiftRepository.findAllByOpeningRequestId(20) } returns listOf(child)
+        every { repository.save(request) } returns request
+
+        val dto = service.updateOpeningRequest(
+            20,
+            UpdateOpeningRequestDto(
+                opening = opening.plusDays(1),
+                closing = closing.plusDays(1),
+                place = "new kitchen",
+                description = "updated",
+            ),
+            admin,
+        )
+
+        assertEquals("new kitchen", dto.place)
+        assertEquals("new kitchen", child.place)
+        assertEquals(opening, child.opening)
+        assertEquals(opening.plusHours(1), child.closing)
+        assertEquals(opening.plusDays(1), request.opening)
+    }
+
+    @Test
+    fun `deleteOpeningRequest deletes child shifts then the request`() {
+        val admin = user(3, Role.ADMIN)
+        val request = OpeningRequestEntity(
+            id = 21,
+            isAccepted = true,
+            user = admin,
+            cookingClub = club,
+            opening = opening,
+            closing = closing,
+            place = "kitchen",
+            description = "desc",
+        )
+        val child = ShiftEntity(
+            id = 6,
+            cookingClub = club,
+            maxMembers = 4,
+            opening = opening,
+            closing = closing,
+            place = "kitchen",
+            openingRequest = request,
+        )
+        every { repository.findById(21) } returns Optional.of(request)
+        every { shiftRepository.findAllByOpeningRequestId(21) } returns listOf(child)
+        every { shiftRepository.deleteAll(listOf(child)) } returns Unit
+        every { repository.delete(request) } returns Unit
+
+        service.deleteOpeningRequest(21, admin)
+
+        verify(exactly = 1) { shiftRepository.deleteAll(listOf(child)) }
+        verify(exactly = 1) { repository.delete(request) }
     }
 
     private fun user(id: Int, role: Role) = UserEntity(

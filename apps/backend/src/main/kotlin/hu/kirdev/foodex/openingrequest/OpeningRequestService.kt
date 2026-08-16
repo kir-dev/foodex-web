@@ -1,6 +1,7 @@
 package hu.kirdev.foodex.openingrequest
 
 import hu.kirdev.foodex.cookingclub.CookingClubService
+import hu.kirdev.foodex.shift.ShiftRepository
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
 import org.springframework.http.HttpStatus
@@ -13,6 +14,7 @@ import java.time.LocalDateTime
 class OpeningRequestService(
     private val openingRequestRepository: OpeningRequestRepository,
     private val cookingClubService: CookingClubService,
+    private val shiftRepository: ShiftRepository,
 ) {
 
     @Transactional(readOnly = true)
@@ -44,6 +46,20 @@ class OpeningRequestService(
     fun getUpcomingOpeningRequestsByIsAcceptedFalse(): List<DetailedOpeningRequestDto> {
         return openingRequestRepository
             .findUpcomingByAccepted(accepted = false, now = LocalDateTime.now())
+            .map { DetailedOpeningRequestDto(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun getCurrentOrUpcomingAcceptedOpeningRequests(): List<DetailedOpeningRequestDto> {
+        return openingRequestRepository
+            .findCurrentOrUpcomingByAccepted(accepted = true, now = LocalDateTime.now())
+            .map { DetailedOpeningRequestDto(it) }
+    }
+
+    @Transactional(readOnly = true)
+    fun getOpeningRequestsInSemester(start: LocalDateTime, end: LocalDateTime): List<DetailedOpeningRequestDto> {
+        return openingRequestRepository
+            .findOverlappingSemester(start, end)
             .map { DetailedOpeningRequestDto(it) }
     }
 
@@ -90,6 +106,10 @@ class OpeningRequestService(
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Opening request not found") }
 
         requireOwnerLeaderOrAdmin(actor, request)
+        val childShifts = shiftRepository.findAllByOpeningRequestId(id)
+        if (childShifts.isNotEmpty()) {
+            shiftRepository.deleteAll(childShifts)
+        }
         openingRequestRepository.delete(request)
     }
 
@@ -102,7 +122,12 @@ class OpeningRequestService(
 
         toUpdate.opening?.let { request.opening = it }
         toUpdate.closing?.let { request.closing = it }
-        toUpdate.place?.let { request.place = it }
+        toUpdate.place?.let { newPlace ->
+            request.place = newPlace
+            shiftRepository.findAllByOpeningRequestId(id).forEach { shift ->
+                shift.place = newPlace
+            }
+        }
         toUpdate.description?.let { request.description = it }
 
         if (!request.opening.isBefore(request.closing)) {

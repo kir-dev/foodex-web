@@ -42,4 +42,16 @@ interface ShiftRepository : JpaRepository<ShiftEntity, Int> {
         """
     )
     fun findByIdWithClub(@Param("id") id: Int): ShiftEntity?
+
+    @Query(
+        """
+        SELECT s FROM ShiftEntity s
+        JOIN FETCH s.cookingClub
+        WHERE s.openingRequest.id = :requestId
+        ORDER BY s.opening
+        """
+    )
+    fun findAllByOpeningRequestIdWithClub(@Param("requestId") requestId: Int): List<ShiftEntity>
+
+    fun findAllByOpeningRequestId(openingRequestId: Int): List<ShiftEntity>
 }

@@ -1,6 +1,7 @@
 package hu.kirdev.foodex.shift
 
 import hu.kirdev.foodex.cookingclub.CookingClubEntity
+import hu.kirdev.foodex.openingrequest.OpeningRequestEntity
 import hu.kirdev.foodex.user.UserEntity
 import jakarta.persistence.*
 import org.hibernate.annotations.BatchSize
@@ -33,6 +34,10 @@ data class ShiftEntity(
 
     @Column(nullable = false)
     var comment: String = "",
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "opening_request_id")
+    var openingRequest: OpeningRequestEntity? = null,
 
     @ManyToMany
     @JoinTable(

@@ -1,5 +1,6 @@
 package hu.kirdev.foodex.openingrequest
 
+import hu.kirdev.foodex.config.ConfigurationService
 import hu.kirdev.foodex.security.CurrentUserService
 import hu.kirdev.foodex.shift.CreateShiftFromOpeningRequestDto
 import hu.kirdev.foodex.shift.DetailedShiftDto
@@ -27,6 +28,7 @@ class OpeningRequestController(
     private val openingRequestService: OpeningRequestService,
     private val shiftService: ShiftService,
     private val currentUserService: CurrentUserService,
+    private val configurationService: ConfigurationService,
 ) {
 
     @Operation(summary = "Create an opening request")
@@ -57,6 +59,38 @@ class OpeningRequestController(
     @GetMapping("/incoming-requests")
     fun getUpcomingOpeningRequest(): ResponseEntity<List<DetailedOpeningRequestDto>> {
         val requests = openingRequestService.getUpcomingOpeningRequestsByIsAcceptedFalse()
+        return ResponseEntity.status(HttpStatus.OK).body(requests)
+    }
+
+    @Operation(summary = "List upcoming accepted opening requests")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Opening requests found",
+            content = [Content(schema = Schema(implementation = DetailedOpeningRequestDto::class))]
+        )
+    )
+    @GetMapping("/accepted-requests")
+    fun getUpcomingAcceptedOpeningRequests(): ResponseEntity<List<DetailedOpeningRequestDto>> {
+        val requests = openingRequestService.getUpcomingOpeningRequestsByIsAcceptedTrue()
+        return ResponseEntity.status(HttpStatus.OK).body(requests)
+    }
+
+    @Operation(summary = "List opening requests in the current semester")
+    @ApiResponses(
+        ApiResponse(
+            responseCode = "200",
+            description = "Opening requests found",
+            content = [Content(schema = Schema(implementation = DetailedOpeningRequestDto::class))]
+        )
+    )
+    @GetMapping("/semester-openings")
+    fun getSemesterOpenings(): ResponseEntity<List<DetailedOpeningRequestDto>> {
+        val config = configurationService.get()
+        val requests = openingRequestService.getOpeningRequestsInSemester(
+            config.startOfSemester,
+            config.endOfSemester,
+        )
         return ResponseEntity.status(HttpStatus.OK).body(requests)
     }
 
@@ -131,5 +165,22 @@ class OpeningRequestController(
         val actor = currentUserService.requireUser()
         val shifts = shiftService.createShiftsFromOpeningRequest(requestId, createRequest, actor)
         return ResponseEntity.status(HttpStatus.CREATED).body(shifts)
+    }
+
+    @Operation(summary = "List shifts created from an opening request")
+    @ApiResponses(
+        value = [
+            ApiResponse(
+                responseCode = "200",
+                description = "Shifts found",
+                content = [Content(schema = Schema(implementation = DetailedShiftDto::class))]
+            ),
+            ApiResponse(responseCode = "404", description = "Opening request not found"),
+        ]
+    )
+    @GetMapping("/requests/{requestId}/shifts")
+    fun getShiftsForOpeningRequest(@PathVariable requestId: Int): ResponseEntity<List<DetailedShiftDto>> {
+        val shifts = shiftService.getShiftsForOpeningRequest(requestId)
+        return ResponseEntity.status(HttpStatus.OK).body(shifts)
     }
 }
