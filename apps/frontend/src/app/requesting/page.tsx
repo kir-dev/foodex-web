@@ -140,9 +140,9 @@ function RequestingContent() {
               <div className='flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto'>
                 <StyledLabel>Ideje:</StyledLabel>
                 <div className='flex items-center gap-2 w-full sm:w-auto text-black'>
-                  <TimeInput value={startTime} onChange={setStartTime} />
+                  <TimeInput className='text-[#ff9860]' value={startTime} onChange={setStartTime} />
                   <span className='mx-1 text-[#ff9860] font-semibold'>–</span>
-                  <TimeInput value={endTime} onChange={setEndTime} />
+                  <TimeInput className='text-[#ff9860]' value={endTime} onChange={setEndTime} />
                 </div>
               </div>
 

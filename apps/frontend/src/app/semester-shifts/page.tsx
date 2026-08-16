@@ -310,11 +310,11 @@ function SemesterShiftsContent() {
           </div>
           <div>
             <StyledLabel>Kezdés</StyledLabel>
-            <TimeInput value={startTime} onChange={setStartTime} />
+            <TimeInput className='text-[#ff9860]' value={startTime} onChange={setStartTime} />
           </div>
           <div>
             <StyledLabel>Vége</StyledLabel>
-            <TimeInput value={endTime} onChange={setEndTime} />
+            <TimeInput className='text-[#ff9860]' value={endTime} onChange={setEndTime} />
           </div>
           <div>
             <StyledLabel>Helye</StyledLabel>
@@ -389,11 +389,11 @@ function SemesterShiftsContent() {
             <div className='flex gap-3'>
               <div className='flex flex-col gap-1 flex-1'>
                 <label className='font-semibold text-[#332C81]'>Kezdés:</label>
-                <TimeInput value={editStartTime} onChange={setEditStartTime} />
+                <TimeInput className='text-[#ff9860]' value={editStartTime} onChange={setEditStartTime} />
               </div>
               <div className='flex flex-col gap-1 flex-1'>
                 <label className='font-semibold text-[#332C81]'>Vége:</label>
-                <TimeInput value={editEndTime} onChange={setEditEndTime} />
+                <TimeInput className='text-[#ff9860]' value={editEndTime} onChange={setEditEndTime} />
               </div>
             </div>
             <div className='flex flex-col gap-1'>
