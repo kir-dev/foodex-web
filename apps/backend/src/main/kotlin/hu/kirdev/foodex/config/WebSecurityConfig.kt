@@ -62,6 +62,7 @@ class WebSecurityConfig(
                     .requestMatchers(HttpMethod.POST, "/api/cooking-clubs").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.PUT, "/api/cooking-clubs/**").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.DELETE, "/api/cooking-clubs/**").hasRole("ADMIN")
+                    .requestMatchers("/api/newbie-grants", "/api/newbie-grants/**").hasRole("ADMIN")
                     .requestMatchers("/api/**").authenticated()
                     .anyRequest().authenticated()
             }

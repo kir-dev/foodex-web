@@ -2,6 +2,7 @@ package hu.kirdev.foodex.oidcuser
 
 import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.cookingclub.DetailedCookingClubDto
+import hu.kirdev.foodex.newbiegrant.NewbieGrantService
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.user.UserService
@@ -20,6 +21,7 @@ class FoodExOidcUserServiceTest {
 
     private lateinit var userService: UserService
     private lateinit var cookingClubService: CookingClubService
+    private lateinit var newbieGrantService: NewbieGrantService
     private lateinit var service: FoodExOidcUserService
 
     private val developerId = "dev-admin-uuid"
@@ -28,10 +30,12 @@ class FoodExOidcUserServiceTest {
     fun setUp() {
         userService = mockk(relaxed = true)
         cookingClubService = mockk(relaxed = true)
+        newbieGrantService = mockk(relaxed = true)
         service = FoodExOidcUserService(
             userService,
             cookingClubService,
             setOf(developerId),
+            newbieGrantService,
         )
     }
 
@@ -74,6 +78,26 @@ class FoodExOidcUserServiceTest {
             executiveAt = listOf(mapOf("id" to 182L, "name" to "FoodEx")),
         )
         assertEquals(Role.ADMIN, service.getHighestRole(user))
+    }
+
+    @Test
+    fun `applyNewbieGrant upgrades guest when grant exists`() {
+        every { newbieGrantService.existsByInternalId("guest-1") } returns true
+        assertEquals(Role.NEWBIE, service.applyNewbieGrant("guest-1", Role.GUEST))
+    }
+
+    @Test
+    fun `applyNewbieGrant leaves guest when no grant`() {
+        every { newbieGrantService.existsByInternalId("guest-1") } returns false
+        assertEquals(Role.GUEST, service.applyNewbieGrant("guest-1", Role.GUEST))
+    }
+
+    @Test
+    fun `applyNewbieGrant does not override member or admin`() {
+        every { newbieGrantService.existsByInternalId(any()) } returns true
+        assertEquals(Role.MEMBER, service.applyNewbieGrant("member-1", Role.MEMBER))
+        assertEquals(Role.ADMIN, service.applyNewbieGrant("admin-1", Role.ADMIN))
+        assertEquals(Role.NEWBIE, service.applyNewbieGrant("newbie-1", Role.NEWBIE))
     }
 
     @Test

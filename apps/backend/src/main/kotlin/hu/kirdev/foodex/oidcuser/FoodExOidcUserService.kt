@@ -1,6 +1,7 @@
 package hu.kirdev.foodex.oidcuser
 
 import hu.kirdev.foodex.cookingclub.CookingClubService
+import hu.kirdev.foodex.newbiegrant.NewbieGrantService
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.user.UserService
@@ -18,6 +19,7 @@ open class FoodExOidcUserService(
     val userService: UserService,
     val cookingClubService: CookingClubService,
     @param:Qualifier("developerAdminIds") private val developerAdminIds: Set<String>,
+    private val newbieGrantService: NewbieGrantService,
 ) : OidcUserService() {
 
     private final val foodExID = 182L
@@ -47,7 +49,7 @@ open class FoodExOidcUserService(
             .intersect(allCookingClubIds)
 
         val existing = userService.getUserByInternalId(foodexUser.internalId)
-        val role = getHighestRole(foodexUser)
+        val role = applyNewbieGrant(foodexUser.internalId, getHighestRole(foodexUser))
 
         val user = if (existing != null) {
             existing.role = role
@@ -96,6 +98,13 @@ open class FoodExOidcUserService(
         }
 
         return Role.GUEST
+    }
+
+    fun applyNewbieGrant(internalId: String, role: Role): Role {
+        if (role != Role.GUEST) {
+            return role
+        }
+        return if (newbieGrantService.existsByInternalId(internalId)) Role.NEWBIE else Role.GUEST
     }
 
     private fun authoritiesFor(role: Role): List<GrantedAuthority> =

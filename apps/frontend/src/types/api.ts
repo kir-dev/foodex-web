@@ -149,6 +149,22 @@ export type UpdateCookingClubDto = {
   name: string;
 };
 
+export type NewbieGrantDto = {
+  id: number;
+  name: string;
+  internalId: string;
+};
+
+export type CreateNewbieGrantDto = {
+  name: string;
+  internalId: string;
+};
+
+export type UpdateNewbieGrantDto = {
+  name: string;
+  internalId: string;
+};
+
 export type UpdateOpeningRequestDto = {
   opening?: string;
   closing?: string;

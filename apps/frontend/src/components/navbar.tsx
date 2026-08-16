@@ -32,6 +32,7 @@ function Navbar() {
     ...(isAdminUser ? [{ href: '/config', title: 'Konfiguráció', label: 'Konfig' }] : []),
     ...(isAdminUser ? [{ href: '/clubs', title: 'Körök kezelése', label: 'Körök' }] : []),
     ...(isAdminUser ? [{ href: '/users', title: 'Felhasználók', label: 'Tagok' }] : []),
+    ...(isAdminUser ? [{ href: '/probasok', title: 'Próbások', label: 'Próbások' }] : []),
   ];
 
   const semesterChildren: NavLink[] = [

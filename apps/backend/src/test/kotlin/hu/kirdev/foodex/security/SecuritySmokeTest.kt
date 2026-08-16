@@ -60,4 +60,12 @@ class SecuritySmokeTest {
                 status { isUnauthorized() }
             }
     }
+
+    @Test
+    fun `unauthenticated GET newbie-grants is rejected`() {
+        mockMvc.get("/api/newbie-grants")
+            .andExpect {
+                status { isUnauthorized() }
+            }
+    }
 }
