@@ -53,7 +53,7 @@ function SemesterShiftsContent() {
   const [endTime, setEndTime] = useState('');
   const [location, setLocation] = useState('');
   const [comment, setComment] = useState('');
-  const [maxMembers, setMaxMembers] = useState(20);
+  const [maxMembers, setMaxMembers] = useState(6);
   const [creating, setCreating] = useState(false);
   const [formMessage, setFormMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
@@ -63,7 +63,7 @@ function SemesterShiftsContent() {
   const [editEndTime, setEditEndTime] = useState('');
   const [editPlace, setEditPlace] = useState('');
   const [editComment, setEditComment] = useState('');
-  const [editMaxMembers, setEditMaxMembers] = useState(20);
+  const [editMaxMembers, setEditMaxMembers] = useState(6);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | ''>('');
   const [draftWorkers, setDraftWorkers] = useState<UserDto[]>([]);
@@ -91,8 +91,8 @@ function SemesterShiftsContent() {
 
   const handleCreate = async (): Promise<void> => {
     setFormMessage(null);
-    if (cookingClubId === '' || !date || !startTime || !endTime || !location.trim() || maxMembers < 1) {
-      setFormMessage({ text: 'Kérlek tölts ki minden kötelező mezőt!', isError: true });
+    if (cookingClubId === '' || !date || !startTime || !endTime || !location.trim() || maxMembers < 1 || maxMembers > 6) {
+      setFormMessage({ text: 'Kérlek tölts ki minden kötelező mezőt! A max. létszám 1 és 6 között legyen.', isError: true });
       return;
     }
 
@@ -116,7 +116,7 @@ function SemesterShiftsContent() {
       setEndTime('');
       setLocation('');
       setComment('');
-      setMaxMembers(20);
+      setMaxMembers(6);
       await loadData();
       setFormMessage({
         text: 'Műszak létrehozva. Ha nem jelenik meg a listában, ellenőrizd a félév dátumait a Konfig oldalon.',
@@ -153,7 +153,7 @@ function SemesterShiftsContent() {
     setEditEndTime(toTimeInputValue(fullShift.closing));
     setEditPlace(fullShift.place);
     setEditComment(fullShift.comment || '');
-    setEditMaxMembers(fullShift.maxMembers || 20);
+    setEditMaxMembers(fullShift.maxMembers || 6);
     setSelectedWorkerId('');
     setDraftWorkers([...fullShift.members, ...fullShift.newbies]);
     setActionMessage(null);
@@ -163,8 +163,8 @@ function SemesterShiftsContent() {
     if (!editingShift) {
       return;
     }
-    if (!editDate || !editStartTime || !editEndTime || !editPlace.trim() || editMaxMembers < 1) {
-      setActionMessage({ text: 'Kérlek tölts ki minden kötelező mezőt!', isError: true });
+    if (!editDate || !editStartTime || !editEndTime || !editPlace.trim() || editMaxMembers < 1 || editMaxMembers > 6) {
+      setActionMessage({ text: 'Kérlek tölts ki minden kötelező mezőt! A max. létszám 1 és 6 között legyen.', isError: true });
       return;
     }
 
@@ -297,6 +297,7 @@ function SemesterShiftsContent() {
             <StyledInput
               type='number'
               min={1}
+              max={6}
               value={maxMembers}
               onChange={(e) => setMaxMembers(Number(e.target.value))}
             />
@@ -410,6 +411,7 @@ function SemesterShiftsContent() {
               <input
                 type='number'
                 min={1}
+                max={6}
                 className='border-2 border-gray-300 rounded-lg p-2 text-black'
                 value={editMaxMembers}
                 onChange={(e) => setEditMaxMembers(Number(e.target.value))}

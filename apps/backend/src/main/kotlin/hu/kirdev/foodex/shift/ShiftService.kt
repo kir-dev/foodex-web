@@ -104,6 +104,9 @@ class ShiftService(
         if (shift.maxMembers < 1) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be positive")
         }
+        if (shift.maxMembers > 6) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be at most 6")
+        }
 
         return shiftRepository.save(
             ShiftEntity(
@@ -189,6 +192,7 @@ class ShiftService(
 
         toUpdate.maxMembers?.let {
             if (it < 1) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be positive")
+            if (it > 6) throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be at most 6")
             shift.maxMembers = it
         }
         toUpdate.opening?.let { shift.opening = it }
@@ -217,6 +221,9 @@ class ShiftService(
         }
         if (createRequest.maxMembers < 1) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be positive")
+        }
+        if (createRequest.maxMembers > 6) {
+            throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be at most 6")
         }
 
         val request = openingRequestRepository.findById(openingRequestId)

@@ -10,7 +10,7 @@ import java.time.LocalDateTime
 
 data class CreateShiftDto(
     val cookingClubId: Int,
-    @field:Positive val maxMembers: Int,
+    @field:Positive @field:Max(6) val maxMembers: Int,
     val opening: LocalDateTime,
     val closing: LocalDateTime,
     @field:NotBlank val place: String,
@@ -19,7 +19,7 @@ data class CreateShiftDto(
 
 data class UpdateShiftDto(
     val cookingClubId: Int?,
-    @field:Positive val maxMembers: Int?,
+    @field:Positive @field:Max(6) val maxMembers: Int?,
     val opening: LocalDateTime?,
     val closing: LocalDateTime?,
     val place: String?,
@@ -75,7 +75,7 @@ data class DetailedShiftDto(
 }
 
 data class CreateShiftFromOpeningRequestDto(
-    @field:Positive val maxMembers: Int,
+    @field:Positive @field:Max(6) val maxMembers: Int,
     @field:Positive @field:Max(4) val numberOfShifts: Int,
 )
 

@@ -54,7 +54,7 @@ function RequestsContent() {
 
   const [acceptingRequest, setAcceptingRequest] = useState<DetailedOpeningRequestDto | null>(null);
   const [acceptShiftCount, setAcceptShiftCount] = useState(1);
-  const [acceptMaxMembers, setAcceptMaxMembers] = useState(20);
+  const [acceptMaxMembers, setAcceptMaxMembers] = useState(6);
   const [isAccepting, setIsAccepting] = useState(false);
 
   const loadData = useCallback(async (): Promise<void> => {
@@ -86,7 +86,7 @@ function RequestsContent() {
     }
     setAcceptingRequest(request);
     setAcceptShiftCount(Math.min(4, shiftCountFromRange(request.opening, request.closing)));
-    setAcceptMaxMembers(20);
+    setAcceptMaxMembers(6);
     setActionMessage(null);
   };
 
@@ -98,8 +98,8 @@ function RequestsContent() {
       setActionMessage({ text: 'A műszakok száma 1 és 4 között legyen.', isError: true });
       return;
     }
-    if (!Number.isFinite(acceptMaxMembers) || acceptMaxMembers < 1) {
-      setActionMessage({ text: 'A max. létszám legalább 1 legyen.', isError: true });
+    if (!Number.isFinite(acceptMaxMembers) || acceptMaxMembers < 1 || acceptMaxMembers > 6) {
+      setActionMessage({ text: 'A max. létszám 1 és 6 között legyen.', isError: true });
       return;
     }
 
@@ -287,6 +287,7 @@ function RequestsContent() {
               <input
                 type='number'
                 min={1}
+                max={6}
                 className='border-2 border-gray-300 rounded-lg p-2 text-black'
                 value={acceptMaxMembers}
                 onChange={(e) => setAcceptMaxMembers(Number(e.target.value))}
