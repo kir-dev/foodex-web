@@ -188,6 +188,7 @@ class ShiftServiceCapacityTest {
         val request = openingRequest(admin)
         every { openingRequestRepository.findById(10) } returns Optional.of(request)
         every { cookingClubService.isLeaderOfCookingClub(1, 403) } returns true
+        every { shiftRepository.countByOpeningRequestId(10) } returns 0
         val saved = slot<ShiftEntity>()
         every { shiftRepository.save(capture(saved)) } answers {
             saved.captured.copy(id = 99)
