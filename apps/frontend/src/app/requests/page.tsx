@@ -232,7 +232,7 @@ function RequestsContent() {
   }
 
   return (
-    <main className='p-6 flex flex-col items-center gap-6 bg-white min-h-screen'>
+    <main className='p-6 flex flex-col items-center gap-6 bg-white flex-1'>
       {actionMessage && (
         <span
           className={`w-full max-w-5xl text-lg font-medium ${

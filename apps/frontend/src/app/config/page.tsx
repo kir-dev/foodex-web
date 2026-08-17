@@ -103,7 +103,7 @@ function ConfigContent() {
   }
 
   return (
-    <main className='p-4 sm:p-8 flex flex-col items-center bg-white min-h-screen'>
+    <main className='p-4 sm:p-8 flex flex-col items-center bg-white flex-1'>
       <div className='w-full max-w-3xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-8 space-y-5'>
         <h1 className='text-3xl font-bold text-[#332C81]'>Oldal konfiguráció</h1>
         <p className='text-[#332C81]'>

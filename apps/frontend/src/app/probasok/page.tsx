@@ -145,7 +145,7 @@ function ProbasokContent() {
   }
 
   return (
-    <main className='p-4 sm:p-8 flex flex-col items-center gap-6 bg-white min-h-screen'>
+    <main className='p-4 sm:p-8 flex flex-col items-center gap-6 bg-white flex-1'>
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-6 space-y-4'>
         <h1 className='text-3xl font-bold text-[#332C81]'>Próbások</h1>
         <p className='text-[#332C81]'>

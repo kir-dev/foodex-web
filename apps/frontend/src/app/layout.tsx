@@ -1,4 +1,5 @@
 import { AuthProvider } from '@/components/auth-provider';
+import Footer from '@/components/footer';
 import Navbar from '@/components/navbar';
 import type { Metadata } from 'next';
 import { ReactNode } from 'react';
@@ -12,10 +13,11 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
   return (
     <html lang='hu'>
-      <body>
+      <body className='min-h-screen flex flex-col'>
         <AuthProvider>
           <Navbar />
-          {children}
+          <div className='flex-1 flex flex-col'>{children}</div>
+          <Footer />
         </AuthProvider>
       </body>
     </html>

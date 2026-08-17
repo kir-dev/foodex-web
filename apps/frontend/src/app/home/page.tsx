@@ -51,7 +51,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className='flex flex-col items-center justify-start min-h-screen p-6 bg-white'>
+    <main className='flex flex-col items-center justify-start flex-1 p-6 bg-white'>
       <div className='flex flex-col md:flex-row gap-4 w-full max-w-7xl lg:max-w-[90%] mb-4'>
         <ImageContainer>
           <Image
