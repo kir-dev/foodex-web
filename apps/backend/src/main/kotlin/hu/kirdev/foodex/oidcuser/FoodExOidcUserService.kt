@@ -39,8 +39,8 @@ open class FoodExOidcUserService(
 
     // Upsert user and reload club leadership on login
     @Transactional(readOnly = false)
-    override fun loadUser(userRequest: OidcUserRequest?): OidcUser? {
-        val authschUser = super.loadUser(userRequest) ?: return null
+    override fun loadUser(userRequest: OidcUserRequest): OidcUser {
+        val authschUser = super.loadUser(userRequest)
 
         val foodexUser = FoodExOidcUser(authschUser)
         val leaderAt: Set<Int> = foodexUser.memberships
@@ -53,15 +53,15 @@ open class FoodExOidcUserService(
 
         val user = if (existing != null) {
             existing.role = role
-            existing.email = foodexUser.email
+            existing.email = foodexUser.requiredEmail
             existing
         } else {
             UserEntity(
                 internalId = foodexUser.internalId,
                 role = role,
-                name = foodexUser.name,
+                name = foodexUser.requiredName,
                 nickname = foodexUser.nickName,
-                email = foodexUser.email,
+                email = foodexUser.requiredEmail,
                 favouriteQuote = null,
                 isActive = foodexUser.memberships.map { it.id }.contains(foodExID) || role == Role.ADMIN,
                 profilePicture = foodexUser.profile,

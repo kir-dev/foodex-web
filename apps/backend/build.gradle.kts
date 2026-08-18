@@ -1,9 +1,9 @@
 plugins {
-	kotlin("jvm") version "2.3.10"
-	kotlin("plugin.spring") version "2.3.10"
-	id("org.springframework.boot") version "4.0.3"
+	kotlin("jvm") version "2.4.10"
+	kotlin("plugin.spring") version "2.4.10"
+	id("org.springframework.boot") version "4.1.0"
 	id("io.spring.dependency-management") version "1.1.7"
-	kotlin("plugin.jpa") version "2.3.10"
+	kotlin("plugin.jpa") version "2.4.10"
 }
 
 group = "hu.kirdev"
@@ -27,14 +27,14 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.0.1")
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.0")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 	runtimeOnly("com.h2database:h2")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testImplementation("org.springframework.security:spring-security-test")
-	testImplementation("io.mockk:mockk:1.14.6")
+	testImplementation("io.mockk:mockk:1.14.11")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

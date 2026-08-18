@@ -7,12 +7,18 @@ data class CircleMembership(val id: Long, val name: String, val title: List<Stri
 data class ExecutiveAt(val id: Long, val name: String)
 
 class FoodExOidcUser(private val oidcUser: OidcUser) : OidcUser by oidcUser {
-    val internalId get() = subject
+    val internalId: String
+        get() = requireNotNull(subject) { "OIDC subject is missing" }
+    val requiredName: String
+        get() = name.takeIf { it.isNotBlank() } ?: nickName?.takeIf { it.isNotBlank() } ?: "Unknown"
+    val requiredEmail: String
+        get() = email.orEmpty()
     var extraAuthorities: List<GrantedAuthority> = listOf()
     val memberships = parseCircleMemberships()
     val executiveAtCircles = parseExecutiveAt()
 
-    override fun getAuthorities(): Collection<GrantedAuthority?> = oidcUser.authorities union extraAuthorities
+    override fun getAuthorities(): MutableCollection<out GrantedAuthority> =
+        (oidcUser.authorities + extraAuthorities).toMutableList()
 
     private fun parseExecutiveAt(): List<ExecutiveAt> {
         val executiveAt = oidcUser.getClaim<List<Map<String, Any>>>("pek.sch.bme.hu:executiveAt/v1") ?: listOf()
