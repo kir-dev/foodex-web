@@ -8,6 +8,9 @@ import './globals.css';
 export const metadata: Metadata = {
   title: 'FoodEx',
   description: 'FoodEx kör weboldal',
+  icons: {
+    icon: { url: '/foodex-icon.png', sizes: '512x512', type: 'image/png' },
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {
