@@ -315,14 +315,14 @@ docker run -p 8080:8080 harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
 docker run -p 3000:3000 harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
 ```
 
-### Kubectl
+### Kubernetes
 
 ```bash
 kubectl config current-context
 kubectl get pods -A
 ```
 
-### K9S
+### K9s
 
 ```bash
 k9s
