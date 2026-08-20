@@ -154,7 +154,7 @@ How to copy them:
 
 1. Sign in via http://localhost:8080/oauth2/authorization/authsch (must complete against the **backend**).
 2. Browser DevTools → **Application** → **Cookies** → select **`http://localhost:8080`** (not `auth.sch.bme.hu`).
-3. Copy `JSESSIONID` and `XSRF-TOKEN`.  
+3. Copy `JSESSIONID` and `XSRF-TOKEN`.
    If `XSRF-TOKEN` is missing, open http://localhost:8080/api/homepage or Swagger once while logged in.
 
 Restarting the backend invalidates in-memory sessions — log in again and copy new cookies.
@@ -195,7 +195,7 @@ Swagger: http://localhost:8080/swagger-ui/index.html
 #### SPA (frontend on :3000)
 
 - CORS allows `http://localhost:3000` with credentials.
-- Frontend must send cookies (`credentials: 'include'`) and on mutating requests set header  
+- Frontend must send cookies (`credentials: 'include'`) and on mutating requests set header
   `X-XSRF-TOKEN` from the `XSRF-TOKEN` cookie.
 - After login, call **`GET /api/users/me`** with `credentials: 'include'` to load the
   current user (`id`, `role`, profile fields). Use that instead of guessing the user id.
@@ -262,6 +262,69 @@ pnpm start:frontend
 1. Visit http://localhost:3000
 2. Sign in via http://localhost:8080/oauth2/authorization/authsch
 3. Use the app; API session + CSRF apply as above
+
+## Deploy
+
+### Build with Docker
+
+#### Backend latest
+
+```bash
+./gradlew bootBuildImage --imageName=harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
+```
+
+#### Frontend latest
+
+```bash
+docker build . -t harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
+```
+
+### Login with Docker
+
+```bash
+docker login harbor.sch.bme.hu
+```
+
+### Push with Docker
+
+#### Push backend
+
+```bash
+docker push harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
+```
+
+#### Push frontend
+
+```bash
+docker push harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
+```
+
+### Run with Docker
+
+#### Run backend with port forwarding
+
+```bash
+docker run -p 8080:8080 harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
+```
+
+#### Run frontend with port forwarding
+
+```bash
+docker run -p 3000:3000 harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
+```
+
+### Kubectl
+
+```bash
+kubectl config current-context
+kubectl get pods -A
+```
+
+### K9S
+
+```bash
+k9s
+```
 
 ---
 
