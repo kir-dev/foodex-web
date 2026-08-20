@@ -270,12 +270,14 @@ pnpm start:frontend
 #### Backend latest
 
 ```bash
+cd apps/backend
 ./gradlew bootBuildImage --imageName=harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
 ```
 
 #### Frontend latest
 
 ```bash
+cd apps/frontend
 docker build . -t harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
 ```
 
