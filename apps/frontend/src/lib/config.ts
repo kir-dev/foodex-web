@@ -1,4 +1,4 @@
-const DEFAULT_API_URL = 'http://localhost:8080';
+const DEFAULT_API_URL = 'https://api.foodex.sch.bme.hu';
 
 function trimTrailingSlash(value: string): string {
   return value.endsWith('/') ? value.slice(0, -1) : value;

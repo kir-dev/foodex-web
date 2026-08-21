@@ -16,6 +16,12 @@ java {
 	}
 }
 
+tasks {
+    bootJar {
+        archiveFileName.set("foodex.jar")
+    }
+}
+
 repositories {
 	mavenCentral()
 }
@@ -36,6 +42,16 @@ dependencies {
 	testImplementation("org.springframework.security:spring-security-test")
 	testImplementation("io.mockk:mockk:1.14.11")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+tasks.getByName<org.springframework.boot.gradle.tasks.bundling.BootBuildImage>("bootBuildImage") {
+    builder = "paketobuildpacks/builder-jammy-tiny:latest"
+
+    environment = mapOf(
+        "BP_JVM_VERSION" to "25",
+        "LC_ALL" to "en_US.UTF-8",
+        "BPE_LC_ALL" to "en_US.UTF-8",
+    )
 }
 
 kotlin {
