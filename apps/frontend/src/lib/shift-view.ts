@@ -3,7 +3,6 @@ import { formatShortDate, formatTimeRange, formatWeekday } from '@/lib/dates';
 import {
   canJoinShift,
   canLeaveShift,
-  DetailedOpeningRequestDto,
   DetailedShiftDto,
   DetailedUserDto,
   isOnShift,
@@ -36,16 +35,5 @@ export function shiftToRow(shift: DetailedShiftDto, user?: DetailedUserDto): Shi
     joined: user ? isOnShift(shift, user.id) : false,
     canJoin: user ? canJoinShift(user, shift) : false,
     canLeave: user ? canLeaveShift(user, shift) : false,
-  };
-}
-
-export function requestToRow(request: DetailedOpeningRequestDto): Shift {
-  return {
-    id: request.id,
-    groupName: request.cookingClub?.name || `Kör ID: ${request.cookingClub?.id ?? request.id}`,
-    day: formatWeekday(request.opening),
-    time: formatTimeRange(request.opening, request.closing),
-    location: request.place,
-    date: formatShortDate(request.opening),
   };
 }

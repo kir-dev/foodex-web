@@ -1,12 +1,12 @@
 'use client';
 
-import { ApprovedShiftsContainer } from '@/components/approvedShiftsContainer';
+import { ApprovedRequestsContainer } from '@/components/approvedRequestsContainer';
 import { useAuth } from '@/components/auth-provider';
 import Button from '@/components/button';
 import { IncomingRequestsContainer } from '@/components/incomingRequestsContainer';
+import { OpeningRequestRow, requestToRow } from '@/components/openingRequestTable';
 import { PageState } from '@/components/page-state';
 import { RequireAuth } from '@/components/require-auth';
-import { Shift } from '@/components/ShiftTable';
 import { TimeInput } from '@/components/timeInput';
 import { apiFetch, isApiError } from '@/lib/api';
 import {
@@ -17,7 +17,6 @@ import {
   toLocalDateTimePayload,
   toTimeInputValue,
 } from '@/lib/dates';
-import { requestToRow } from '@/lib/shift-view';
 import { useRefetchOnPath } from '@/lib/use-refetch-on-path';
 import {
   CreateShiftFromOpeningRequestDto,
@@ -198,7 +197,7 @@ function RequestsContent() {
     }
   };
 
-  const handleDeleteAcceptedRequest = async (row: Shift): Promise<void> => {
+  const handleDeleteAcceptedRequest = async (row: OpeningRequestRow): Promise<void> => {
     if (!confirm('Biztosan törölni szeretnéd ezt a nyitást? A hozzá tartozó műszakok is törlődnek.')) {
       return;
     }
@@ -255,8 +254,8 @@ function RequestsContent() {
 
       <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
         <h3 className='text-2xl font-bold text-[#332C81] pl-3 mb-2'>Elfogadott kérések</h3>
-        <ApprovedShiftsContainer
-          shifts={acceptedRequests.map(requestToRow)}
+        <ApprovedRequestsContainer
+          requests={acceptedRequests.map(requestToRow)}
           onEdit={(row) => handleOpenRequestEdit(row.id)}
           onDelete={(row) => void handleDeleteAcceptedRequest(row)}
         />

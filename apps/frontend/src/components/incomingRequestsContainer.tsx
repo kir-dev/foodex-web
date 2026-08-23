@@ -1,9 +1,9 @@
 'use client';
 
-import { Shift, ShiftTable } from '@/components/ShiftTable';
+import { OpeningRequestRow, OpeningRequestTable } from '@/components/openingRequestTable';
 
 type RequestsProps = {
-  requests: Shift[];
+  requests: OpeningRequestRow[];
   onAccept: (id: number) => void;
   onReject?: (id: number) => void;
   onEdit?: (id: number) => void;
@@ -11,18 +11,18 @@ type RequestsProps = {
 
 export function IncomingRequestsContainer({ requests, onAccept, onReject, onEdit }: RequestsProps) {
   return (
-    <ShiftTable
-      shifts={requests}
+    <OpeningRequestTable
+      requests={requests}
       buttons={[
         {
           label: 'Elfogadás',
-          onClick: (shift) => onAccept(shift.id),
+          onClick: (request) => onAccept(request.id),
         },
         ...(onEdit
           ? [
               {
                 label: 'Módosítás',
-                onClick: (shift: Shift) => onEdit(shift.id),
+                onClick: (request: OpeningRequestRow) => onEdit(request.id),
               },
             ]
           : []),
@@ -30,7 +30,7 @@ export function IncomingRequestsContainer({ requests, onAccept, onReject, onEdit
           ? [
               {
                 label: 'Elutasítás',
-                onClick: (shift: Shift) => onReject(shift.id),
+                onClick: (request: OpeningRequestRow) => onReject(request.id),
               },
             ]
           : []),

@@ -6,6 +6,7 @@ import { PageState } from '@/components/page-state';
 import { RequestShiftsModal } from '@/components/requestShiftsModal';
 import { RequireAuth } from '@/components/require-auth';
 import { TimeInput } from '@/components/timeInput';
+import { UserNameLink } from '@/components/userNameLink';
 import { apiFetch, isApiError } from '@/lib/api';
 import {
   compareByOpeningDesc,
@@ -185,8 +186,14 @@ function OpeningsContent() {
                     <p className='text-gray-600 mb-1'>
                       🕒 {formatTime(request.opening)} - {formatTime(request.closing)}
                     </p>
-                    <p className='text-gray-600 mb-2'>
+                    <p className='text-gray-600 mb-1'>
                       📍 Helyszín: <span className='font-semibold text-black'>{request.place}</span>
+                    </p>
+                    <p className='text-gray-600 mb-2'>
+                      Kérte:{' '}
+                      <UserNameLink userId={request.user.id} className='font-semibold text-black'>
+                        {request.user.nickname}
+                      </UserNameLink>
                     </p>
 
                     {request.description && (
