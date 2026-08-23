@@ -60,37 +60,37 @@ function UsersContent() {
   }
 
   return (
-    <main className='p-4 sm:p-8 flex flex-col items-center bg-white flex-1'>
-      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-6 space-y-4'>
-        <h1 className='text-3xl font-bold text-[#332C81]'>Aktív felhasználók</h1>
+    <main className='p-4 sm:p-8 flex flex-col items-center bg-surface flex-1'>
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-2xl p-4 sm:p-6 space-y-4'>
+        <h1 className='text-3xl font-bold text-brand-fg'>Aktív felhasználók</h1>
         <StyledInput
           type='search'
           placeholder='Keresés név, becenév, email vagy szerep szerint...'
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          className='border-2 border-[#332C81]'
+          className='border-2 border-brand-fg'
         />
 
         <div className='flex flex-col gap-3'>
           {filtered.length === 0 ? (
-            <p className='text-gray-500'>Nincs találat.</p>
+            <p className='text-muted'>Nincs találat.</p>
           ) : (
             filtered.map((user) => (
-              <div key={user.id} className='border-2 border-[#332C81] rounded-xl p-3'>
+              <div key={user.id} className='border-2 border-brand-fg rounded-xl p-3'>
                 <div className='flex flex-col sm:flex-row sm:justify-between gap-1'>
-                  <p className='text-xl font-semibold text-[#332C81]'>
+                  <p className='text-xl font-semibold text-brand-fg'>
                     <UserNameLink userId={user.id}>{user.name}</UserNameLink>{' '}
-                    <span className='font-normal text-gray-600'>
+                    <span className='font-normal text-muted'>
                       (<UserNameLink userId={user.id}>{user.nickname}</UserNameLink>)
                     </span>
                   </p>
-                  <span className='text-sm font-bold text-[#FF9860]'>{user.role}</span>
+                  <span className='text-sm font-bold text-accent'>{user.role}</span>
                 </div>
-                <p className='text-gray-600'>{user.email}</p>
+                <p className='text-muted'>{user.email}</p>
                 {user.leaderAt.length > 0 && (
-                  <p className='text-sm text-gray-500'>Vezető: {user.leaderAt.map((club) => club.name).join(', ')}</p>
+                  <p className='text-sm text-muted'>Vezető: {user.leaderAt.map((club) => club.name).join(', ')}</p>
                 )}
-                <p className='text-sm text-gray-500'>Műszakok: {user.shifts.length}</p>
+                <p className='text-sm text-muted'>Műszakok: {user.shifts.length}</p>
               </div>
             ))
           )}

@@ -14,8 +14,8 @@ const Button: React.FC<ButtonProps> = ({ label, type = 'button', className = '',
   const baseClasses = 'font-semibold text-xl px-4 py-2 rounded-full border-2 transition-all';
 
   const variantClasses = {
-    primary: 'bg-[#2f2173] text-[#ff9860] border-[#ff9860] hover:bg-[#3d2d91]',
-    secondary: 'bg-white text-[#2f2173] border-[#2f2173] hover:bg-[#2f2173] hover:text-[#ff9860]',
+    primary: 'bg-brand-deep text-accent border-accent hover:bg-brand-deep-hover',
+    secondary: 'bg-surface text-brand-fg border-brand-fg hover:bg-brand hover:text-accent',
   };
 
   return (

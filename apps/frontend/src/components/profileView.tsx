@@ -173,32 +173,32 @@ export function ProfileView({ user, editable, onSaved }: ProfileViewProps) {
 
   return (
     <div className='w-full flex justify-center p-4 sm:p-6'>
-      <div className='rounded-xl border-2 border-[#332C81] p-4 sm:p-8 w-full max-w-6xl space-y-6'>
+      <div className='rounded-xl border-2 border-brand-fg p-4 sm:p-8 w-full max-w-6xl space-y-6'>
         <div className='flex flex-col md:flex-row gap-6'>
           {user.profilePicture ? (
             <img
               src={user.profilePicture}
               alt='Profilkép'
-              className='w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 rounded-xl mx-auto md:mx-0 border-2 border-[#FF9860] object-cover'
+              className='w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 rounded-xl mx-auto md:mx-0 border-2 border-accent object-cover'
             />
           ) : (
-            <div className='w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 bg-gray-300 rounded-xl mx-auto md:mx-0 border-2 border-[#FF9860]' />
+            <div className='w-48 h-48 sm:w-60 sm:h-60 md:w-72 md:h-72 bg-gray-300 rounded-xl mx-auto md:mx-0 border-2 border-accent' />
           )}
 
-          <div className='flex-1 bg-[#332C81] border-2 border-[#FF9860] rounded-xl p-4 flex flex-col justify-between'>
+          <div className='flex-1 bg-brand border-2 border-accent rounded-xl p-4 flex flex-col justify-between'>
             <div>
               <div className='mb-4 flex flex-col gap-2 md:flex-row md:items-center md:gap-4'>
                 <div className='flex items-center gap-2 text-xl font-semibold'>
-                  <span className='text-[#FF9860]'>Név:</span>
+                  <span className='text-accent'>Név:</span>
                   <span className='text-white'>{user.name}</span>
                 </div>
 
                 <div className='flex flex-col md:flex-row md:items-center gap-2 w-full md:w-auto'>
-                  <span className='text-[#FF9860] font-semibold text-xl'>Becenév:</span>
+                  <span className='text-accent font-semibold text-xl'>Becenév:</span>
                   {editable ? (
                     <input
                       type='text'
-                      className='rounded-xl px-2 py-1 w-full md:w-48 bg-white text-black placeholder-gray-300'
+                      className='rounded-xl px-2 py-1 w-full md:w-48 bg-surface text-foreground placeholder-gray-300'
                       value={nickname}
                       maxLength={10}
                       onChange={(e) => setNickname(e.target.value)}
@@ -211,19 +211,19 @@ export function ProfileView({ user, editable, onSaved }: ProfileViewProps) {
               </div>
 
               <div className='mb-2 text-xl font-semibold'>
-                <span className='text-[#FF9860]'>E-mail:</span> <span className='text-white'>{user.email}</span>
+                <span className='text-accent'>E-mail:</span> <span className='text-white'>{user.email}</span>
               </div>
 
               <div className='mb-2 text-xl font-semibold'>
-                <span className='text-[#FF9860]'>Jogosultság:</span>{' '}
+                <span className='text-accent'>Jogosultság:</span>{' '}
                 <span className='text-white'>{user.role.toLowerCase()}</span>
               </div>
 
               <div className='mb-4'>
-                <span className='text-[#FF9860] font-semibold text-xl'>Kedvenc idézet</span>
+                <span className='text-accent font-semibold text-xl'>Kedvenc idézet</span>
                 {editable ? (
                   <textarea
-                    className='w-full h-20 rounded-xl px-2 py-1 mt-3 bg-white text-black placeholder-gray-300'
+                    className='w-full h-20 rounded-xl px-2 py-1 mt-3 bg-surface text-foreground placeholder-gray-300'
                     value={favouriteQuote}
                     onChange={(e) => setFavouriteQuote(e.target.value)}
                     placeholder='Írd ide az idézeted'
@@ -238,8 +238,8 @@ export function ProfileView({ user, editable, onSaved }: ProfileViewProps) {
           </div>
         </div>
 
-        <div className='bg-[#332C81] border-2 border-[#FF9860] rounded-xl p-4 space-y-5'>
-          <h2 className='text-[#FF9860] font-semibold text-2xl tracking-wide'>Féléves tevékenységek</h2>
+        <div className='bg-brand border-2 border-accent rounded-xl p-4 space-y-5'>
+          <h2 className='text-accent font-semibold text-2xl tracking-wide'>Féléves tevékenységek</h2>
 
           {activitiesLoading ? (
             <p className='text-gray-300 italic'>Tevékenységek betöltése...</p>

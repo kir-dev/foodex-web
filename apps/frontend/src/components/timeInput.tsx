@@ -31,7 +31,7 @@ export function TimeInput({ value, onChange, className = '' }: TimeInputProps) {
     <div className={`inline-flex items-center gap-1 ${className}`}>
       <select
         aria-label='Óra'
-        className='rounded-2xl p-2 text-xl bg-white text-black'
+        className='rounded-2xl p-2 text-xl bg-surface text-foreground'
         value={hour}
         onChange={(event) => emit(event.target.value, minute || '00')}
       >
@@ -45,7 +45,7 @@ export function TimeInput({ value, onChange, className = '' }: TimeInputProps) {
       <span className='text-xl font-semibold'>:</span>
       <select
         aria-label='Perc'
-        className='rounded-2xl p-2 text-xl bg-white text-black'
+        className='rounded-2xl p-2 text-xl bg-surface text-foreground'
         value={minute}
         onChange={(event) => emit(hour || '00', event.target.value)}
       >

@@ -320,16 +320,16 @@ function SemesterShiftsContent() {
   }
 
   return (
-    <main className='p-6 flex flex-col items-center gap-6 bg-white flex-1'>
-      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-6 space-y-4'>
-        <h2 className='text-2xl font-bold text-[#332C81]'>Új műszak létrehozása</h2>
-        <p className='text-[#332C81]'>A műszakot egy nyitási kéréshez kell rendelni (legfeljebb 4 műszak / nyitás).</p>
+    <main className='p-6 flex flex-col items-center gap-6 bg-surface flex-1'>
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-2xl p-4 sm:p-6 space-y-4'>
+        <h2 className='text-2xl font-bold text-brand-fg'>Új műszak létrehozása</h2>
+        <p className='text-brand-fg'>A műszakot egy nyitási kéréshez kell rendelni (legfeljebb 4 műszak / nyitás).</p>
 
         <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
-          <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
+          <div className='bg-brand text-white p-4 rounded-2xl border-2 border-accent'>
             <StyledLabel>Nyitási kérés</StyledLabel>
             <select
-              className='bg-white p-2 rounded-2xl text-black text-xl mt-2 w-full'
+              className='bg-surface p-2 rounded-2xl text-foreground text-xl mt-2 w-full'
               value={openingRequestId}
               onChange={(e) => handleSelectOpeningRequest(e.target.value ? Number(e.target.value) : '')}
             >
@@ -346,7 +346,7 @@ function SemesterShiftsContent() {
               })}
             </select>
           </div>
-          <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
+          <div className='bg-brand text-white p-4 rounded-2xl border-2 border-accent'>
             <StyledLabel>Max. létszám</StyledLabel>
             <StyledInput
               type='number'
@@ -358,7 +358,7 @@ function SemesterShiftsContent() {
           </div>
         </div>
 
-        <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
+        <div className='bg-brand text-white p-4 rounded-2xl border-2 border-accent'>
           <StyledLabel>Műszak</StyledLabel>
           <div className='flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6 items-start sm:items-center w-full'>
             <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3.5 w-full sm:w-auto'>
@@ -368,10 +368,10 @@ function SemesterShiftsContent() {
 
             <div className='flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto'>
               <StyledLabel>Ideje:</StyledLabel>
-              <div className='flex items-center gap-2 w-full sm:w-auto text-black'>
-                <TimeInput className='text-[#ff9860]' value={startTime} onChange={setStartTime} />
-                <span className='mx-1 text-[#ff9860] font-semibold'>–</span>
-                <TimeInput className='text-[#ff9860]' value={endTime} onChange={setEndTime} />
+              <div className='flex items-center gap-2 w-full sm:w-auto text-foreground'>
+                <TimeInput className='text-accent' value={startTime} onChange={setStartTime} />
+                <span className='mx-1 text-accent font-semibold'>–</span>
+                <TimeInput className='text-accent' value={endTime} onChange={setEndTime} />
               </div>
             </div>
 
@@ -388,10 +388,10 @@ function SemesterShiftsContent() {
           </div>
         </div>
 
-        <div className='bg-[#2f2173] text-white p-4 rounded-2xl border-2 border-[#ff9860]'>
+        <div className='bg-brand-deep text-white p-4 rounded-2xl border-2 border-accent'>
           <StyledLabel>Megjegyzés</StyledLabel>
           <textarea
-            className='bg-white w-full p-3 rounded-2xl text-black text-xl h-24 mt-3'
+            className='bg-surface w-full p-3 rounded-2xl text-foreground text-xl h-24 mt-3'
             value={comment}
             onChange={(e) => setComment(e.target.value)}
           />
@@ -412,9 +412,9 @@ function SemesterShiftsContent() {
         </div>
       </div>
 
-      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-xl p-2'>
         <div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 px-3 mb-2'>
-          <h1 className='text-2xl font-bold text-[#332C81]'>Féléves műszakok</h1>
+          <h1 className='text-2xl font-bold text-brand-fg'>Féléves műszakok</h1>
           {actionMessage && (
             <span className={`text-lg font-medium ${actionMessage.isError ? 'text-red-500' : 'text-green-600'}`}>
               {actionMessage.text}
@@ -434,76 +434,76 @@ function SemesterShiftsContent() {
 
       {editingShift && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
-          <div className='bg-white rounded-xl border-2 border-[#332C81] p-6 max-w-lg w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto'>
-            <h4 className='text-2xl font-bold text-[#332C81]'>Műszak módosítása</h4>
-            <p className='text-gray-600 font-medium'>{editingShift.cookingClub?.name}</p>
+          <div className='bg-surface rounded-xl border-2 border-brand-fg p-6 max-w-lg w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto'>
+            <h4 className='text-2xl font-bold text-brand-fg'>Műszak módosítása</h4>
+            <p className='text-muted font-medium'>{editingShift.cookingClub?.name}</p>
 
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Nap:</label>
+              <label className='font-semibold text-brand-fg'>Nap:</label>
               <input
                 type='date'
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={editDate}
                 onChange={(e) => setEditDate(e.target.value)}
               />
             </div>
             <div className='flex gap-3'>
               <div className='flex flex-col gap-1 flex-1'>
-                <label className='font-semibold text-[#332C81]'>Kezdés:</label>
-                <TimeInput className='text-[#ff9860]' value={editStartTime} onChange={setEditStartTime} />
+                <label className='font-semibold text-brand-fg'>Kezdés:</label>
+                <TimeInput className='text-accent' value={editStartTime} onChange={setEditStartTime} />
               </div>
               <div className='flex flex-col gap-1 flex-1'>
-                <label className='font-semibold text-[#332C81]'>Vége:</label>
-                <TimeInput className='text-[#ff9860]' value={editEndTime} onChange={setEditEndTime} />
+                <label className='font-semibold text-brand-fg'>Vége:</label>
+                <TimeInput className='text-accent' value={editEndTime} onChange={setEditEndTime} />
               </div>
             </div>
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Helyszín:</label>
+              <label className='font-semibold text-brand-fg'>Helyszín:</label>
               <input
                 type='text'
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={editPlace}
                 onChange={(e) => setEditPlace(e.target.value)}
               />
             </div>
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Max. létszám:</label>
+              <label className='font-semibold text-brand-fg'>Max. létszám:</label>
               <input
                 type='number'
                 min={1}
                 max={6}
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={editMaxMembers}
                 onChange={(e) => setEditMaxMembers(Number(e.target.value))}
               />
             </div>
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Megjegyzés:</label>
+              <label className='font-semibold text-brand-fg'>Megjegyzés:</label>
               <textarea
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={editComment}
                 onChange={(e) => setEditComment(e.target.value)}
               />
             </div>
 
             <div className='space-y-2'>
-              <h5 className='font-semibold text-[#332C81] text-lg'>Dolgozók</h5>
+              <h5 className='font-semibold text-brand-fg text-lg'>Dolgozók</h5>
               {draftWorkers.length === 0 ? (
-                <p className='text-gray-500 italic'>Még senki nincs a műszakon.</p>
+                <p className='text-muted italic'>Még senki nincs a műszakon.</p>
               ) : (
                 <ul className='flex flex-col gap-2'>
                   {draftWorkers.map((worker) => (
                     <li
                       key={worker.id}
-                      className='flex items-center justify-between gap-2 border-2 border-[#332C81] rounded-lg px-3 py-2'
+                      className='flex items-center justify-between gap-2 border-2 border-brand-fg rounded-lg px-3 py-2'
                     >
-                      <span className='text-[#332C81] font-medium'>
+                      <span className='text-brand-fg font-medium'>
                         {worker.nickname}{' '}
-                        <span className='text-sm font-normal text-gray-500'>({ROLE_LABEL[worker.role]})</span>
+                        <span className='text-sm font-normal text-muted'>({ROLE_LABEL[worker.role]})</span>
                       </span>
                       <button
                         type='button'
-                        className='bg-white text-[#332C81] font-bold px-3 py-1 rounded-xl border-2 border-[#332C81]'
+                        className='bg-surface text-brand-fg font-bold px-3 py-1 rounded-xl border-2 border-brand-fg'
                         onClick={() => handleRemoveWorker(worker.id)}
                         disabled={isSaving}
                       >
@@ -516,7 +516,7 @@ function SemesterShiftsContent() {
 
               <div className='flex flex-col sm:flex-row gap-2 pt-1'>
                 <select
-                  className='border-2 border-gray-300 rounded-lg p-2 text-black flex-1'
+                  className='border-2 border-input-border rounded-lg p-2 text-foreground flex-1'
                   value={selectedWorkerId}
                   onChange={(e) => setSelectedWorkerId(e.target.value ? Number(e.target.value) : '')}
                 >

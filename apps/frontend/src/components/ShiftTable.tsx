@@ -39,7 +39,7 @@ export function ShiftTable({
   emptyLabel = 'Nincs megjeleníthető műszak.',
 }: ShiftTableProps) {
   if (shifts.length === 0) {
-    return <p className='px-3 py-4 text-[#332C81]'>{emptyLabel}</p>;
+    return <p className='px-3 py-4 text-brand-fg'>{emptyLabel}</p>;
   }
 
   return (
@@ -52,14 +52,14 @@ export function ShiftTable({
               showNamesColumn
                 ? 'sm:grid-cols-[1fr_1fr_1fr_1fr_1.6fr_auto]'
                 : 'sm:grid-cols-[1fr_1fr_1fr_1fr_auto]'
-            } items-center bg-[#332C81] text-[#FF9860] font-semibold text-base sm:text-lg rounded-xl w-full ${
-              shift.joined ? 'ring-2 ring-[#FF9860]' : ''
+            } items-center bg-brand text-accent font-semibold text-base sm:text-lg rounded-xl w-full ${
+              shift.joined ? 'ring-2 ring-accent' : ''
             }`}
           >
             <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full'>
               {shift.groupName}
               {shift.joined && (
-                <span className='ml-2 text-xs font-bold bg-[#FF9860] text-[#332C81] px-2 py-0.5 rounded-full align-middle'>
+                <span className='ml-2 text-xs font-bold bg-accent text-brand-fg px-2 py-0.5 rounded-full align-middle'>
                   Jelentkeztél
                 </span>
               )}
@@ -73,7 +73,7 @@ export function ShiftTable({
 
             {showNamesColumn && (
               <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full text-sm sm:text-base font-medium text-white'>
-                {shift.occupancy && <span className='block text-[#FF9860]'>{shift.occupancy}</span>}
+                {shift.occupancy && <span className='block text-accent'>{shift.occupancy}</span>}
                 <span className='italic font-normal'>
                   {shift.workers && shift.workers.length > 0
                     ? shift.workers.map((worker, index) => (
@@ -94,7 +94,7 @@ export function ShiftTable({
                   <button
                     key={btn.label}
                     type='button'
-                    className='bg-white text-[#332C81] font-bold px-3 py-1 rounded-xl w-fit'
+                    className='bg-white text-brand-fg font-bold px-3 py-1 rounded-xl w-fit'
                     onClick={() => btn.onClick(shift)}
                   >
                     {btn.label}

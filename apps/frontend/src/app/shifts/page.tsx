@@ -100,7 +100,7 @@ function ShiftsContent() {
   };
 
   return (
-    <main className='p-6 flex flex-col items-center gap-6 bg-white flex-1'>
+    <main className='p-6 flex flex-col items-center gap-6 bg-surface flex-1'>
       {actionMessage && (
         <p
           className={`w-full max-w-5xl text-lg font-medium ${actionMessage.isError ? 'text-red-500' : 'text-green-600'}`}
@@ -110,13 +110,13 @@ function ShiftsContent() {
       )}
 
       {user.role === 'NEWBIE' && (
-        <p className='w-full max-w-5xl text-[#332C81]'>
+        <p className='w-full max-w-5xl text-brand-fg'>
           Újoncként akkor tudsz jelentkezni, ha már van legalább egy tag a műszakban, és kevesebb újonc van, mint tag.
         </p>
       )}
 
-      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
-        <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Aktív műszakok</h3>
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-xl p-2'>
+        <h3 className='text-2xl font-bold text-brand-fg pl-3'>Aktív műszakok</h3>
         <ActiveShiftsContainer
           shifts={data.activeShifts.map(toRow)}
           onJoin={allowJoin ? (shift) => void handleJoin(shift) : undefined}
@@ -125,8 +125,8 @@ function ShiftsContent() {
         />
       </div>
 
-      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
-        <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Betelt és folyamatban lévő műszakok</h3>
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-xl p-2'>
+        <h3 className='text-2xl font-bold text-brand-fg pl-3'>Betelt és folyamatban lévő műszakok</h3>
         <SubmitShiftsContainer
           shifts={data.fullShifts.map(toRow)}
           onJoin={allowJoin ? (shift) => void handleJoin(shift) : undefined}

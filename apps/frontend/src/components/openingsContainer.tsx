@@ -18,7 +18,7 @@ export function OpeningsContainer({ openings }: OpeningsProps) {
         {openings.map((opening) => (
           <div
             key={opening.id}
-            className='border-2 border-[#332C81] bg-[#332C81] rounded-xl px-3 py-2 grid
+            className='border-2 border-brand-fg bg-brand rounded-xl px-3 py-2 grid
     sm:grid-cols-[minmax(6rem,1.3fr)_minmax(6.5rem,0.9fr)_4.5rem_minmax(7rem,1fr)_minmax(5rem,1fr)]
     gap-x-3 items-center text-white text-lg'
           >

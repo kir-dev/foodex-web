@@ -231,7 +231,7 @@ function RequestsContent() {
   }
 
   return (
-    <main className='p-6 flex flex-col items-center gap-6 bg-white flex-1'>
+    <main className='p-6 flex flex-col items-center gap-6 bg-surface flex-1'>
       {actionMessage && (
         <span
           className={`w-full max-w-5xl text-lg font-medium ${
@@ -242,8 +242,8 @@ function RequestsContent() {
         </span>
       )}
 
-      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
-        <h3 className='text-2xl font-bold text-[#332C81] pl-3 mb-2'>Bejövő kérések</h3>
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-xl p-2'>
+        <h3 className='text-2xl font-bold text-brand-fg pl-3 mb-2'>Bejövő kérések</h3>
         <IncomingRequestsContainer
           requests={requests.map(requestToRow)}
           onAccept={handleOpenAccept}
@@ -252,8 +252,8 @@ function RequestsContent() {
         />
       </div>
 
-      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-xl p-2'>
-        <h3 className='text-2xl font-bold text-[#332C81] pl-3 mb-2'>Elfogadott kérések</h3>
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-xl p-2'>
+        <h3 className='text-2xl font-bold text-brand-fg pl-3 mb-2'>Elfogadott kérések</h3>
         <ApprovedRequestsContainer
           requests={acceptedRequests.map(requestToRow)}
           onEdit={(row) => handleOpenRequestEdit(row.id)}
@@ -263,31 +263,31 @@ function RequestsContent() {
 
       {acceptingRequest && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
-          <div className='bg-white rounded-xl border-2 border-[#332C81] p-6 max-w-md w-full space-y-4 shadow-xl'>
-            <h4 className='text-2xl font-bold text-[#332C81]'>Kérés elfogadása</h4>
-            <p className='text-gray-600 font-medium'>{acceptingRequest.cookingClub?.name}</p>
-            <p className='text-gray-600'>
+          <div className='bg-surface rounded-xl border-2 border-brand-fg p-6 max-w-md w-full space-y-4 shadow-xl'>
+            <h4 className='text-2xl font-bold text-brand-fg'>Kérés elfogadása</h4>
+            <p className='text-muted font-medium'>{acceptingRequest.cookingClub?.name}</p>
+            <p className='text-muted'>
               {formatLongDate(acceptingRequest.opening)} ·{' '}
               {formatTimeRange(acceptingRequest.opening, acceptingRequest.closing)}
             </p>
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Műszakok száma:</label>
+              <label className='font-semibold text-brand-fg'>Műszakok száma:</label>
               <input
                 type='number'
                 min={1}
                 max={4}
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={acceptShiftCount}
                 onChange={(e) => setAcceptShiftCount(Number(e.target.value))}
               />
             </div>
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Max. létszám:</label>
+              <label className='font-semibold text-brand-fg'>Max. létszám:</label>
               <input
                 type='number'
                 min={1}
                 max={6}
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={acceptMaxMembers}
                 onChange={(e) => setAcceptMaxMembers(Number(e.target.value))}
               />
@@ -313,41 +313,41 @@ function RequestsContent() {
 
       {editingRequest && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
-          <div className='bg-white rounded-xl border-2 border-[#332C81] p-6 max-w-md w-full space-y-4 shadow-xl'>
-            <h4 className='text-2xl font-bold text-[#332C81]'>Kérés módosítása</h4>
-            <p className='text-gray-600 font-medium'>{editingRequest.cookingClub?.name}</p>
+          <div className='bg-surface rounded-xl border-2 border-brand-fg p-6 max-w-md w-full space-y-4 shadow-xl'>
+            <h4 className='text-2xl font-bold text-brand-fg'>Kérés módosítása</h4>
+            <p className='text-muted font-medium'>{editingRequest.cookingClub?.name}</p>
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Nap:</label>
+              <label className='font-semibold text-brand-fg'>Nap:</label>
               <input
                 type='date'
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={editRequestDate}
                 onChange={(e) => setEditRequestDate(e.target.value)}
               />
             </div>
             <div className='flex gap-3'>
               <div className='flex flex-col gap-1 flex-1'>
-                <label className='font-semibold text-[#332C81]'>Kezdés:</label>
+                <label className='font-semibold text-brand-fg'>Kezdés:</label>
                 <TimeInput value={editRequestStart} onChange={setEditRequestStart} />
               </div>
               <div className='flex flex-col gap-1 flex-1'>
-                <label className='font-semibold text-[#332C81]'>Vége:</label>
+                <label className='font-semibold text-brand-fg'>Vége:</label>
                 <TimeInput value={editRequestEnd} onChange={setEditRequestEnd} />
               </div>
             </div>
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Helyszín:</label>
+              <label className='font-semibold text-brand-fg'>Helyszín:</label>
               <input
                 type='text'
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={editRequestPlace}
                 onChange={(e) => setEditRequestPlace(e.target.value)}
               />
             </div>
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Leírás:</label>
+              <label className='font-semibold text-brand-fg'>Leírás:</label>
               <textarea
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={editRequestDescription}
                 onChange={(e) => setEditRequestDescription(e.target.value)}
               />

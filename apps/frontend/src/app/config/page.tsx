@@ -103,15 +103,15 @@ function ConfigContent() {
   }
 
   return (
-    <main className='p-4 sm:p-8 flex flex-col items-center bg-white flex-1'>
-      <div className='w-full max-w-3xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-8 space-y-5'>
-        <h1 className='text-3xl font-bold text-[#332C81]'>Oldal konfiguráció</h1>
-        <p className='text-[#332C81]'>
+    <main className='p-4 sm:p-8 flex flex-col items-center bg-surface flex-1'>
+      <div className='w-full max-w-3xl border-2 border-brand-fg rounded-2xl p-4 sm:p-8 space-y-5'>
+        <h1 className='text-3xl font-bold text-brand-fg'>Oldal konfiguráció</h1>
+        <p className='text-brand-fg'>
           A félév dátumai határozzák meg, mely műszakok jelennek meg a Nyitások oldalon. A feeling, a logó és a
           leírás a kezdőlapon látszik.
         </p>
 
-        <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860] space-y-3'>
+        <div className='bg-brand text-white p-4 rounded-2xl border-2 border-accent space-y-3'>
           <div>
             <StyledLabel>A hét feelingje</StyledLabel>
             <StyledInput type='text' value={feelingOfTheWeek} onChange={(e) => setFeelingOfTheWeek(e.target.value)} />
@@ -123,7 +123,7 @@ function ConfigContent() {
           <div>
             <StyledLabel>Kezdőlap leírása</StyledLabel>
             <textarea
-              className='bg-white w-full p-3 rounded-2xl text-black text-xl h-32 mt-3'
+              className='bg-surface w-full p-3 rounded-2xl text-foreground text-xl h-32 mt-3'
               value={homepageDescription}
               onChange={(e) => setHomepageDescription(e.target.value)}
             />

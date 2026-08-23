@@ -37,29 +37,29 @@ export function RequestShiftsModal({ requestId, clubName, onClose }: RequestShif
 
   return (
     <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
-      <div className='bg-white rounded-xl border-2 border-[#332C81] p-6 max-w-lg w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto'>
-        <h4 className='text-2xl font-bold text-[#332C81]'>Műszakok</h4>
-        {clubName && <p className='text-gray-600 font-medium'>{clubName}</p>}
+      <div className='bg-surface rounded-xl border-2 border-brand-fg p-6 max-w-lg w-full space-y-4 shadow-xl max-h-[90vh] overflow-y-auto'>
+        <h4 className='text-2xl font-bold text-brand-fg'>Műszakok</h4>
+        {clubName && <p className='text-muted font-medium'>{clubName}</p>}
 
         {loading ? (
-          <p className='text-gray-500 italic'>Műszakok betöltése...</p>
+          <p className='text-muted italic'>Műszakok betöltése...</p>
         ) : error ? (
           <p className='text-red-500 font-medium'>{error}</p>
         ) : shifts.length === 0 ? (
-          <p className='text-gray-500 italic'>Nincsenek műszakok.</p>
+          <p className='text-muted italic'>Nincsenek műszakok.</p>
         ) : (
           <ul className='flex flex-col gap-2'>
             {shifts.map((shift) => (
               <li
                 key={shift.id}
-                className='border-2 border-[#332C81] rounded-xl px-3 py-2 text-[#332C81]'
+                className='border-2 border-brand-fg rounded-xl px-3 py-2 text-brand-fg'
               >
                 <span className='block font-semibold'>
                   {formatWeekday(shift.opening)}{' '}
-                  <span className='font-medium text-gray-600'>{formatShortDate(shift.opening)}</span>
+                  <span className='font-medium text-muted'>{formatShortDate(shift.opening)}</span>
                 </span>
                 <span className='block'>{formatTimeRange(shift.opening, shift.closing)}</span>
-                <span className='block italic text-gray-600'>{shift.place}</span>
+                <span className='block italic text-muted'>{shift.place}</span>
                 <span className='block font-medium'>{shiftOccupancyLabel(shift)}</span>
               </li>
             ))}

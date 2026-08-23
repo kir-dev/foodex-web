@@ -147,9 +147,9 @@ function OpeningsContent() {
   }
 
   return (
-    <main className='p-4 sm:p-8 flex flex-col items-center bg-white flex-1 gap-6'>
-      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-6'>
-        <h1 className='text-3xl font-bold text-[#332C81] mb-6 pl-2'>Féléves Nyitások</h1>
+    <main className='p-4 sm:p-8 flex flex-col items-center bg-surface flex-1 gap-6'>
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-2xl p-4 sm:p-6'>
+        <h1 className='text-3xl font-bold text-brand-fg mb-6 pl-2'>Féléves Nyitások</h1>
 
         {listMessage && (
           <p className={`text-lg font-medium mb-4 pl-2 ${listMessage.isError ? 'text-red-500' : 'text-green-600'}`}>
@@ -158,7 +158,7 @@ function OpeningsContent() {
         )}
 
         {openings.length === 0 ? (
-          <p className='text-gray-500 text-lg pl-2'>Nincsenek nyitási kérések ebben a félévben.</p>
+          <p className='text-muted text-lg pl-2'>Nincsenek nyitási kérések ebben a félévben.</p>
         ) : (
           <div className='grid grid-cols-1 md:grid-cols-2 gap-4'>
             {orderedOpenings.map((request) => {
@@ -166,38 +166,40 @@ function OpeningsContent() {
               return (
                 <div
                   key={request.id}
-                  className='border-2 border-[#332C81] bg-white rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-shadow'
+                  className='border-2 border-brand-fg bg-surface rounded-xl p-4 flex flex-col justify-between hover:shadow-md transition-shadow'
                 >
                   <div>
                     <div className='flex justify-between items-start mb-2'>
-                      <h3 className='text-2xl font-bold text-[#332C81]'>
+                      <h3 className='text-2xl font-bold text-brand-fg'>
                         {request.cookingClub?.name || `Kör #${request.id}`}
                       </h3>
                       <span
                         className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
-                          accepted ? 'bg-green-100 text-green-800' : 'bg-orange-100 text-[#332C81]'
+                          accepted
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                            : 'bg-orange-100 text-brand-fg dark:bg-orange-950'
                         }`}
                       >
                         {accepted ? 'Elfogadva' : 'Függőben'}
                       </span>
                     </div>
 
-                    <p className='text-gray-700 font-medium mb-1'>📅 {formatLongDate(request.opening)}</p>
-                    <p className='text-gray-600 mb-1'>
+                    <p className='text-muted font-medium mb-1'>📅 {formatLongDate(request.opening)}</p>
+                    <p className='text-muted mb-1'>
                       🕒 {formatTime(request.opening)} - {formatTime(request.closing)}
                     </p>
-                    <p className='text-gray-600 mb-1'>
-                      📍 Helyszín: <span className='font-semibold text-black'>{request.place}</span>
+                    <p className='text-muted mb-1'>
+                      📍 Helyszín: <span className='font-semibold text-foreground'>{request.place}</span>
                     </p>
-                    <p className='text-gray-600 mb-2'>
+                    <p className='text-muted mb-2'>
                       Kérte:{' '}
-                      <UserNameLink userId={request.user.id} className='font-semibold text-black'>
+                      <UserNameLink userId={request.user.id} className='font-semibold text-foreground'>
                         {request.user.nickname}
                       </UserNameLink>
                     </p>
 
                     {request.description && (
-                      <p className='text-sm text-gray-500 italic border-t pt-2 mt-2'>&quot;{request.description}&quot;</p>
+                      <p className='text-sm text-muted italic border-t pt-2 mt-2'>&quot;{request.description}&quot;</p>
                     )}
                   </div>
 
@@ -233,42 +235,42 @@ function OpeningsContent() {
 
       {isAdminUser && editingRequest && (
         <div className='fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50'>
-          <div className='bg-white rounded-xl border-2 border-[#332C81] p-6 max-w-md w-full space-y-4 shadow-xl'>
-            <h4 className='text-2xl font-bold text-[#332C81]'>Nyitás módosítása</h4>
-            <p className='text-gray-600 font-medium'>{editingRequest.cookingClub?.name}</p>
+          <div className='bg-surface rounded-xl border-2 border-brand-fg p-6 max-w-md w-full space-y-4 shadow-xl'>
+            <h4 className='text-2xl font-bold text-brand-fg'>Nyitás módosítása</h4>
+            <p className='text-muted font-medium'>{editingRequest.cookingClub?.name}</p>
 
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Nap:</label>
+              <label className='font-semibold text-brand-fg'>Nap:</label>
               <input
                 type='date'
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={editDate}
                 onChange={(e) => setEditDate(e.target.value)}
               />
             </div>
             <div className='flex gap-3'>
               <div className='flex flex-col gap-1 flex-1'>
-                <label className='font-semibold text-[#332C81]'>Kezdés:</label>
+                <label className='font-semibold text-brand-fg'>Kezdés:</label>
                 <TimeInput value={editStartTime} onChange={setEditStartTime} />
               </div>
               <div className='flex flex-col gap-1 flex-1'>
-                <label className='font-semibold text-[#332C81]'>Vége:</label>
+                <label className='font-semibold text-brand-fg'>Vége:</label>
                 <TimeInput value={editEndTime} onChange={setEditEndTime} />
               </div>
             </div>
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Helyszín:</label>
+              <label className='font-semibold text-brand-fg'>Helyszín:</label>
               <input
                 type='text'
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={editPlace}
                 onChange={(e) => setEditPlace(e.target.value)}
               />
             </div>
             <div className='flex flex-col gap-1'>
-              <label className='font-semibold text-[#332C81]'>Leírás:</label>
+              <label className='font-semibold text-brand-fg'>Leírás:</label>
               <textarea
-                className='border-2 border-gray-300 rounded-lg p-2 text-black'
+                className='border-2 border-input-border rounded-lg p-2 text-foreground'
                 value={editDescription}
                 onChange={(e) => setEditDescription(e.target.value)}
               />

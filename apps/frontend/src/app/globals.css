@@ -2,9 +2,47 @@
 
 @custom-variant dark (&:is(.dark *));
 
+:root {
+  color-scheme: light;
+  --brand: #332c81;
+  --brand-deep: #2f2173;
+  --brand-deep-hover: #3d2d91;
+  --brand-fg: #332c81;
+  --accent: #ff9860;
+  --page: #f1f5f9;
+  --surface: #ffffff;
+  --foreground: #000000;
+  --muted: #4b5563;
+  --input-border: #d1d5db;
+}
+
+.dark {
+  color-scheme: dark;
+  --brand: #332c81;
+  --brand-deep: #241a5c;
+  --brand-deep-hover: #3d2d91;
+  --brand-fg: #c9c7f2;
+  --accent: #ff9860;
+  --page: #0f1020;
+  --surface: #18192e;
+  --foreground: #f4f4f8;
+  --muted: #b4b4c8;
+  --input-border: #3f4060;
+}
+
 @theme {
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
+  --color-brand: var(--brand);
+  --color-brand-deep: var(--brand-deep);
+  --color-brand-deep-hover: var(--brand-deep-hover);
+  --color-brand-fg: var(--brand-fg);
+  --color-accent: var(--accent);
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-foreground: var(--foreground);
+  --color-muted: var(--muted);
+  --color-input-border: var(--input-border);
 
   @keyframes accordion-down {
     from {
@@ -54,5 +92,5 @@
 }
 
 body {
-  @apply bg-slate-100;
+  @apply bg-page text-foreground;
 }

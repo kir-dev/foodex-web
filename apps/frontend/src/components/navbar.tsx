@@ -1,6 +1,7 @@
 'use client';
 
 import { loginUrl, useAuth } from '@/components/auth-provider';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { Menu, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -55,13 +56,16 @@ function Navbar() {
   };
 
   return (
-    <nav className='w-full bg-white border-b-2 border-[#332C81] px-4 py-2'>
+    <nav className='w-full bg-surface border-b-2 border-brand-fg px-4 py-2'>
       <div className='flex justify-between items-center'>
-        <div className='text-[#332C81] text-2xl font-bold block sm:hidden'>FoodEx</div>
+        <div className='text-brand-fg text-2xl font-bold block sm:hidden'>FoodEx</div>
 
-        <button className='sm:hidden text-[#332C81]' onClick={() => setIsOpen(!isOpen)}>
-          {isOpen ? <X size={32} /> : <Menu size={32} />}
-        </button>
+        <div className='flex items-center gap-2 sm:hidden'>
+          <ThemeToggle />
+          <button className='text-brand-fg' onClick={() => setIsOpen(!isOpen)}>
+            {isOpen ? <X size={32} /> : <Menu size={32} />}
+          </button>
+        </div>
 
         <div className='hidden sm:flex justify-between w-full'>
           <div className='flex space-x-4'>
@@ -71,12 +75,13 @@ function Navbar() {
           </div>
 
           <div className='flex space-x-4 items-center'>
+            <ThemeToggle />
             {status === 'loading' ? (
-              <div className='text-gray-400 text-lg'>Ellenőrzés...</div>
+              <div className='text-muted text-lg'>Ellenőrzés...</div>
             ) : !isLoggedIn ? (
               <a
                 href={loginUrl}
-                className='px-4 py-1 border-2 border-[#FF9860] bg-[#332C81] rounded-md text-white text-2xl font-semibold hover:bg-white hover:text-[#332C81] hover:border-[#332C81] transition-all'
+                className='px-4 py-1 border-2 border-accent bg-brand rounded-md text-white text-2xl font-semibold hover:bg-surface hover:text-brand-fg hover:border-brand-fg transition-all'
               >
                 Bejelentkezés
               </a>
@@ -90,7 +95,7 @@ function Navbar() {
                         alt={user?.nickname || 'Profil'}
                         width={42}
                         height={42}
-                        className='rounded-full border-2 border-[#332C81] hover:bg-[#332C81] transition-all p-1 hover:p-1.5'
+                        className='rounded-full border-2 border-brand-fg hover:bg-brand transition-all p-1 hover:p-1.5'
                       />
                     </Link>
                   ) : (
@@ -100,7 +105,7 @@ function Navbar() {
                 <button
                   type='button'
                   onClick={() => void handleLogout()}
-                  className='px-3 py-1 border-2 border-[#332C81] rounded-md text-[#332C81] text-xl font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
+                  className='px-3 py-1 border-2 border-brand-fg rounded-md text-brand-fg text-xl font-semibold hover:bg-brand hover:text-accent transition-all'
                 >
                   Kijelentkezés
                 </button>
@@ -123,11 +128,11 @@ function Navbar() {
           ))}
 
           {status === 'loading' ? (
-            <div className='text-gray-400 text-lg px-3 py-2'>Ellenőrzés...</div>
+            <div className='text-muted text-lg px-3 py-2'>Ellenőrzés...</div>
           ) : !isLoggedIn ? (
             <a
               href={loginUrl}
-              className='px-3 py-2 text-center border-2 border-[#FF9860] bg-[#332C81] rounded-md text-white text-lg font-semibold'
+              className='px-3 py-2 text-center border-2 border-accent bg-brand rounded-md text-white text-lg font-semibold'
             >
               Bejelentkezés
             </a>
@@ -140,14 +145,14 @@ function Navbar() {
                     href={item.href ?? '/profile'}
                     title={item.title}
                     onClick={() => setIsOpen(false)}
-                    className='flex items-center space-x-2 px-3 py-2 border-2 border-[#332C81] rounded-md text-[#332C81] text-lg font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
+                    className='flex items-center space-x-2 px-3 py-2 border-2 border-brand-fg rounded-md text-brand-fg text-lg font-semibold hover:bg-brand hover:text-accent transition-all'
                   >
                     <Image
                       src='/profile.png'
                       alt='Profil'
                       width={32}
                       height={32}
-                      className='rounded-full border border-[#332C81] p-0.5'
+                      className='rounded-full border border-brand-fg p-0.5'
                     />
                     <span>Profil</span>
                   </Link>
@@ -164,7 +169,7 @@ function Navbar() {
               <button
                 type='button'
                 onClick={() => void handleLogout()}
-                className='px-3 py-2 border-2 border-[#332C81] rounded-md text-[#332C81] text-lg font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
+                className='px-3 py-2 border-2 border-brand-fg rounded-md text-brand-fg text-lg font-semibold hover:bg-brand hover:text-accent transition-all'
               >
                 Kijelentkezés
               </button>
@@ -177,7 +182,7 @@ function Navbar() {
 }
 
 const linkClassName =
-  'px-3 py-1 border-2 border-[#332C81] rounded-md text-[#332C81] text-2xl font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all';
+  'px-3 py-1 border-2 border-brand-fg rounded-md text-brand-fg text-2xl font-semibold hover:bg-brand hover:text-accent transition-all';
 
 function NavItemView({ item }: { item: NavItem }) {
   if (item.children && item.children.length > 0) {
@@ -187,13 +192,13 @@ function NavItemView({ item }: { item: NavItem }) {
           {item.label}
         </button>
         <div className='absolute right-0 top-full z-20 hidden min-w-44 pt-1 group-hover:block group-focus-within:block'>
-          <div className='flex flex-col gap-1 rounded-md border-2 border-[#332C81] bg-white p-1 shadow-lg'>
+          <div className='flex flex-col gap-1 rounded-md border-2 border-brand-fg bg-surface p-1 shadow-lg'>
             {item.children.map((child) => (
               <Link
                 key={child.href}
                 href={child.href}
                 title={child.title}
-                className='px-3 py-1 rounded-md text-[#332C81] text-xl font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
+                className='px-3 py-1 rounded-md text-brand-fg text-xl font-semibold hover:bg-brand hover:text-accent transition-all'
               >
                 {child.label}
               </Link>
@@ -227,7 +232,7 @@ function MobileNavItem({
   onNavigate: () => void;
 }) {
   const mobileClassName =
-    'px-3 py-2 border-2 border-[#332C81] rounded-md text-[#332C81] text-lg font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all';
+    'px-3 py-2 border-2 border-brand-fg rounded-md text-brand-fg text-lg font-semibold hover:bg-brand hover:text-accent transition-all';
 
   if (item.children && item.children.length > 0) {
     const isExpanded = openDropdown === item.title;
@@ -248,7 +253,7 @@ function MobileNavItem({
               href={child.href}
               title={child.title}
               onClick={onNavigate}
-              className='ml-3 px-3 py-2 border-2 border-[#332C81] rounded-md text-[#332C81] text-lg font-semibold hover:bg-[#332C81] hover:text-[#FF9860] transition-all'
+              className='ml-3 px-3 py-2 border-2 border-brand-fg rounded-md text-brand-fg text-lg font-semibold hover:bg-brand hover:text-accent transition-all'
             >
               {child.label}
             </Link>

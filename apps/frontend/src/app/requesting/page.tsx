@@ -109,14 +109,14 @@ function RequestingContent() {
 
   return (
     <div className='px-4 sm:px-8 py-8 flex flex-col items-center'>
-      <div className='w-full max-w-[1280px] border-2 border-[#332C81] rounded-2xl p-4 sm:p-8'>
+      <div className='w-full max-w-[1280px] border-2 border-brand-fg rounded-2xl p-4 sm:p-8'>
         {clubsError && <p className='mb-4 text-red-500 font-semibold'>{clubsError}</p>}
 
         <div className='flex flex-col md:flex-row gap-4 md:gap-6 pb-5 w-full'>
-          <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860] w-full md:w-1/4'>
+          <div className='bg-brand text-white p-4 rounded-2xl border-2 border-accent w-full md:w-1/4'>
             <StyledLabel>Kör neve</StyledLabel>
             <select
-              className='bg-white p-2 rounded-2xl text-black text-xl mt-2 w-full'
+              className='bg-surface p-2 rounded-2xl text-foreground text-xl mt-2 w-full'
               value={cookingClubId}
               onChange={(e) => setCookingClubId(e.target.value ? Number(e.target.value) : '')}
             >
@@ -129,7 +129,7 @@ function RequestingContent() {
             </select>
           </div>
 
-          <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860] flex-1 md:w-3/4'>
+          <div className='bg-brand text-white p-4 rounded-2xl border-2 border-accent flex-1 md:w-3/4'>
             <StyledLabel>Nyitás</StyledLabel>
             <div className='flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6 items-start sm:items-center w-full'>
               <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3.5 w-full sm:w-auto'>
@@ -139,10 +139,10 @@ function RequestingContent() {
 
               <div className='flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto'>
                 <StyledLabel>Ideje:</StyledLabel>
-                <div className='flex items-center gap-2 w-full sm:w-auto text-black'>
-                  <TimeInput className='text-[#ff9860]' value={startTime} onChange={setStartTime} />
-                  <span className='mx-1 text-[#ff9860] font-semibold'>–</span>
-                  <TimeInput className='text-[#ff9860]' value={endTime} onChange={setEndTime} />
+                <div className='flex items-center gap-2 w-full sm:w-auto text-foreground'>
+                  <TimeInput className='text-accent' value={startTime} onChange={setStartTime} />
+                  <span className='mx-1 text-accent font-semibold'>–</span>
+                  <TimeInput className='text-accent' value={endTime} onChange={setEndTime} />
                 </div>
               </div>
 
@@ -160,12 +160,12 @@ function RequestingContent() {
           </div>
         </div>
 
-        <div className='bg-[#2f2173] text-white p-4 rounded-2xl border-2 border-[#ff9860] mb-5 w-full'>
+        <div className='bg-brand-deep text-white p-4 rounded-2xl border-2 border-accent mb-5 w-full'>
           <StyledLabel>Megjegyzés</StyledLabel>
           <textarea
             placeholder='pl. különleges nyitás, szokásosnál több foodexes kell, stb... (max 200 karakter lehet)'
             maxLength={200}
-            className='bg-white w-full p-3 rounded-2xl text-black text-xl h-32 mt-4'
+            className='bg-surface w-full p-3 rounded-2xl text-foreground text-xl h-32 mt-4'
             value={comment}
             onChange={(e) => setComment(e.target.value)}
           />

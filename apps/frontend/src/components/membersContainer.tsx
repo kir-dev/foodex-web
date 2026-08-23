@@ -17,9 +17,9 @@ export function MembersContainer({ members }: Props) {
         {members.map((member) => (
           <div
             key={member.id}
-            className='border-2 border-[#332C81] bg-[#332C81] rounded-xl p-2 flex items-center text-white text-lg'
+            className='border-2 border-brand-fg bg-brand rounded-xl p-2 flex items-center text-white text-lg'
           >
-            <span className='font-semibold text-[#FF9860]'>
+            <span className='font-semibold text-accent'>
               <UserNameLink userId={member.id}>{member.name}</UserNameLink>{' '}
               <span className='font-normal italic text-white'>({member.title})</span>
             </span>

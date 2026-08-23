@@ -18,7 +18,7 @@ export function StyledInput({ size = 'full', className = '', ...props }: StyledI
   return (
     <input
       {...props} // Most már biztonságosan átmegy minden, a TS nem fog akadékoskodni
-      className={`bg-white p-2 rounded-2xl text-black text-xl mt-2 ${sizeClasses[size]} ${className}`}
+      className={`bg-surface p-2 rounded-2xl text-foreground text-xl mt-2 ${sizeClasses[size]} ${className}`}
     />
   );
 }

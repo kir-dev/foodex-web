@@ -51,7 +51,7 @@ export default function HomePage() {
   }
 
   return (
-    <main className='flex flex-col items-center justify-start flex-1 p-6 bg-white'>
+    <main className='flex flex-col items-center justify-start flex-1 p-6 bg-surface'>
       <div className='flex flex-col md:flex-row gap-4 w-full max-w-7xl lg:max-w-[90%] mb-4'>
         <ImageContainer>
           <Image
@@ -64,21 +64,21 @@ export default function HomePage() {
           />
         </ImageContainer>
 
-        <div className='flex flex-col justify-start w-full bg-[#332C81] text-[#FF9860] rounded-xl px-6 py-6'>
+        <div className='flex flex-col justify-start w-full bg-brand text-accent rounded-xl px-6 py-6'>
           <h2 className='text-3xl sm:text-4xl md:text-5xl mb-4 font-semibold'>FoodEx</h2>
           <p className='text-base sm:text-lg whitespace-pre-wrap'>{data.homepageDescription}</p>
         </div>
       </div>
 
-      <div className='w-full sm:w-2/3 md:w-1/3 border-2 border-[#332C81] rounded-xl p-2 mb-4 text-center'>
-        <p className='text-xl font-semibold text-[#332C81]'>
-          A hét feelingje: <span className='font-normal text-black'>{data.feelingOfTheWeek}</span>
+      <div className='w-full sm:w-2/3 md:w-1/3 border-2 border-brand-fg rounded-xl p-2 mb-4 text-center'>
+        <p className='text-xl font-semibold text-brand-fg'>
+          A hét feelingje: <span className='font-normal text-foreground'>{data.feelingOfTheWeek}</span>
         </p>
       </div>
 
       <div className='w-full max-w-7xl grid grid-cols-1 lg:grid-cols-2 gap-6'>
-        <div className='w-full border-2 border-[#332C81] rounded-xl p-2'>
-          <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Aktív tagok</h3>
+        <div className='w-full border-2 border-brand-fg rounded-xl p-2'>
+          <h3 className='text-2xl font-bold text-brand-fg pl-3'>Aktív tagok</h3>
           <MembersContainer
             members={(data.activeMembers || []).map((member) => ({
               id: member.id,
@@ -88,8 +88,8 @@ export default function HomePage() {
           />
         </div>
 
-        <div className='w-full border-2 border-[#332C81] rounded-xl p-2'>
-          <h3 className='text-2xl font-bold text-[#332C81] pl-3'>Heti nyitások</h3>
+        <div className='w-full border-2 border-brand-fg rounded-xl p-2'>
+          <h3 className='text-2xl font-bold text-brand-fg pl-3'>Heti nyitások</h3>
           <OpeningsContainer
             openings={(data.upcomingOpenings || []).map((openingReq) => ({
               id: openingReq.id,

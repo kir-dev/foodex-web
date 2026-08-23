@@ -136,15 +136,15 @@ function ClubsContent() {
   }
 
   return (
-    <main className='p-4 sm:p-8 flex flex-col items-center gap-6 bg-white flex-1'>
-      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-6 space-y-4'>
-        <h1 className='text-3xl font-bold text-[#332C81]'>Kajás körök</h1>
-        <p className='text-[#332C81]'>
+    <main className='p-4 sm:p-8 flex flex-col items-center gap-6 bg-surface flex-1'>
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-2xl p-4 sm:p-6 space-y-4'>
+        <h1 className='text-3xl font-bold text-brand-fg'>Kajás körök</h1>
+        <p className='text-brand-fg'>
           Új kör felvételekor az ID az AuthSCH körazonosító (például Pizzásch 223). A vezetőket a belépéskor a backend
           állítja be.
         </p>
 
-        <div className='bg-[#332C81] text-white p-4 rounded-2xl border-2 border-[#ff9860] flex flex-col sm:flex-row gap-4 items-end'>
+        <div className='bg-brand text-white p-4 rounded-2xl border-2 border-accent flex flex-col sm:flex-row gap-4 items-end'>
           <div className='w-full sm:w-40'>
             <StyledLabel>Kör ID</StyledLabel>
             <StyledInput type='number' min={1} value={newId} onChange={(e) => setNewId(e.target.value)} />
@@ -166,29 +166,29 @@ function ClubsContent() {
         )}
       </div>
 
-      <div className='w-full max-w-5xl border-2 border-[#332C81] rounded-2xl p-4 sm:p-6 space-y-3'>
-        <h2 className='text-2xl font-bold text-[#332C81]'>Meglévő körök</h2>
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-2xl p-4 sm:p-6 space-y-3'>
+        <h2 className='text-2xl font-bold text-brand-fg'>Meglévő körök</h2>
         {clubs.length === 0 ? (
-          <p className='text-gray-500'>Még nincs kör a rendszerben.</p>
+          <p className='text-muted'>Még nincs kör a rendszerben.</p>
         ) : (
           clubs.map((club) => (
             <div
               key={club.id}
-              className='border-2 border-[#332C81] rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-3'
+              className='border-2 border-brand-fg rounded-xl p-3 flex flex-col sm:flex-row sm:items-center gap-3'
             >
               <div className='flex-1'>
-                <p className='text-sm text-gray-500'>ID: {club.id}</p>
+                <p className='text-sm text-muted'>ID: {club.id}</p>
                 {editingId === club.id ? (
                   <input
                     type='text'
-                    className='border-2 border-gray-300 rounded-lg p-2 text-black w-full max-w-md'
+                    className='border-2 border-input-border rounded-lg p-2 text-foreground w-full max-w-md'
                     value={editingName}
                     onChange={(e) => setEditingName(e.target.value)}
                   />
                 ) : (
-                  <p className='text-xl font-semibold text-[#332C81]'>{club.name}</p>
+                  <p className='text-xl font-semibold text-brand-fg'>{club.name}</p>
                 )}
-                <p className='text-sm text-gray-600'>
+                <p className='text-sm text-muted'>
                   Vezetők: {club.leaders.length > 0 ? club.leaders.map((leader) => leader.nickname).join(', ') : '—'}
                 </p>
               </div>
