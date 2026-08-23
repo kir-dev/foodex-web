@@ -59,7 +59,8 @@ export default function HomePage() {
             alt='FoodEx Logo'
             width={500}
             height={500}
-            className='w-full h-full object-cover rounded-xl'
+            className='block h-auto w-full object-contain'
+            style={{ width: '100%', height: 'auto' }}
             unoptimized
           />
         </ImageContainer>

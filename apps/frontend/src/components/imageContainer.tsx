@@ -1,11 +1,12 @@
 import React from 'react';
+
 export function ImageContainer({ children }: { children: React.ReactNode }) {
   return (
     <div
-      className='w-[350px] h-auto border-2 border-brand-fg rounded-xl bg-brand
-                    flex items-center justify-center p-3'
+      className='w-full max-w-[350px] self-center border-2 border-brand-fg rounded-xl bg-brand p-3
+                 md:w-[350px] md:shrink-0 md:self-start'
     >
-      <div className='border-4 border-accent rounded-xl overflow-hidden max-w-[90%] max-h-[250px]'>{children}</div>
+      <div className='overflow-hidden rounded-xl border-4 border-accent'>{children}</div>
     </div>
   );
 }
