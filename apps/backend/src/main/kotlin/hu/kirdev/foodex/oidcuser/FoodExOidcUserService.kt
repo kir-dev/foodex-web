@@ -24,29 +24,14 @@ open class FoodExOidcUserService(
 
     private final val foodExID = 182L
 
-    private final val allCookingClubIds = setOf(
-        223,    // Pizzásch
-        403,    // Americano
-        179,    // Vödör
-        473,    // LángoSCH
-        31,     // Kakas
-        528,    // Paschta;
-        395,    // Palacsintázó
-        490,    // ReggeliSCH
-        529     // Dobozosch
-        // TODO: Magyarosch
-    )
-
     // Upsert user and reload club leadership on login
     @Transactional(readOnly = false)
     override fun loadUser(userRequest: OidcUserRequest): OidcUser {
         val authschUser = super.loadUser(userRequest)
 
         val foodexUser = FoodExOidcUser(authschUser)
-        val leaderAt: Set<Int> = foodexUser.memberships
-            .map { it.id.toInt() }
-            .toSet()
-            .intersect(allCookingClubIds)
+        val knownClubIds = cookingClubService.getAllCookingClubs().map { it.id }.toSet()
+        val leaderAt = cookingClubIdsLedBy(foodexUser, knownClubIds)
 
         val existing = userService.getUserByInternalId(foodexUser.internalId)
         val role = applyNewbieGrant(foodexUser.internalId, getHighestRole(foodexUser))
@@ -109,6 +94,12 @@ open class FoodExOidcUserService(
 
     private fun authoritiesFor(role: Role): List<GrantedAuthority> =
         listOf(SimpleGrantedAuthority("ROLE_${role.name}"))
+
+    fun cookingClubIdsLedBy(foodexUser: FoodExOidcUser, knownClubIds: Set<Int>): Set<Int> =
+        foodexUser.executiveAtCircles
+            .map { it.id.toInt() }
+            .toSet()
+            .intersect(knownClubIds)
 
     // Refresh cooking-club leadership join table
     fun reloadPermissionsOfUserToCookingClubs(user: UserEntity, leaderAtClubIds: Set<Int>) {

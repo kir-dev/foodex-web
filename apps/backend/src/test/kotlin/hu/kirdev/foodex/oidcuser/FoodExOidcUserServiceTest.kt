@@ -101,6 +101,56 @@ class FoodExOidcUserServiceTest {
     }
 
     @Test
+    fun `cookingClubIdsLedBy uses executiveAt of known clubs`() {
+        val user = foodExUser(
+            subject = "leader-1",
+            executiveAt = listOf(mapOf("id" to 403L, "name" to "Americano")),
+        )
+        assertEquals(setOf(403), service.cookingClubIdsLedBy(user, setOf(403, 473)))
+    }
+
+    @Test
+    fun `cookingClubIdsLedBy ignores membership without executiveAt`() {
+        val user = foodExUser(
+            subject = "member-2",
+            memberships = listOf(
+                mapOf("id" to 403L, "name" to "Americano", "title" to emptyList<String>()),
+            ),
+        )
+        assertEquals(emptySet<Int>(), service.cookingClubIdsLedBy(user, setOf(403, 473)))
+    }
+
+    @Test
+    fun `cookingClubIdsLedBy ignores FoodEx executive id unless it is a cooking club`() {
+        val user = foodExUser(
+            subject = "exec-2",
+            executiveAt = listOf(
+                mapOf("id" to 182L, "name" to "FoodEx"),
+                mapOf("id" to 403L, "name" to "Americano"),
+            ),
+        )
+        assertEquals(setOf(403), service.cookingClubIdsLedBy(user, setOf(403, 473)))
+    }
+
+    @Test
+    fun `cookingClubIdsLedBy ignores executive of unknown club id`() {
+        val user = foodExUser(
+            subject = "exec-3",
+            executiveAt = listOf(mapOf("id" to 999L, "name" to "Other")),
+        )
+        assertEquals(emptySet<Int>(), service.cookingClubIdsLedBy(user, setOf(403, 473)))
+    }
+
+    @Test
+    fun `cookingClubIdsLedBy allows guest korvezeto of a known club`() {
+        val user = foodExUser(
+            subject = "guest-leader",
+            executiveAt = listOf(mapOf("id" to 403L, "name" to "Americano")),
+        )
+        assertEquals(setOf(403), service.cookingClubIdsLedBy(user, setOf(403, 473)))
+    }
+
+    @Test
     fun `reloadPermissions uses AuthSCH club ids for non-admin`() {
         val user = UserEntity(
             id = 7,
