@@ -252,7 +252,11 @@ class ShiftServiceCapacityTest {
         val ex = assertThrows<ResponseStatusException> {
             service.createShiftsFromOpeningRequest(
                 10,
-                CreateShiftFromOpeningRequestDto(maxMembers = 4, numberOfShifts = 5),
+                CreateShiftFromOpeningRequestDto(
+                    maxMembers = 4,
+                    numberOfShifts = 5,
+                    applicationOpening = now.plusHours(1),
+                ),
                 admin,
             )
         }
@@ -274,7 +278,11 @@ class ShiftServiceCapacityTest {
 
         val result = service.createShiftsFromOpeningRequest(
             10,
-            CreateShiftFromOpeningRequestDto(maxMembers = 4, numberOfShifts = 2),
+            CreateShiftFromOpeningRequestDto(
+                maxMembers = 4,
+                numberOfShifts = 2,
+                applicationOpening = now.plusHours(1),
+            ),
             admin,
         )
 
@@ -309,6 +317,183 @@ class ShiftServiceCapacityTest {
 
         assertEquals(listOf(1), result.activeShifts.map { it.id })
         assertEquals(listOf(2, 3), result.fullShifts.map { it.id })
+        assertTrue(result.notYetOpenShifts.isEmpty())
+    }
+
+    @Test
+    fun `createShiftsFromOpeningRequest copies applicationOpening onto every shift`() {
+        val admin = user(1, Role.ADMIN)
+        val request = openingRequest(admin)
+        val applicationOpening = now.plusHours(1)
+        every { openingRequestRepository.findById(10) } returns Optional.of(request)
+        every { cookingClubService.isLeaderOfCookingClub(1, 403) } returns true
+        every { shiftRepository.countByOpeningRequestId(10) } returns 0
+        val saved = mutableListOf<ShiftEntity>()
+        every { shiftRepository.save(any()) } answers {
+            val entity = firstArg<ShiftEntity>()
+            saved.add(entity)
+            entity.copy(id = saved.size)
+        }
+        every { openingRequestService.acceptOpeningRequest(10, admin) } returns mockk()
+
+        val result = service.createShiftsFromOpeningRequest(
+            10,
+            CreateShiftFromOpeningRequestDto(
+                maxMembers = 4,
+                numberOfShifts = 2,
+                applicationOpening = applicationOpening,
+            ),
+            admin,
+        )
+
+        assertEquals(2, result.size)
+        assertTrue(saved.all { it.applicationOpening == applicationOpening })
+        assertTrue(result.all { it.applicationOpening == applicationOpening })
+    }
+
+    @Test
+    fun `createShiftsFromOpeningRequest rejects applicationOpening not before request opening`() {
+        val admin = user(1, Role.ADMIN)
+        val request = openingRequest(admin)
+        every { openingRequestRepository.findById(10) } returns Optional.of(request)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.createShiftsFromOpeningRequest(
+                10,
+                CreateShiftFromOpeningRequestDto(
+                    maxMembers = 4,
+                    numberOfShifts = 2,
+                    applicationOpening = request.opening,
+                ),
+                admin,
+            )
+        }
+        assertEquals(HttpStatus.BAD_REQUEST, ex.statusCode)
+    }
+
+    @Test
+    fun `addWorkerToShift rejects member self-join before applicationOpening`() {
+        val member = user(3, Role.MEMBER)
+        val shift = shift(
+            maxMembers = 5,
+            workers = mutableListOf(),
+            applicationOpening = now.plusHours(1),
+        )
+        every { userRepository.findById(3) } returns Optional.of(member)
+        every { shiftRepository.findById(1) } returns Optional.of(shift)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.addWorkerToShift(3, 1, member)
+        }
+        assertEquals(HttpStatus.CONFLICT, ex.statusCode)
+        assertEquals("Applications are not yet open", ex.reason)
+    }
+
+    @Test
+    fun `addWorkerToShift rejects admin self-join before applicationOpening`() {
+        val admin = user(1, Role.ADMIN)
+        val shift = shift(
+            maxMembers = 5,
+            workers = mutableListOf(),
+            applicationOpening = now.plusHours(1),
+        )
+        every { userRepository.findById(1) } returns Optional.of(admin)
+        every { shiftRepository.findById(1) } returns Optional.of(shift)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.addWorkerToShift(1, 1, admin)
+        }
+        assertEquals(HttpStatus.CONFLICT, ex.statusCode)
+        assertEquals("Applications are not yet open", ex.reason)
+    }
+
+    @Test
+    fun `addWorkerToShift allows self-join after applicationOpening`() {
+        val member = user(3, Role.MEMBER)
+        val shift = shift(
+            maxMembers = 5,
+            workers = mutableListOf(),
+            applicationOpening = now.minusMinutes(1),
+        )
+        every { userRepository.findById(3) } returns Optional.of(member)
+        every { shiftRepository.findById(1) } returns Optional.of(shift)
+        every { shiftRepository.save(shift) } returns shift
+
+        val result = service.addWorkerToShift(3, 1, member)
+
+        assertTrue(result.members.any { it.id == 3 })
+    }
+
+    @Test
+    fun `addWorkerToShift admin can assign another user before applicationOpening`() {
+        val admin = user(1, Role.ADMIN)
+        val member = user(3, Role.MEMBER)
+        val shift = shift(
+            maxMembers = 5,
+            workers = mutableListOf(),
+            applicationOpening = now.plusHours(1),
+        )
+        every { userRepository.findById(3) } returns Optional.of(member)
+        every { shiftRepository.findById(1) } returns Optional.of(shift)
+        every { shiftRepository.save(shift) } returns shift
+
+        val result = service.addWorkerToShift(3, 1, admin)
+
+        assertTrue(result.members.any { it.id == 3 })
+    }
+
+    @Test
+    fun `getUpcomingActiveAndFullShifts puts locked shifts in notYetOpenShifts ordered by applicationOpening`() {
+        val laterOpen = shift(
+            id = 1,
+            maxMembers = 4,
+            workers = mutableListOf(),
+            applicationOpening = now.plusHours(3),
+        )
+        val earlierOpen = shift(
+            id = 2,
+            maxMembers = 4,
+            workers = mutableListOf(),
+            applicationOpening = now.plusHours(1),
+        )
+        val alreadyOpen = shift(
+            id = 3,
+            maxMembers = 4,
+            workers = mutableListOf(user(1, Role.MEMBER)),
+        )
+        every { shiftRepository.findUpcomingWithClub(any()) } returns listOf(laterOpen, earlierOpen, alreadyOpen)
+
+        val result = service.getUpcomingActiveAndFullShifts()
+
+        assertEquals(listOf(2, 1), result.notYetOpenShifts.map { it.id })
+        assertEquals(listOf(3), result.activeShifts.map { it.id })
+        assertTrue(result.fullShifts.isEmpty())
+    }
+
+    @Test
+    fun `updateShift persists applicationOpening`() {
+        val admin = user(1, Role.ADMIN)
+        val shift = shift(maxMembers = 4, workers = mutableListOf())
+        val applicationOpening = now.plusMinutes(30)
+        every { shiftRepository.findById(1) } returns Optional.of(shift)
+        every { shiftRepository.save(shift) } returns shift
+
+        val result = service.updateShift(
+            1,
+            UpdateShiftDto(
+                cookingClubId = null,
+                maxMembers = null,
+                opening = null,
+                closing = null,
+                place = null,
+                comment = null,
+                applicationOpening = applicationOpening,
+            ),
+            admin,
+        )
+
+        assertEquals(applicationOpening, shift.applicationOpening)
+        assertEquals(applicationOpening, result.applicationOpening)
     }
 
     private fun shift(
@@ -317,6 +502,7 @@ class ShiftServiceCapacityTest {
         workers: MutableList<UserEntity>,
         opening: LocalDateTime = now.plusHours(2),
         closing: LocalDateTime = now.plusHours(4),
+        applicationOpening: LocalDateTime? = null,
     ) = ShiftEntity(
         id = id,
         cookingClub = club,
@@ -325,6 +511,7 @@ class ShiftServiceCapacityTest {
         closing = closing,
         place = "kitchen",
         comment = "",
+        applicationOpening = applicationOpening,
         workers = workers,
     )
 

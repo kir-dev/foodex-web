@@ -29,6 +29,7 @@ export type ShiftDto = {
   place: string;
   comment: string;
   openingRequestId?: number | null;
+  applicationOpening?: string | null;
 };
 
 export type OpeningRequestDto = {
@@ -105,6 +106,7 @@ export type DetailedShiftDto = {
   place: string;
   comment: string;
   openingRequestId?: number | null;
+  applicationOpening?: string | null;
   members: UserDto[];
   newbies: UserDto[];
   trials: UserDto[];
@@ -113,6 +115,7 @@ export type DetailedShiftDto = {
 export type ActiveAndFullShifts = {
   activeShifts: DetailedShiftDto[];
   fullShifts: DetailedShiftDto[];
+  notYetOpenShifts: DetailedShiftDto[];
 };
 
 export type HomepageDto = {
@@ -147,6 +150,7 @@ export type CreateShiftDto = {
   closing: string;
   place: string;
   comment?: string;
+  applicationOpening?: string | null;
 };
 
 export type CreateCookingClubDto = {
@@ -201,6 +205,7 @@ export type UpdateOpeningRequestDto = {
 export type CreateShiftFromOpeningRequestDto = {
   maxMembers: number;
   numberOfShifts: number;
+  applicationOpening: string;
 };
 
 export type UpdateShiftDto = {
@@ -210,6 +215,7 @@ export type UpdateShiftDto = {
   closing?: string;
   place?: string;
   comment?: string;
+  applicationOpening?: string;
 };
 
 export function isAdmin(user: { role: Role }): boolean {
@@ -257,6 +263,9 @@ export function canJoinShift(user: DetailedUserDto, shift: DetailedShiftDto): bo
     return false;
   }
   if (new Date(shift.opening).getTime() <= Date.now()) {
+    return false;
+  }
+  if (shift.applicationOpening && new Date(shift.applicationOpening).getTime() > Date.now()) {
     return false;
   }
   if (user.role === 'TRIAL') {

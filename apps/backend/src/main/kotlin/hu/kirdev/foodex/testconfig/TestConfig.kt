@@ -437,6 +437,7 @@ class TestConfig {
                     closing = LocalDateTime.now().plusDays(3).plusHours(3),
                     place = "10. konyha",
                     comment = "pizzasch jovo muszak",
+                    applicationOpening = LocalDateTime.now().plusHours(4),
                     workers = mutableListOf(user2, user6, user8),
                     openingRequest = request8,
                 )
@@ -485,6 +486,7 @@ class TestConfig {
                     closing = LocalDateTime.now().plusDays(7).plusHours(3),
                     place = "11. konyha",
                     comment = "palacsintazo ures muszak",
+                    applicationOpening = LocalDateTime.now().plusHours(2),
                     workers = mutableListOf(),
                     openingRequest = request13,
                 )

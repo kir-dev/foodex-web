@@ -1,5 +1,5 @@
 import { Shift } from '@/components/ShiftTable';
-import { formatShortDate, formatTimeRange, formatWeekday } from '@/lib/dates';
+import { formatDateTime, formatShortDate, formatTimeRange, formatWeekday } from '@/lib/dates';
 import {
   canJoinShift,
   canLeaveShift,
@@ -37,5 +37,9 @@ export function shiftToRow(shift: DetailedShiftDto, user?: DetailedUserDto): Shi
     joined: user ? isOnShift(shift, user.id) : false,
     canJoin: user ? canJoinShift(user, shift) : false,
     canLeave: user ? canLeaveShift(user, shift) : false,
+    note:
+      shift.applicationOpening && new Date(shift.applicationOpening).getTime() > Date.now()
+        ? `Jelentkezés: ${formatDateTime(shift.applicationOpening)}`
+        : undefined,
   };
 }

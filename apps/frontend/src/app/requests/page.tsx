@@ -12,6 +12,8 @@ import { apiFetch, isApiError } from '@/lib/api';
 import {
   formatLongDate,
   formatTimeRange,
+  nowDateInputValue,
+  nowTimeInputValue,
   shiftCountFromRange,
   toDateInputValue,
   toLocalDateTimePayload,
@@ -54,6 +56,8 @@ function RequestsContent() {
   const [acceptingRequest, setAcceptingRequest] = useState<DetailedOpeningRequestDto | null>(null);
   const [acceptShiftCount, setAcceptShiftCount] = useState(1);
   const [acceptMaxMembers, setAcceptMaxMembers] = useState(6);
+  const [acceptApplicationDate, setAcceptApplicationDate] = useState('');
+  const [acceptApplicationTime, setAcceptApplicationTime] = useState('');
   const [isAccepting, setIsAccepting] = useState(false);
 
   const loadData = useCallback(async (): Promise<void> => {
@@ -86,6 +90,8 @@ function RequestsContent() {
     setAcceptingRequest(request);
     setAcceptShiftCount(Math.min(4, shiftCountFromRange(request.opening, request.closing)));
     setAcceptMaxMembers(6);
+    setAcceptApplicationDate(nowDateInputValue());
+    setAcceptApplicationTime(nowTimeInputValue());
     setActionMessage(null);
   };
 
@@ -101,6 +107,15 @@ function RequestsContent() {
       setActionMessage({ text: 'A max. létszám 1 és 6 között legyen.', isError: true });
       return;
     }
+    if (!acceptApplicationDate || !acceptApplicationTime) {
+      setActionMessage({ text: 'Add meg a jelentkezés nyitását.', isError: true });
+      return;
+    }
+    const applicationOpening = toLocalDateTimePayload(acceptApplicationDate, acceptApplicationTime);
+    if (new Date(applicationOpening).getTime() >= new Date(acceptingRequest.opening).getTime()) {
+      setActionMessage({ text: 'A jelentkezés nyitása a nyitás kezdete előtt legyen.', isError: true });
+      return;
+    }
 
     setIsAccepting(true);
     setActionMessage(null);
@@ -108,6 +123,7 @@ function RequestsContent() {
       const payload: CreateShiftFromOpeningRequestDto = {
         maxMembers: Math.floor(acceptMaxMembers),
         numberOfShifts: Math.floor(acceptShiftCount),
+        applicationOpening,
       };
 
       await apiFetch<DetailedShiftDto[]>(`/api/requests/${acceptingRequest.id}`, {
@@ -291,6 +307,18 @@ function RequestsContent() {
                 value={acceptMaxMembers}
                 onChange={(e) => setAcceptMaxMembers(Number(e.target.value))}
               />
+            </div>
+            <div className='flex flex-col gap-1'>
+              <label className='font-semibold text-brand-fg'>Jelentkezés nyitása:</label>
+              <div className='flex gap-3'>
+                <input
+                  type='date'
+                  className='border-2 border-input-border rounded-lg p-2 text-foreground flex-1'
+                  value={acceptApplicationDate}
+                  onChange={(e) => setAcceptApplicationDate(e.target.value)}
+                />
+                <TimeInput value={acceptApplicationTime} onChange={setAcceptApplicationTime} />
+              </div>
             </div>
             {actionMessage?.isError && <p className='text-red-500 font-medium'>{actionMessage.text}</p>}
             <div className='flex justify-end gap-3 pt-2'>

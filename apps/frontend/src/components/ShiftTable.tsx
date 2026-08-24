@@ -19,6 +19,7 @@ export type Shift = {
   joined?: boolean;
   canJoin?: boolean;
   canLeave?: boolean;
+  note?: string;
 };
 
 type ShiftTableProps = {
@@ -62,6 +63,9 @@ export function ShiftTable({
                 <span className='ml-2 text-xs font-bold bg-accent text-brand-fg px-2 py-0.5 rounded-full align-middle'>
                   Jelentkeztél
                 </span>
+              )}
+              {shift.note && (
+                <span className='block text-sm font-medium text-white mt-1'>{shift.note}</span>
               )}
             </span>
             <span className='px-2 py-2 border-b sm:border-b-0 sm:border-r border-white w-full'>

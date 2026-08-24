@@ -35,6 +35,9 @@ data class ShiftEntity(
     @Column(nullable = false)
     var comment: String = "",
 
+    @Column
+    var applicationOpening: LocalDateTime? = null,
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "opening_request_id")
     var openingRequest: OpeningRequestEntity? = null,

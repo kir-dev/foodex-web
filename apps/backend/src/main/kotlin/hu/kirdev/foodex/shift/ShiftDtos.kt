@@ -16,6 +16,7 @@ data class CreateShiftDto(
     val closing: LocalDateTime,
     @field:NotBlank val place: String,
     val comment: String = "",
+    val applicationOpening: LocalDateTime? = null,
 )
 
 data class UpdateShiftDto(
@@ -25,6 +26,7 @@ data class UpdateShiftDto(
     val closing: LocalDateTime?,
     val place: String?,
     val comment: String?,
+    val applicationOpening: LocalDateTime?,
 )
 
 data class ShiftDto(
@@ -36,6 +38,7 @@ data class ShiftDto(
     val place: String,
     val comment: String,
     val openingRequestId: Int?,
+    val applicationOpening: LocalDateTime?,
 ) {
     constructor(shift: ShiftEntity) : this(
         id = shift.id,
@@ -46,6 +49,7 @@ data class ShiftDto(
         place = shift.place,
         comment = shift.comment,
         openingRequestId = shift.openingRequest?.id,
+        applicationOpening = shift.applicationOpening,
     )
 }
 
@@ -58,6 +62,7 @@ data class DetailedShiftDto(
     val place: String,
     val comment: String,
     val openingRequestId: Int?,
+    val applicationOpening: LocalDateTime?,
     val members: List<UserDto>,
     val newbies: List<UserDto>,
     val trials: List<UserDto>,
@@ -71,6 +76,7 @@ data class DetailedShiftDto(
         place = shift.place,
         comment = shift.comment,
         openingRequestId = shift.openingRequest?.id,
+        applicationOpening = shift.applicationOpening,
         members = shift.workers.filter { it.role.countsAsMemberForCapacity() }.map { UserDto(it) },
         newbies = shift.workers.filter { it.role == Role.NEWBIE }.map { UserDto(it) },
         trials = shift.workers.filter { it.role == Role.TRIAL }.map { UserDto(it) },
@@ -80,9 +86,11 @@ data class DetailedShiftDto(
 data class CreateShiftFromOpeningRequestDto(
     @field:Positive @field:Max(6) val maxMembers: Int,
     @field:Positive @field:Max(4) val numberOfShifts: Int,
+    val applicationOpening: LocalDateTime,
 )
 
 data class ActiveAndFullShifts(
     val activeShifts: List<DetailedShiftDto>,
     val fullShifts: List<DetailedShiftDto>,
+    val notYetOpenShifts: List<DetailedShiftDto>,
 )

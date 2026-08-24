@@ -70,17 +70,20 @@ class ShiftService(
         val upcoming = getUpcomingShiftEntities()
         val active = mutableListOf<ShiftEntity>()
         val fullOrHappening = mutableListOf<ShiftEntity>()
+        val notYetOpen = mutableListOf<ShiftEntity>()
         for (shift in upcoming) {
             val notStarted = shift.opening.isAfter(now)
-            if (notStarted && hasMemberSlot(shift)) {
-                active.add(shift)
-            } else {
-                fullOrHappening.add(shift)
+            when {
+                notStarted && !isApplicationOpen(shift, now) -> notYetOpen.add(shift)
+                notStarted && hasMemberSlot(shift) -> active.add(shift)
+                else -> fullOrHappening.add(shift)
             }
         }
+        notYetOpen.sortWith(compareBy({ it.applicationOpening }, { it.opening }, { it.id }))
         return ActiveAndFullShifts(
             activeShifts = active.map { DetailedShiftDto(it) },
             fullShifts = fullOrHappening.map { DetailedShiftDto(it) },
+            notYetOpenShifts = notYetOpen.map { DetailedShiftDto(it) },
         )
     }
 
@@ -115,6 +118,7 @@ class ShiftService(
         if (shift.maxMembers > 6) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "maxMembers must be at most 6")
         }
+        requireApplicationOpeningBeforeShiftStart(shift.applicationOpening, shift.opening)
 
         return shiftRepository.save(
             ShiftEntity(
@@ -124,6 +128,7 @@ class ShiftService(
                 closing = shift.closing,
                 place = shift.place,
                 comment = shift.comment,
+                applicationOpening = shift.applicationOpening,
                 openingRequest = request,
             )
         ).let { DetailedShiftDto(it) }
@@ -138,7 +143,13 @@ class ShiftService(
 
         requireSelfLeaderOrAdmin(actor, userId, shift.cookingClub.id)
 
-        if (!actor.role.isAdminOrAbove() && !shift.opening.isAfter(LocalDateTime.now())) {
+        val now = LocalDateTime.now()
+        val selfJoin = actor.id == user.id
+        if (selfJoin && !isApplicationOpen(shift, now)) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "Applications are not yet open")
+        }
+
+        if (!actor.role.isAdminOrAbove() && !shift.opening.isAfter(now)) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Shift has already started")
         }
 
@@ -208,10 +219,12 @@ class ShiftService(
         toUpdate.closing?.let { shift.closing = it }
         toUpdate.place?.let { shift.place = it }
         toUpdate.comment?.let { shift.comment = it }
+        toUpdate.applicationOpening?.let { shift.applicationOpening = it }
 
         if (!shift.opening.isBefore(shift.closing)) {
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Closing must be after opening")
         }
+        requireApplicationOpeningBeforeShiftStart(shift.applicationOpening, shift.opening)
 
         return DetailedShiftDto(shiftRepository.save(shift))
     }
@@ -247,6 +260,8 @@ class ShiftService(
             throw ResponseStatusException(HttpStatus.CONFLICT, "Opening request already accepted")
         }
 
+        requireApplicationOpeningBeforeShiftStart(createRequest.applicationOpening, request.opening)
+
         val existing = shiftRepository.countByOpeningRequestId(openingRequestId)
         if (existing + createRequest.numberOfShifts > MAX_SHIFTS_PER_OPENING_REQUEST) {
             throw ResponseStatusException(
@@ -266,6 +281,7 @@ class ShiftService(
                 opening = request.opening.plus(lengthOfEachShift.multipliedBy(i.toLong())),
                 closing = request.opening.plus(lengthOfEachShift.multipliedBy((i + 1).toLong())),
                 place = request.place,
+                applicationOpening = createRequest.applicationOpening,
                 openingRequest = request,
             )
             shifts.add(shiftRepository.save(shift))
@@ -300,6 +316,23 @@ class ShiftService(
     fun hasOpenSlot(shift: ShiftEntity): Boolean {
         val trialSlot = memberCount(shift) > 0 && trialCount(shift) < memberCount(shift)
         return hasMemberSlot(shift) || trialSlot
+    }
+
+    fun isApplicationOpen(shift: ShiftEntity, now: LocalDateTime = LocalDateTime.now()): Boolean {
+        val opensAt = shift.applicationOpening ?: return true
+        return !opensAt.isAfter(now)
+    }
+
+    private fun requireApplicationOpeningBeforeShiftStart(
+        applicationOpening: LocalDateTime?,
+        opening: LocalDateTime,
+    ) {
+        if (applicationOpening != null && !applicationOpening.isBefore(opening)) {
+            throw ResponseStatusException(
+                HttpStatus.BAD_REQUEST,
+                "applicationOpening must be before the opening starts",
+            )
+        }
     }
 
     private fun requireLeaderOrAdmin(actor: UserEntity, cookingClubId: Int) {

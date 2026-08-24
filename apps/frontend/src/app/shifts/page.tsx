@@ -32,6 +32,7 @@ function ShiftsContent() {
     setData({
       activeShifts: Array.isArray(shiftsData.activeShifts) ? shiftsData.activeShifts : [],
       fullShifts: Array.isArray(shiftsData.fullShifts) ? shiftsData.fullShifts : [],
+      notYetOpenShifts: Array.isArray(shiftsData.notYetOpenShifts) ? shiftsData.notYetOpenShifts : [],
     });
   }, []);
 
@@ -137,6 +138,15 @@ function ShiftsContent() {
           onJoin={allowJoin ? (shift) => void handleJoin(shift) : undefined}
           onLeave={(shift) => void handleLeave(shift)}
           emptyLabel='Nincs betelt vagy folyamatban lévő műszak.'
+        />
+      </div>
+
+      <div className='w-full max-w-5xl border-2 border-brand-fg rounded-xl p-2'>
+        <h3 className='text-2xl font-bold text-brand-fg pl-3'>Még nem lehet jelentkezni</h3>
+        <ActiveShiftsContainer
+          shifts={data.notYetOpenShifts.map(toRow)}
+          onLeave={(shift) => void handleLeave(shift)}
+          emptyLabel='Nincs olyan műszak, amire már ne lehetne jelentkezni.'
         />
       </div>
     </main>

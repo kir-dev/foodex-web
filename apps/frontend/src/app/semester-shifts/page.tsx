@@ -56,6 +56,8 @@ function SemesterShiftsContent() {
   const [location, setLocation] = useState('');
   const [comment, setComment] = useState('');
   const [maxMembers, setMaxMembers] = useState(6);
+  const [applicationDate, setApplicationDate] = useState('');
+  const [applicationTime, setApplicationTime] = useState('');
   const [creating, setCreating] = useState(false);
   const [formMessage, setFormMessage] = useState<{ text: string; isError: boolean } | null>(null);
 
@@ -66,6 +68,8 @@ function SemesterShiftsContent() {
   const [editPlace, setEditPlace] = useState('');
   const [editComment, setEditComment] = useState('');
   const [editMaxMembers, setEditMaxMembers] = useState(6);
+  const [editApplicationDate, setEditApplicationDate] = useState('');
+  const [editApplicationTime, setEditApplicationTime] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [selectedWorkerId, setSelectedWorkerId] = useState<number | ''>('');
   const [draftWorkers, setDraftWorkers] = useState<UserDto[]>([]);
@@ -113,6 +117,21 @@ function SemesterShiftsContent() {
       return;
     }
 
+    const hasApplicationDate = Boolean(applicationDate);
+    const hasApplicationTime = Boolean(applicationTime);
+    if (hasApplicationDate !== hasApplicationTime) {
+      setFormMessage({ text: 'Add meg a jelentkezés nyitásának napját és idejét is, vagy hagyd üresen.', isError: true });
+      return;
+    }
+    let applicationOpening: string | undefined;
+    if (hasApplicationDate && hasApplicationTime) {
+      applicationOpening = toLocalDateTimePayload(applicationDate, applicationTime);
+      if (new Date(applicationOpening).getTime() >= new Date(toLocalDateTimePayload(date, startTime)).getTime()) {
+        setFormMessage({ text: 'A jelentkezés nyitása a műszak kezdete előtt legyen.', isError: true });
+        return;
+      }
+    }
+
     setCreating(true);
     try {
       const payload: CreateShiftDto = {
@@ -123,6 +142,7 @@ function SemesterShiftsContent() {
         closing: toLocalDateTimePayload(date, endTime),
         place: location.trim(),
         comment: comment.trim(),
+        ...(applicationOpening ? { applicationOpening } : {}),
       };
       await apiFetch<DetailedShiftDto>('/api/semester-shifts', {
         method: 'POST',
@@ -136,6 +156,8 @@ function SemesterShiftsContent() {
       setLocation('');
       setComment('');
       setMaxMembers(6);
+      setApplicationDate('');
+      setApplicationTime('');
       await loadData();
       setFormMessage({
         text: 'Műszak létrehozva. Ha nem jelenik meg a listában, ellenőrizd a félév dátumait a Konfig oldalon.',
@@ -178,6 +200,8 @@ function SemesterShiftsContent() {
     setEditPlace(fullShift.place);
     setEditComment(fullShift.comment || '');
     setEditMaxMembers(fullShift.maxMembers || 6);
+    setEditApplicationDate(fullShift.applicationOpening ? toDateInputValue(fullShift.applicationOpening) : '');
+    setEditApplicationTime(fullShift.applicationOpening ? toTimeInputValue(fullShift.applicationOpening) : '');
     setSelectedWorkerId('');
     setDraftWorkers(shiftWorkers(fullShift));
     setActionMessage(null);
@@ -190,6 +214,20 @@ function SemesterShiftsContent() {
     if (!editDate || !editStartTime || !editEndTime || !editPlace.trim() || editMaxMembers < 1 || editMaxMembers > 6) {
       setActionMessage({ text: 'Kérlek tölts ki minden kötelező mezőt! A max. létszám 1 és 6 között legyen.', isError: true });
       return;
+    }
+    const hasApplicationDate = Boolean(editApplicationDate);
+    const hasApplicationTime = Boolean(editApplicationTime);
+    if (hasApplicationDate !== hasApplicationTime) {
+      setActionMessage({ text: 'Add meg a jelentkezés nyitásának napját és idejét is, vagy hagyd üresen.', isError: true });
+      return;
+    }
+    let applicationOpening: string | undefined;
+    if (hasApplicationDate && hasApplicationTime) {
+      applicationOpening = toLocalDateTimePayload(editApplicationDate, editApplicationTime);
+      if (new Date(applicationOpening).getTime() >= new Date(toLocalDateTimePayload(editDate, editStartTime)).getTime()) {
+        setActionMessage({ text: 'A jelentkezés nyitása a műszak kezdete előtt legyen.', isError: true });
+        return;
+      }
     }
 
     setIsSaving(true);
@@ -220,6 +258,7 @@ function SemesterShiftsContent() {
         closing: toLocalDateTimePayload(editDate, editEndTime),
         place: editPlace.trim(),
         comment: editComment.trim(),
+        ...(applicationOpening ? { applicationOpening } : {}),
       };
       latest = await apiFetch<DetailedShiftDto>(`/api/semester-shifts/${editingShift.id}`, {
         method: 'PATCH',
@@ -382,6 +421,27 @@ function SemesterShiftsContent() {
           </div>
         </div>
 
+        <div className='bg-brand text-white p-4 rounded-2xl border-2 border-accent'>
+          <StyledLabel>Jelentkezés nyitása (opcionális)</StyledLabel>
+          <div className='flex flex-col sm:flex-row sm:flex-wrap gap-4 sm:gap-6 items-start sm:items-center w-full mt-2'>
+            <div className='flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3.5 w-full sm:w-auto'>
+              <StyledLabel>Napja:</StyledLabel>
+              <StyledInput
+                type='date'
+                size='large'
+                value={applicationDate}
+                onChange={(e) => setApplicationDate(e.target.value)}
+              />
+            </div>
+            <div className='flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto'>
+              <StyledLabel>Ideje:</StyledLabel>
+              <div className='flex items-center gap-2 w-full sm:w-auto text-foreground'>
+                <TimeInput className='text-accent' value={applicationTime} onChange={setApplicationTime} />
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className='bg-brand-deep text-white p-4 rounded-2xl border-2 border-accent'>
           <StyledLabel>Megjegyzés</StyledLabel>
           <textarea
@@ -470,6 +530,18 @@ function SemesterShiftsContent() {
                 value={editMaxMembers}
                 onChange={(e) => setEditMaxMembers(Number(e.target.value))}
               />
+            </div>
+            <div className='flex flex-col gap-1'>
+              <label className='font-semibold text-brand-fg'>Jelentkezés nyitása:</label>
+              <div className='flex gap-3'>
+                <input
+                  type='date'
+                  className='border-2 border-input-border rounded-lg p-2 text-foreground flex-1'
+                  value={editApplicationDate}
+                  onChange={(e) => setEditApplicationDate(e.target.value)}
+                />
+                <TimeInput className='text-accent' value={editApplicationTime} onChange={setEditApplicationTime} />
+              </div>
             </div>
             <div className='flex flex-col gap-1'>
               <label className='font-semibold text-brand-fg'>Megjegyzés:</label>

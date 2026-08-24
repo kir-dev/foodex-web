@@ -53,6 +53,22 @@ export function toTimeInputValue(value: string): string {
   return value.slice(11, 16);
 }
 
+export function formatDateTime(value: string): string {
+  return `${formatShortDate(value)} ${formatTime(value)}`;
+}
+
+export function nowDateInputValue(): string {
+  const date = new Date();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${date.getFullYear()}-${month}-${day}`;
+}
+
+export function nowTimeInputValue(): string {
+  const date = new Date();
+  return `${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}`;
+}
+
 export function shiftCountFromRange(opening: string, closing: string, defaultShiftHours = 2): number {
   const start = parseLocalDateTime(opening).getTime();
   const end = parseLocalDateTime(closing).getTime();
