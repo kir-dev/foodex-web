@@ -1,4 +1,13 @@
-export type Role = 'ADMIN' | 'MEMBER' | 'NEWBIE' | 'GUEST';
+export type Role = 'GUEST' | 'TRIAL' | 'NEWBIE' | 'MEMBER' | 'ADMIN' | 'SUPERUSER';
+
+export const ROLE_LABEL: Record<Role, string> = {
+  GUEST: 'vendég',
+  TRIAL: 'próbás',
+  NEWBIE: 'újonc',
+  MEMBER: 'tag',
+  ADMIN: 'admin',
+  SUPERUSER: 'szuperadmin',
+};
 
 export type UserDto = {
   id: number;
@@ -98,6 +107,7 @@ export type DetailedShiftDto = {
   openingRequestId?: number | null;
   members: UserDto[];
   newbies: UserDto[];
+  trials: UserDto[];
 };
 
 export type ActiveAndFullShifts = {
@@ -149,18 +159,34 @@ export type UpdateCookingClubDto = {
   name: string;
 };
 
-export type NewbieGrantDto = {
+export type TrialGrantDto = {
   id: number;
   name: string;
   internalId: string;
 };
 
-export type CreateNewbieGrantDto = {
+export type CreateTrialGrantDto = {
   name: string;
   internalId: string;
 };
 
-export type UpdateNewbieGrantDto = {
+export type UpdateTrialGrantDto = {
+  name: string;
+  internalId: string;
+};
+
+export type AdminGrantDto = {
+  id: number;
+  name: string;
+  internalId: string;
+};
+
+export type CreateAdminGrantDto = {
+  name: string;
+  internalId: string;
+};
+
+export type UpdateAdminGrantDto = {
   name: string;
   internalId: string;
 };
@@ -186,20 +212,28 @@ export type UpdateShiftDto = {
   comment?: string;
 };
 
-export function isAdmin(user: DetailedUserDto): boolean {
-  return user.role === 'ADMIN';
+export function isAdmin(user: { role: Role }): boolean {
+  return user.role === 'ADMIN' || user.role === 'SUPERUSER';
+}
+
+export function isSuperuser(user: { role: Role }): boolean {
+  return user.role === 'SUPERUSER';
 }
 
 export function isClubLeaderOrAdmin(user: DetailedUserDto): boolean {
-  return user.role === 'ADMIN' || user.leaderAt.length > 0;
+  return isAdmin(user) || user.leaderAt.length > 0;
 }
 
 export function canJoinShifts(user: DetailedUserDto): boolean {
   return user.role !== 'GUEST';
 }
 
+export function shiftWorkers(shift: DetailedShiftDto): UserDto[] {
+  return [...shift.members, ...shift.newbies, ...(shift.trials ?? [])];
+}
+
 export function isOnShift(shift: DetailedShiftDto, userId: number): boolean {
-  return shift.members.some((member) => member.id === userId) || shift.newbies.some((newbie) => newbie.id === userId);
+  return shiftWorkers(shift).some((worker) => worker.id === userId);
 }
 
 export function memberCount(shift: DetailedShiftDto): number {
@@ -208,6 +242,10 @@ export function memberCount(shift: DetailedShiftDto): number {
 
 export function newbieCount(shift: DetailedShiftDto): number {
   return shift.newbies.length;
+}
+
+export function trialCount(shift: DetailedShiftDto): number {
+  return (shift.trials ?? []).length;
 }
 
 /** Mirrors ShiftService.canJoin, plus "already signed up" / already started. */
@@ -221,11 +259,10 @@ export function canJoinShift(user: DetailedUserDto, shift: DetailedShiftDto): bo
   if (new Date(shift.opening).getTime() <= Date.now()) {
     return false;
   }
-  if (user.role === 'NEWBIE') {
-    const members = memberCount(shift);
-    return members > 0 && newbieCount(shift) < members;
+  if (user.role === 'TRIAL') {
+    return trialCount(shift) < memberCount(shift);
   }
-  return memberCount(shift) < shift.maxMembers;
+  return memberCount(shift) + newbieCount(shift) < shift.maxMembers;
 }
 
 export function canLeaveShift(user: DetailedUserDto, shift: DetailedShiftDto): boolean {

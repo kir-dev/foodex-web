@@ -50,7 +50,7 @@ class UserService(private val userRepository: UserRepository) {
     // Self or ADMIN
     @Transactional(readOnly = false)
     fun updateUser(id: Int, updateTo: UpdateUserDto, actor: UserEntity): DetailedUserDto {
-        if (actor.role != Role.ADMIN && actor.id != id) {
+        if (!actor.role.isAdminOrAbove() && actor.id != id) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Can only update own profile")
         }
 

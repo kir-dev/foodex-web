@@ -2,7 +2,7 @@
 
 import { apiFetch, isApiError } from '@/lib/api';
 import { loginUrl, logoutUrl } from '@/lib/config';
-import { DetailedUserDto, isAdmin, isClubLeaderOrAdmin } from '@/types/api';
+import { DetailedUserDto, isAdmin, isClubLeaderOrAdmin, isSuperuser } from '@/types/api';
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 export type AuthStatus = 'loading' | 'authenticated' | 'unauthenticated';
@@ -12,6 +12,7 @@ type AuthContextValue = {
   status: AuthStatus;
   canManageRequests: boolean;
   isAdminUser: boolean;
+  isSuperuserUser: boolean;
   refresh: () => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -64,6 +65,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       status,
       canManageRequests: user ? isClubLeaderOrAdmin(user) : false,
       isAdminUser: user ? isAdmin(user) : false,
+      isSuperuserUser: user ? isSuperuser(user) : false,
       refresh,
       logout,
     }),

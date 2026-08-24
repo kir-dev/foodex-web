@@ -1,7 +1,8 @@
 package hu.kirdev.foodex.oidcuser
 
+import hu.kirdev.foodex.admingrant.AdminGrantService
 import hu.kirdev.foodex.cookingclub.CookingClubService
-import hu.kirdev.foodex.newbiegrant.NewbieGrantService
+import hu.kirdev.foodex.trialgrant.TrialGrantService
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.user.UserService
@@ -18,8 +19,9 @@ import org.springframework.transaction.annotation.Transactional
 open class FoodExOidcUserService(
     val userService: UserService,
     val cookingClubService: CookingClubService,
-    @param:Qualifier("developerAdminIds") private val developerAdminIds: Set<String>,
-    private val newbieGrantService: NewbieGrantService,
+    @param:Qualifier("superuserIds") private val superuserIds: Set<String>,
+    private val trialGrantService: TrialGrantService,
+    private val adminGrantService: AdminGrantService,
 ) : OidcUserService() {
 
     private final val foodExID = 182L
@@ -34,11 +36,12 @@ open class FoodExOidcUserService(
         val leaderAt = cookingClubIdsLedBy(foodexUser, knownClubIds)
 
         val existing = userService.getUserByInternalId(foodexUser.internalId)
-        val role = applyNewbieGrant(foodexUser.internalId, getHighestRole(foodexUser))
+        val role = resolveRole(foodexUser)
 
         val user = if (existing != null) {
             existing.role = role
             existing.email = foodexUser.requiredEmail
+            existing.isActive = role != Role.GUEST
             existing
         } else {
             UserEntity(
@@ -48,7 +51,7 @@ open class FoodExOidcUserService(
                 nickname = foodexUser.nickName,
                 email = foodexUser.requiredEmail,
                 favouriteQuote = null,
-                isActive = foodexUser.memberships.map { it.id }.contains(foodExID) || role == Role.ADMIN,
+                isActive = role != Role.GUEST,
                 profilePicture = foodexUser.profile,
             )
         }
@@ -61,18 +64,21 @@ open class FoodExOidcUserService(
         return foodexUser
     }
 
+    fun resolveRole(foodexUser: FoodExOidcUser): Role {
+        val base = getHighestRole(foodexUser)
+        val withTrial = applyTrialGrant(foodexUser.internalId, base)
+        return applyAdminGrant(foodexUser.internalId, withTrial)
+    }
+
     fun getHighestRole(foodexUser: FoodExOidcUser): Role {
-        // Developer admin elevators (AuthSCH internalId)
-        if (foodexUser.internalId in developerAdminIds) {
-            return Role.ADMIN
+        if (foodexUser.internalId in superuserIds) {
+            return Role.SUPERUSER
         }
 
-        // Admin of FoodEx
         if (foodexUser.executiveAtCircles.any { it.id == foodExID }) {
             return Role.ADMIN
         }
 
-        // Member of FoodEx
         for (membership in foodexUser.memberships) {
             if (membership.id == foodExID) {
                 if (membership.title.any { it.contains("újonc", ignoreCase = true) }) {
@@ -85,15 +91,28 @@ open class FoodExOidcUserService(
         return Role.GUEST
     }
 
-    fun applyNewbieGrant(internalId: String, role: Role): Role {
+    fun applyTrialGrant(internalId: String, role: Role): Role {
         if (role != Role.GUEST) {
             return role
         }
-        return if (newbieGrantService.existsByInternalId(internalId)) Role.NEWBIE else Role.GUEST
+        return if (trialGrantService.existsByInternalId(internalId)) Role.TRIAL else Role.GUEST
+    }
+
+    fun applyAdminGrant(internalId: String, role: Role): Role {
+        if (role == Role.SUPERUSER) {
+            return role
+        }
+        return if (adminGrantService.existsByInternalId(internalId)) Role.ADMIN else role
     }
 
     private fun authoritiesFor(role: Role): List<GrantedAuthority> =
-        listOf(SimpleGrantedAuthority("ROLE_${role.name}"))
+        when (role) {
+            Role.SUPERUSER -> listOf(
+                SimpleGrantedAuthority("ROLE_SUPERUSER"),
+                SimpleGrantedAuthority("ROLE_ADMIN"),
+            )
+            else -> listOf(SimpleGrantedAuthority("ROLE_${role.name}"))
+        }
 
     fun cookingClubIdsLedBy(foodexUser: FoodExOidcUser, knownClubIds: Set<Int>): Set<Int> =
         foodexUser.executiveAtCircles
@@ -105,14 +124,11 @@ open class FoodExOidcUserService(
     fun reloadPermissionsOfUserToCookingClubs(user: UserEntity, leaderAtClubIds: Set<Int>) {
         val currentlyLeading = user.leaderAt.toList()
 
-
-        // Remove all permissions of user
         for (club in currentlyLeading) {
             cookingClubService.removeLeaderFromCookingClub(user.id, club.id)
         }
 
-        // Admin --> Add privileges to ALL clubs
-        if (user.role == Role.ADMIN) {
+        if (user.role.isAdminOrAbove()) {
             for (club in cookingClubService.getAllCookingClubs()) {
                 cookingClubService.addLeaderToCookingClub(user.id, club.id)
             }

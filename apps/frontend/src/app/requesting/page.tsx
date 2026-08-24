@@ -14,6 +14,7 @@ import {
   CreateOpeningRequestDto,
   DetailedCookingClubDto,
   DetailedOpeningRequestDto,
+  isAdmin,
   isClubLeaderOrAdmin,
 } from '@/types/api';
 import { useEffect, useMemo, useState } from 'react';
@@ -43,7 +44,7 @@ function RequestingContent() {
     if (!user) {
       return clubs;
     }
-    if (user.role === 'ADMIN') {
+    if (isAdmin(user)) {
       return clubs;
     }
     return user.leaderAt;

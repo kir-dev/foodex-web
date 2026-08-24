@@ -62,8 +62,16 @@ class SecuritySmokeTest {
     }
 
     @Test
-    fun `unauthenticated GET newbie-grants is rejected`() {
-        mockMvc.get("/api/newbie-grants")
+    fun `unauthenticated GET trial-grants is rejected`() {
+        mockMvc.get("/api/trial-grants")
+            .andExpect {
+                status { isUnauthorized() }
+            }
+    }
+
+    @Test
+    fun `unauthenticated GET admin-grants is rejected`() {
+        mockMvc.get("/api/admin-grants")
             .andExpect {
                 status { isUnauthorized() }
             }

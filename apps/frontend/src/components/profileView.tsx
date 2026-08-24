@@ -10,6 +10,7 @@ import {
   DetailedCookingClubDto,
   DetailedUserDto,
   OpeningRequestDto,
+  ROLE_LABEL,
   ShiftDto,
   UpdateUserDto,
 } from '@/types/api';
@@ -216,7 +217,7 @@ export function ProfileView({ user, editable, onSaved }: ProfileViewProps) {
 
               <div className='mb-2 text-xl font-semibold'>
                 <span className='text-accent'>Jogosultság:</span>{' '}
-                <span className='text-white'>{user.role.toLowerCase()}</span>
+                <span className='text-white'>{ROLE_LABEL[user.role] ?? user.role.toLowerCase()}</span>
               </div>
 
               <div className='mb-4'>

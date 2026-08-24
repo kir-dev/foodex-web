@@ -1,4 +1,4 @@
-package hu.kirdev.foodex.newbiegrant
+package hu.kirdev.foodex.trialgrant
 
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
@@ -8,8 +8,8 @@ import jakarta.persistence.Id
 import jakarta.persistence.Table
 
 @Entity
-@Table(name = "newbie_grants")
-data class NewbieGrantEntity(
+@Table(name = "trial_grants")
+data class TrialGrantEntity(
     @Id
     @Column(nullable = false)
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -23,7 +23,7 @@ data class NewbieGrantEntity(
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is NewbieGrantEntity) return false
+        if (other !is TrialGrantEntity) return false
         if (id != other.id) return false
         return true
     }

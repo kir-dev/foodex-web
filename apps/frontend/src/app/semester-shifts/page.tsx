@@ -25,18 +25,12 @@ import {
   DetailedShiftDto,
   DetailedUserDto,
   isAdmin,
-  Role,
+  ROLE_LABEL,
   UpdateShiftDto,
   UserDto,
+  shiftWorkers,
 } from '@/types/api';
 import { useCallback, useMemo, useState } from 'react';
-
-const ROLE_LABEL: Record<Role, string> = {
-  ADMIN: 'admin',
-  MEMBER: 'tag',
-  NEWBIE: 'újonc',
-  GUEST: 'vendég',
-};
 
 export default function SemesterShiftsPage() {
   return (
@@ -185,7 +179,7 @@ function SemesterShiftsContent() {
     setEditComment(fullShift.comment || '');
     setEditMaxMembers(fullShift.maxMembers || 6);
     setSelectedWorkerId('');
-    setDraftWorkers([...fullShift.members, ...fullShift.newbies]);
+    setDraftWorkers(shiftWorkers(fullShift));
     setActionMessage(null);
   };
 
@@ -202,7 +196,7 @@ function SemesterShiftsContent() {
     setActionMessage(null);
     try {
       const originalIds = new Set(
-        [...editingShift.members, ...editingShift.newbies].map((worker) => worker.id)
+        shiftWorkers(editingShift).map((worker) => worker.id)
       );
       const draftIds = new Set(draftWorkers.map((worker) => worker.id));
       const toRemove = [...originalIds].filter((id) => !draftIds.has(id));

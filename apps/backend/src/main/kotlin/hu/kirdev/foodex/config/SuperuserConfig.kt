@@ -6,15 +6,15 @@ import org.springframework.core.io.ClassPathResource
 import java.util.Properties
 
 /**
- * Loads AuthSCH internalIds that should be elevated to ADMIN on login.
- * Keys of developer-admins.properties are the IDs; values are human notes only.
+ * Loads AuthSCH internalIds that should be elevated to SUPERUSER on login.
+ * Keys of superusers.properties are the IDs; values are human notes only.
  */
 @Configuration
-class DeveloperAdminConfig {
+class SuperuserConfig {
 
     @Bean
-    fun developerAdminIds(): Set<String> {
-        val resource = ClassPathResource("config/developer-admins.properties")
+    fun superuserIds(): Set<String> {
+        val resource = ClassPathResource("config/superusers.properties")
         if (!resource.exists()) {
             return emptySet()
         }

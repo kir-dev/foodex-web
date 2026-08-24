@@ -60,6 +60,7 @@ data class DetailedShiftDto(
     val openingRequestId: Int?,
     val members: List<UserDto>,
     val newbies: List<UserDto>,
+    val trials: List<UserDto>,
 ) {
     constructor(shift: ShiftEntity) : this(
         id = shift.id,
@@ -70,8 +71,9 @@ data class DetailedShiftDto(
         place = shift.place,
         comment = shift.comment,
         openingRequestId = shift.openingRequest?.id,
-        members = shift.workers.filter { it.role == Role.MEMBER || it.role == Role.ADMIN }.map { UserDto(it) },
+        members = shift.workers.filter { it.role.countsAsMemberForCapacity() }.map { UserDto(it) },
         newbies = shift.workers.filter { it.role == Role.NEWBIE }.map { UserDto(it) },
+        trials = shift.workers.filter { it.role == Role.TRIAL }.map { UserDto(it) },
     )
 }
 

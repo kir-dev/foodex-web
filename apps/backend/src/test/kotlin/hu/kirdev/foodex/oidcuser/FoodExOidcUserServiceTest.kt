@@ -1,8 +1,9 @@
 package hu.kirdev.foodex.oidcuser
 
+import hu.kirdev.foodex.admingrant.AdminGrantService
 import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.cookingclub.DetailedCookingClubDto
-import hu.kirdev.foodex.newbiegrant.NewbieGrantService
+import hu.kirdev.foodex.trialgrant.TrialGrantService
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.user.UserService
@@ -21,28 +22,31 @@ class FoodExOidcUserServiceTest {
 
     private lateinit var userService: UserService
     private lateinit var cookingClubService: CookingClubService
-    private lateinit var newbieGrantService: NewbieGrantService
+    private lateinit var trialGrantService: TrialGrantService
+    private lateinit var adminGrantService: AdminGrantService
     private lateinit var service: FoodExOidcUserService
 
-    private val developerId = "dev-admin-uuid"
+    private val superuserId = "superuser-uuid"
 
     @BeforeEach
     fun setUp() {
         userService = mockk(relaxed = true)
         cookingClubService = mockk(relaxed = true)
-        newbieGrantService = mockk(relaxed = true)
+        trialGrantService = mockk(relaxed = true)
+        adminGrantService = mockk(relaxed = true)
         service = FoodExOidcUserService(
             userService,
             cookingClubService,
-            setOf(developerId),
-            newbieGrantService,
+            setOf(superuserId),
+            trialGrantService,
+            adminGrantService,
         )
     }
 
     @Test
-    fun `getHighestRole elevates developer admin`() {
-        val user = foodExUser(subject = developerId)
-        assertEquals(Role.ADMIN, service.getHighestRole(user))
+    fun `getHighestRole elevates hardcoded superuser`() {
+        val user = foodExUser(subject = superuserId)
+        assertEquals(Role.SUPERUSER, service.getHighestRole(user))
     }
 
     @Test
@@ -81,23 +85,75 @@ class FoodExOidcUserServiceTest {
     }
 
     @Test
-    fun `applyNewbieGrant upgrades guest when grant exists`() {
-        every { newbieGrantService.existsByInternalId("guest-1") } returns true
-        assertEquals(Role.NEWBIE, service.applyNewbieGrant("guest-1", Role.GUEST))
+    fun `applyTrialGrant upgrades guest when grant exists`() {
+        every { trialGrantService.existsByInternalId("guest-1") } returns true
+        assertEquals(Role.TRIAL, service.applyTrialGrant("guest-1", Role.GUEST))
     }
 
     @Test
-    fun `applyNewbieGrant leaves guest when no grant`() {
-        every { newbieGrantService.existsByInternalId("guest-1") } returns false
-        assertEquals(Role.GUEST, service.applyNewbieGrant("guest-1", Role.GUEST))
+    fun `applyTrialGrant leaves guest when no grant`() {
+        every { trialGrantService.existsByInternalId("guest-1") } returns false
+        assertEquals(Role.GUEST, service.applyTrialGrant("guest-1", Role.GUEST))
     }
 
     @Test
-    fun `applyNewbieGrant does not override member or admin`() {
-        every { newbieGrantService.existsByInternalId(any()) } returns true
-        assertEquals(Role.MEMBER, service.applyNewbieGrant("member-1", Role.MEMBER))
-        assertEquals(Role.ADMIN, service.applyNewbieGrant("admin-1", Role.ADMIN))
-        assertEquals(Role.NEWBIE, service.applyNewbieGrant("newbie-1", Role.NEWBIE))
+    fun `applyTrialGrant does not override newbie member or admin`() {
+        every { trialGrantService.existsByInternalId(any()) } returns true
+        assertEquals(Role.MEMBER, service.applyTrialGrant("member-1", Role.MEMBER))
+        assertEquals(Role.ADMIN, service.applyTrialGrant("admin-1", Role.ADMIN))
+        assertEquals(Role.NEWBIE, service.applyTrialGrant("newbie-1", Role.NEWBIE))
+        assertEquals(Role.SUPERUSER, service.applyTrialGrant("su-1", Role.SUPERUSER))
+    }
+
+    @Test
+    fun `applyAdminGrant upgrades non-superuser when grant exists`() {
+        every { adminGrantService.existsByInternalId("member-1") } returns true
+        assertEquals(Role.ADMIN, service.applyAdminGrant("member-1", Role.MEMBER))
+        assertEquals(Role.ADMIN, service.applyAdminGrant("member-1", Role.GUEST))
+        assertEquals(Role.ADMIN, service.applyAdminGrant("member-1", Role.TRIAL))
+        assertEquals(Role.ADMIN, service.applyAdminGrant("member-1", Role.NEWBIE))
+    }
+
+    @Test
+    fun `applyAdminGrant never overrides superuser`() {
+        every { adminGrantService.existsByInternalId(any()) } returns true
+        assertEquals(Role.SUPERUSER, service.applyAdminGrant("su-1", Role.SUPERUSER))
+    }
+
+    @Test
+    fun `resolveRole trial grant only applies after guest`() {
+        every { trialGrantService.existsByInternalId("guest-1") } returns true
+        every { adminGrantService.existsByInternalId("guest-1") } returns false
+        val guest = foodExUser(subject = "guest-1")
+        assertEquals(Role.TRIAL, service.resolveRole(guest))
+    }
+
+    @Test
+    fun `resolveRole newbie wins over trial grant`() {
+        every { trialGrantService.existsByInternalId("newbie-1") } returns true
+        every { adminGrantService.existsByInternalId("newbie-1") } returns false
+        val newbie = foodExUser(
+            subject = "newbie-1",
+            memberships = listOf(
+                mapOf("id" to 182L, "name" to "FoodEx", "title" to listOf("újonc")),
+            ),
+        )
+        assertEquals(Role.NEWBIE, service.resolveRole(newbie))
+    }
+
+    @Test
+    fun `resolveRole admin grant wins over trial`() {
+        every { trialGrantService.existsByInternalId("guest-1") } returns true
+        every { adminGrantService.existsByInternalId("guest-1") } returns true
+        val guest = foodExUser(subject = "guest-1")
+        assertEquals(Role.ADMIN, service.resolveRole(guest))
+    }
+
+    @Test
+    fun `resolveRole hardcoded superuser wins over admin grant`() {
+        every { adminGrantService.existsByInternalId(superuserId) } returns true
+        val user = foodExUser(subject = superuserId)
+        assertEquals(Role.SUPERUSER, service.resolveRole(user))
     }
 
     @Test
@@ -195,6 +251,28 @@ class FoodExOidcUserServiceTest {
 
         verify { cookingClubService.addLeaderToCookingClub(1, 403) }
         verify { cookingClubService.addLeaderToCookingClub(1, 473) }
+    }
+
+    @Test
+    fun `reloadPermissions grants all clubs to superuser`() {
+        val user = UserEntity(
+            id = 1,
+            internalId = "su",
+            role = Role.SUPERUSER,
+            name = "Superuser",
+            nickname = null,
+            email = "s@test.com",
+            favouriteQuote = null,
+            isActive = true,
+        )
+        every { cookingClubService.getAllCookingClubs() } returns listOf(
+            DetailedCookingClubDto(403, "A", emptyList(), emptyList(), emptyList()),
+        )
+        every { cookingClubService.addLeaderToCookingClub(any(), any()) } returns mockk(relaxed = true)
+
+        service.reloadPermissionsOfUserToCookingClubs(user, emptySet())
+
+        verify { cookingClubService.addLeaderToCookingClub(1, 403) }
     }
 
     private fun foodExUser(

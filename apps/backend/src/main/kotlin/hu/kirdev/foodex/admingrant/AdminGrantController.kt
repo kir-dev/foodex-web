@@ -1,4 +1,4 @@
-package hu.kirdev.foodex.newbiegrant
+package hu.kirdev.foodex.admingrant
 
 import io.swagger.v3.oas.annotations.Operation
 import io.swagger.v3.oas.annotations.media.Content
@@ -18,74 +18,74 @@ import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.RestController
 
 @RestController
-@RequestMapping("/api/newbie-grants")
-class NewbieGrantController(
-    private val newbieGrantService: NewbieGrantService,
+@RequestMapping("/api/admin-grants")
+class AdminGrantController(
+    private val adminGrantService: AdminGrantService,
 ) {
 
-    @Operation(summary = "List newbie grants")
+    @Operation(summary = "List admin grants")
     @ApiResponses(
         ApiResponse(
             responseCode = "200",
-            description = "Newbie grants found",
-            content = [Content(schema = Schema(implementation = NewbieGrantDto::class))]
+            description = "Admin grants found",
+            content = [Content(schema = Schema(implementation = AdminGrantDto::class))]
         )
     )
     @GetMapping
-    fun getNewbieGrants(): ResponseEntity<List<NewbieGrantDto>> {
-        return ResponseEntity.ok(newbieGrantService.getAllGrants())
+    fun getAdminGrants(): ResponseEntity<List<AdminGrantDto>> {
+        return ResponseEntity.ok(adminGrantService.getAllGrants())
     }
 
-    @Operation(summary = "Create a newbie grant")
+    @Operation(summary = "Create an admin grant")
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "201",
-                description = "Newbie grant created",
-                content = [Content(schema = Schema(implementation = NewbieGrantDto::class))]
+                description = "Admin grant created",
+                content = [Content(schema = Schema(implementation = AdminGrantDto::class))]
             ),
             ApiResponse(responseCode = "409", description = "internalId already granted"),
         ]
     )
     @PostMapping
-    fun createNewbieGrant(
-        @Valid @RequestBody request: CreateNewbieGrantDto
-    ): ResponseEntity<NewbieGrantDto> {
-        val grant = newbieGrantService.createGrant(request)
+    fun createAdminGrant(
+        @Valid @RequestBody request: CreateAdminGrantDto
+    ): ResponseEntity<AdminGrantDto> {
+        val grant = adminGrantService.createGrant(request)
         return ResponseEntity.status(HttpStatus.CREATED).body(grant)
     }
 
-    @Operation(summary = "Update a newbie grant")
+    @Operation(summary = "Update an admin grant")
     @ApiResponses(
         value = [
             ApiResponse(
                 responseCode = "200",
-                description = "Newbie grant updated",
-                content = [Content(schema = Schema(implementation = NewbieGrantDto::class))]
+                description = "Admin grant updated",
+                content = [Content(schema = Schema(implementation = AdminGrantDto::class))]
             ),
-            ApiResponse(responseCode = "404", description = "Newbie grant not found"),
+            ApiResponse(responseCode = "404", description = "Admin grant not found"),
             ApiResponse(responseCode = "409", description = "internalId already granted"),
         ]
     )
     @PutMapping("/{grantId}")
-    fun updateNewbieGrant(
+    fun updateAdminGrant(
         @PathVariable grantId: Int,
-        @Valid @RequestBody request: UpdateNewbieGrantDto
-    ): ResponseEntity<NewbieGrantDto> {
-        val grant = newbieGrantService.updateGrant(grantId, request)
+        @Valid @RequestBody request: UpdateAdminGrantDto
+    ): ResponseEntity<AdminGrantDto> {
+        val grant = adminGrantService.updateGrant(grantId, request)
         return ResponseEntity.ok(grant)
     }
 
-    @Operation(summary = "Delete a newbie grant")
+    @Operation(summary = "Delete an admin grant")
     @ApiResponses(
         value = [
-            ApiResponse(responseCode = "204", description = "Newbie grant deleted"),
-            ApiResponse(responseCode = "404", description = "Newbie grant not found"),
+            ApiResponse(responseCode = "204", description = "Admin grant deleted"),
+            ApiResponse(responseCode = "404", description = "Admin grant not found"),
         ]
     )
     @DeleteMapping("/{grantId}")
-    fun deleteNewbieGrant(@PathVariable grantId: Int): ResponseEntity<Void> {
-        newbieGrantService.deleteGrant(grantId)
+    fun deleteAdminGrant(@PathVariable grantId: Int): ResponseEntity<Void> {
+        adminGrantService.deleteGrant(grantId)
         return ResponseEntity.noContent().build()
     }
 }

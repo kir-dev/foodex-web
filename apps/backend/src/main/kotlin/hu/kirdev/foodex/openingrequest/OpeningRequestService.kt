@@ -67,7 +67,7 @@ class OpeningRequestService(
     fun createOpeningRequest(request: CreateOpeningRequestDto, actor: UserEntity): DetailedOpeningRequestDto {
         val club = cookingClubService.getCookingClubEntity(request.cookingClubId)
 
-        val allowed = actor.role == Role.ADMIN ||
+        val allowed = actor.role.isAdminOrAbove() ||
             cookingClubService.isLeaderOfCookingClub(actor.id, request.cookingClubId)
         if (!allowed) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not leader of cooking club")
@@ -138,7 +138,7 @@ class OpeningRequestService(
     }
 
     private fun requireOwnerLeaderOrAdmin(actor: UserEntity, request: OpeningRequestEntity) {
-        if (actor.role == Role.ADMIN) return
+        if (actor.role.isAdminOrAbove()) return
         if (actor.id == request.user.id) return
         if (cookingClubService.isLeaderOfCookingClub(actor.id, request.cookingClub.id)) return
         throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to modify this opening request")

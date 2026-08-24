@@ -43,7 +43,7 @@ class ConfigurationService(
     /** WRITE — caller must be ADMIN */
     @Transactional(readOnly = false)
     fun updateConfiguration(updateTo: UpdateConfigurationDto, actor: UserEntity): ConfigurationDto {
-        if (actor.role != Role.ADMIN) {
+        if (!actor.role.isAdminOrAbove()) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Admin only")
         }
 

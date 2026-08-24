@@ -101,6 +101,42 @@ class TestConfig {
                     profilePicture = null
                 )
             )
+            val user7 = userRepository.save(
+                UserEntity(
+                    internalId = UUID.randomUUID().toString(),
+                    role = Role.SUPERUSER,
+                    name = "Szuper Admin",
+                    nickname = "Super",
+                    email = "super@gmail.com",
+                    favouriteQuote = "I <3 FoodEx",
+                    isActive = true,
+                    profilePicture = null
+                )
+            )
+            val user8 = userRepository.save(
+                UserEntity(
+                    internalId = UUID.randomUUID().toString(),
+                    role = Role.TRIAL,
+                    name = "Probas Anna",
+                    nickname = "Anna",
+                    email = "anna.probas@gmail.com",
+                    favouriteQuote = "Most proba vagyok",
+                    isActive = true,
+                    profilePicture = null
+                )
+            )
+            val user9 = userRepository.save(
+                UserEntity(
+                    internalId = UUID.randomUUID().toString(),
+                    role = Role.TRIAL,
+                    name = "Probas Bence",
+                    nickname = "Bence",
+                    email = "bence.probas@gmail.com",
+                    favouriteQuote = "Proba muszak",
+                    isActive = true,
+                    profilePicture = null
+                )
+            )
 
             /***** Cooking clubs *****/
             // Pizzásch
@@ -248,6 +284,83 @@ class TestConfig {
                     description = "ez is egy leiras langosch"
                 )
             )
+            val request8 = openingRequestRepository.save(
+                OpeningRequestEntity(
+                    isAccepted = true,
+                    user = user1,
+                    cookingClub = club223,
+                    opening = LocalDateTime.now().plusDays(3),
+                    closing = LocalDateTime.now().plusDays(3).plusHours(3),
+                    place = "10. konyha",
+                    description = "pizzasch nyitas"
+                )
+            )
+            val request9 = openingRequestRepository.save(
+                OpeningRequestEntity(
+                    isAccepted = false,
+                    user = user5,
+                    cookingClub = club473,
+                    opening = LocalDateTime.now().plusDays(4),
+                    closing = LocalDateTime.now().plusDays(4).plusHours(2),
+                    place = "18. konyha",
+                    description = "langosch jovoheti kerelem"
+                )
+            )
+            val request10 = openingRequestRepository.save(
+                OpeningRequestEntity(
+                    isAccepted = true,
+                    user = user1,
+                    cookingClub = club179,
+                    opening = LocalDateTime.now().plusDays(5),
+                    closing = LocalDateTime.now().plusDays(5).plusHours(4),
+                    place = "4. konyha",
+                    description = "vodor nyitas"
+                )
+            )
+            val request11 = openingRequestRepository.save(
+                OpeningRequestEntity(
+                    isAccepted = false,
+                    user = user1,
+                    cookingClub = club31,
+                    opening = LocalDateTime.now().plusDays(6),
+                    closing = LocalDateTime.now().plusDays(6).plusHours(2),
+                    place = "13. konyha",
+                    description = "kakas kerelem"
+                )
+            )
+            val request12 = openingRequestRepository.save(
+                OpeningRequestEntity(
+                    isAccepted = true,
+                    user = user3,
+                    cookingClub = club528,
+                    opening = LocalDateTime.now().plusDays(1).plusHours(2),
+                    closing = LocalDateTime.now().plusDays(1).plusHours(5),
+                    place = "8. konyha",
+                    description = "paschta nyitas"
+                )
+            )
+            val request13 = openingRequestRepository.save(
+                OpeningRequestEntity(
+                    isAccepted = true,
+                    user = user1,
+                    cookingClub = club395,
+                    opening = LocalDateTime.now().plusDays(7),
+                    closing = LocalDateTime.now().plusDays(7).plusHours(3),
+                    place = "11. konyha",
+                    description = "palacsintazo nyitas"
+                )
+            )
+            val request14 = openingRequestRepository.save(
+                OpeningRequestEntity(
+                    isAccepted = false,
+                    user = user1,
+                    cookingClub = club490,
+                    opening = LocalDateTime.now().plusDays(8),
+                    closing = LocalDateTime.now().plusDays(8).plusHours(2),
+                    place = "-1 konyha",
+                    description = "regglisch kerelem"
+                )
+            )
 
             /***** Shifts *****/
             val shift1 = shiftRepository.save(
@@ -314,6 +427,90 @@ class TestConfig {
                     place = "10. konyha",
                     comment = "ELOZO FELEVBOL VAN!!!",
                     workers = mutableListOf<UserEntity>(user1, user2, user5, user6),
+                )
+            )
+            val shift7 = shiftRepository.save(
+                ShiftEntity(
+                    cookingClub = club223,
+                    maxMembers = 4,
+                    opening = LocalDateTime.now().plusDays(3),
+                    closing = LocalDateTime.now().plusDays(3).plusHours(3),
+                    place = "10. konyha",
+                    comment = "pizzasch jovo muszak",
+                    workers = mutableListOf(user2, user6, user8),
+                    openingRequest = request8,
+                )
+            )
+            val shift8 = shiftRepository.save(
+                ShiftEntity(
+                    cookingClub = club473,
+                    maxMembers = 3,
+                    opening = LocalDateTime.now().plusHours(3),
+                    closing = LocalDateTime.now().plusHours(5),
+                    place = "18. konyha",
+                    comment = "langosch szabad muszak",
+                    workers = mutableListOf(user2),
+                    openingRequest = request9,
+                )
+            )
+            val shift9 = shiftRepository.save(
+                ShiftEntity(
+                    cookingClub = club179,
+                    maxMembers = 5,
+                    opening = LocalDateTime.now().plusDays(5),
+                    closing = LocalDateTime.now().plusDays(5).plusHours(4),
+                    place = "4. konyha",
+                    comment = "vodor muszak taggal es probassal",
+                    workers = mutableListOf(user2, user7, user8, user9),
+                    openingRequest = request10,
+                )
+            )
+            val shift10 = shiftRepository.save(
+                ShiftEntity(
+                    cookingClub = club528,
+                    maxMembers = 3,
+                    opening = LocalDateTime.now().plusDays(1).plusHours(2),
+                    closing = LocalDateTime.now().plusDays(1).plusHours(5),
+                    place = "8. konyha",
+                    comment = "paschta muszak",
+                    workers = mutableListOf(user4, user5, user6),
+                    openingRequest = request12,
+                )
+            )
+            val shift11 = shiftRepository.save(
+                ShiftEntity(
+                    cookingClub = club395,
+                    maxMembers = 4,
+                    opening = LocalDateTime.now().plusDays(7),
+                    closing = LocalDateTime.now().plusDays(7).plusHours(3),
+                    place = "11. konyha",
+                    comment = "palacsintazo ures muszak",
+                    workers = mutableListOf(),
+                    openingRequest = request13,
+                )
+            )
+            val shift12 = shiftRepository.save(
+                ShiftEntity(
+                    cookingClub = club31,
+                    maxMembers = 2,
+                    opening = LocalDateTime.now().plusDays(6),
+                    closing = LocalDateTime.now().plusDays(6).plusHours(2),
+                    place = "13. konyha",
+                    comment = "kakas muszak",
+                    workers = mutableListOf(user1, user8),
+                    openingRequest = request11,
+                )
+            )
+            shiftRepository.save(
+                ShiftEntity(
+                    cookingClub = club490,
+                    maxMembers = 3,
+                    opening = LocalDateTime.now().plusDays(8),
+                    closing = LocalDateTime.now().plusDays(8).plusHours(2),
+                    place = "-1 konyha",
+                    comment = "regglisch muszak",
+                    workers = mutableListOf(user2, user9),
+                    openingRequest = request14,
                 )
             )
         }

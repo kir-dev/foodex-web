@@ -6,6 +6,8 @@ import org.springframework.beans.factory.annotation.Value
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.http.HttpMethod
+import org.springframework.security.access.hierarchicalroles.RoleHierarchy
+import org.springframework.security.access.hierarchicalroles.RoleHierarchyImpl
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity
@@ -62,7 +64,8 @@ class WebSecurityConfig(
                     .requestMatchers(HttpMethod.POST, "/api/cooking-clubs").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.PUT, "/api/cooking-clubs/**").hasRole("ADMIN")
                     .requestMatchers(HttpMethod.DELETE, "/api/cooking-clubs/**").hasRole("ADMIN")
-                    .requestMatchers("/api/newbie-grants", "/api/newbie-grants/**").hasRole("ADMIN")
+                    .requestMatchers("/api/trial-grants", "/api/trial-grants/**").hasRole("ADMIN")
+                    .requestMatchers("/api/admin-grants", "/api/admin-grants/**").hasRole("SUPERUSER")
                     .requestMatchers("/api/**").authenticated()
                     .anyRequest().authenticated()
             }
@@ -88,6 +91,11 @@ class WebSecurityConfig(
                 logout.logoutSuccessUrl(frontendUrl)
             }
         return http.build()
+    }
+
+    @Bean
+    fun roleHierarchy(): RoleHierarchy {
+        return RoleHierarchyImpl.fromHierarchy("ROLE_SUPERUSER > ROLE_ADMIN")
     }
 
     @Bean

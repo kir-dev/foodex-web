@@ -109,9 +109,14 @@ function ShiftsContent() {
         </p>
       )}
 
+      {user.role === 'TRIAL' && (
+        <p className='w-full max-w-5xl text-brand-fg'>
+          Próbásként akkor tudsz jelentkezni, ha kevesebb próbás van a műszakban, mint tag (újoncok nélkül).
+        </p>
+      )}
       {user.role === 'NEWBIE' && (
         <p className='w-full max-w-5xl text-brand-fg'>
-          Újoncként akkor tudsz jelentkezni, ha már van legalább egy tag a műszakban, és kevesebb újonc van, mint tag.
+          Újoncként a tagokkal együtt adjátok ki a műszak létszámát.
         </p>
       )}
 

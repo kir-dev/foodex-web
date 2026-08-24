@@ -7,19 +7,12 @@ import { PageState } from '@/components/page-state';
 import { apiFetch, isApiError } from '@/lib/api';
 import { formatShortDate, formatTimeRange, formatWeekday } from '@/lib/dates';
 import { useRefetchOnPath } from '@/lib/use-refetch-on-path';
-import { HomepageDto, Role } from '@/types/api';
+import { HomepageDto, ROLE_LABEL, Role } from '@/types/api';
 import Image from 'next/image';
 import { useState } from 'react';
 
-const ROLE_TITLES: Record<Role, string> = {
-  ADMIN: 'admin',
-  MEMBER: 'tag',
-  NEWBIE: 'újonc',
-  GUEST: 'vendég',
-};
-
 function roleTitle(role: Role): string {
-  return ROLE_TITLES[role] ?? role.toLowerCase();
+  return ROLE_LABEL[role] ?? role.toLowerCase();
 }
 
 export default function HomePage() {

@@ -6,21 +6,21 @@ import { RequireAuth } from '@/components/require-auth';
 import { StyledInput } from '@/components/styledInput';
 import { StyledLabel } from '@/components/styledLabel';
 import { apiFetch, isApiError } from '@/lib/api';
-import { CreateTrialGrantDto, isAdmin, TrialGrantDto, UpdateTrialGrantDto } from '@/types/api';
+import { AdminGrantDto, CreateAdminGrantDto, isSuperuser, UpdateAdminGrantDto } from '@/types/api';
 import { useCallback, useEffect, useState } from 'react';
 
 const AUTHSCH_PROFILE_URL = 'http://auth.sch.bme.hu/site/profile';
 
-export default function ProbasokPage() {
+export default function AdminokPage() {
   return (
-    <RequireAuth allow={isAdmin} loadingLabel='Próbások betöltése...'>
-      <ProbasokContent />
+    <RequireAuth allow={isSuperuser} loadingLabel='Adminok betöltése...'>
+      <AdminokContent />
     </RequireAuth>
   );
 }
 
-function ProbasokContent() {
-  const [grants, setGrants] = useState<TrialGrantDto[]>([]);
+function AdminokContent() {
+  const [grants, setGrants] = useState<AdminGrantDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<{ text: string; isError: boolean } | null>(null);
@@ -35,7 +35,7 @@ function ProbasokContent() {
   const [saving, setSaving] = useState(false);
 
   const loadGrants = useCallback(async (): Promise<void> => {
-    const data = await apiFetch<TrialGrantDto[]>('/api/trial-grants');
+    const data = await apiFetch<AdminGrantDto[]>('/api/admin-grants');
     setGrants(Array.isArray(data) ? data : []);
   }, []);
 
@@ -44,7 +44,7 @@ function ProbasokContent() {
       try {
         await loadGrants();
       } catch (err) {
-        setError(isApiError(err) ? err.message : 'Nem sikerült betölteni a próbásokat.');
+        setError(isApiError(err) ? err.message : 'Nem sikerült betölteni az adminokat.');
       } finally {
         setLoading(false);
       }
@@ -64,18 +64,18 @@ function ProbasokContent() {
 
     setCreating(true);
     try {
-      const payload: CreateTrialGrantDto = { name, internalId };
-      await apiFetch<TrialGrantDto>('/api/trial-grants', {
+      const payload: CreateAdminGrantDto = { name, internalId };
+      await apiFetch<AdminGrantDto>('/api/admin-grants', {
         method: 'POST',
         body: payload,
       });
       setNewName('');
       setNewInternalId('');
       await loadGrants();
-      setMessage({ text: 'Próbás hozzáadva.', isError: false });
+      setMessage({ text: 'Admin hozzáadva.', isError: false });
     } catch (err) {
       setMessage({
-        text: isApiError(err) ? err.message : 'Nem sikerült hozzáadni a próbást.',
+        text: isApiError(err) ? err.message : 'Nem sikerült hozzáadni az admint.',
         isError: true,
       });
     } finally {
@@ -94,17 +94,17 @@ function ProbasokContent() {
     setSaving(true);
     setMessage(null);
     try {
-      const payload: UpdateTrialGrantDto = { name, internalId };
-      await apiFetch<TrialGrantDto>(`/api/trial-grants/${grantId}`, {
+      const payload: UpdateAdminGrantDto = { name, internalId };
+      await apiFetch<AdminGrantDto>(`/api/admin-grants/${grantId}`, {
         method: 'PUT',
         body: payload,
       });
       setEditingId(null);
       await loadGrants();
-      setMessage({ text: 'Próbás frissítve.', isError: false });
+      setMessage({ text: 'Admin frissítve.', isError: false });
     } catch (err) {
       setMessage({
-        text: isApiError(err) ? err.message : 'Nem sikerült frissíteni a próbást.',
+        text: isApiError(err) ? err.message : 'Nem sikerült frissíteni az admint.',
         isError: true,
       });
     } finally {
@@ -112,14 +112,14 @@ function ProbasokContent() {
     }
   };
 
-  const handleDelete = async (grant: TrialGrantDto): Promise<void> => {
-    if (!confirm(`Biztosan törlöd ${grant.name} próbás jogosultságát?`)) {
+  const handleDelete = async (grant: AdminGrantDto): Promise<void> => {
+    if (!confirm(`Biztosan törlöd ${grant.name} admin jogosultságát?`)) {
       return;
     }
 
     setMessage(null);
     try {
-      await apiFetch<void>(`/api/trial-grants/${grant.id}`, {
+      await apiFetch<void>(`/api/admin-grants/${grant.id}`, {
         method: 'DELETE',
         parseJson: false,
       });
@@ -127,17 +127,17 @@ function ProbasokContent() {
         setEditingId(null);
       }
       await loadGrants();
-      setMessage({ text: 'Próbás törölve.', isError: false });
+      setMessage({ text: 'Admin törölve.', isError: false });
     } catch (err) {
       setMessage({
-        text: isApiError(err) ? err.message : 'Nem sikerült törölni a próbást.',
+        text: isApiError(err) ? err.message : 'Nem sikerült törölni az admint.',
         isError: true,
       });
     }
   };
 
   if (loading) {
-    return <PageState>Próbások betöltése...</PageState>;
+    return <PageState>Adminok betöltése...</PageState>;
   }
 
   if (error) {
@@ -147,7 +147,7 @@ function ProbasokContent() {
   return (
     <main className='p-4 sm:p-8 flex flex-col items-center gap-6 bg-surface flex-1'>
       <div className='w-full max-w-5xl border-2 border-brand-fg rounded-2xl p-4 sm:p-6 space-y-4'>
-        <h1 className='text-3xl font-bold text-brand-fg'>Próbások</h1>
+        <h1 className='text-3xl font-bold text-brand-fg'>Adminok</h1>
         <p className='text-brand-fg'>
           <a
             href={AUTHSCH_PROFILE_URL}
@@ -159,11 +159,11 @@ function ProbasokContent() {
           </a>
         </p>
         <p className='text-brand-fg'>
-          Itt olyan vendégeknek adhatsz próbás jogosultságot, akiket még nem vettek fel újoncként az AuthSCH-ban. Újonc,
-          tag, admin vagy szuperadmin jogosultságot ez nem ír felül.
+          Itt admin jogosultságot adhatsz felhasználóknak a belső azonosítójukkal. Szuperadmin jogosultságot ez nem ír
+          felül.
         </p>
 
-        <h2 className='text-2xl font-bold text-brand-fg'>Próbás hozzáadása</h2>
+        <h2 className='text-2xl font-bold text-brand-fg'>Admin hozzáadása</h2>
         <div className='bg-brand text-white p-4 rounded-2xl border-2 border-accent flex flex-col sm:flex-row gap-4 items-end'>
           <div className='flex-1 w-full'>
             <StyledLabel>Név</StyledLabel>
@@ -179,7 +179,7 @@ function ProbasokContent() {
             />
           </div>
           <Button
-            label={creating ? 'Hozzáadás...' : 'Próbás hozzáadása'}
+            label={creating ? 'Hozzáadás...' : 'Admin hozzáadása'}
             variant='primary'
             onClick={() => void handleCreate()}
             disabled={creating}
@@ -192,9 +192,9 @@ function ProbasokContent() {
       </div>
 
       <div className='w-full max-w-5xl border-2 border-brand-fg rounded-2xl p-4 sm:p-6 space-y-3'>
-        <h2 className='text-2xl font-bold text-brand-fg'>Felvett próbások</h2>
+        <h2 className='text-2xl font-bold text-brand-fg'>Felvett adminok</h2>
         {grants.length === 0 ? (
-          <p className='text-muted'>Még nincs próbás a listán.</p>
+          <p className='text-muted'>Még nincs admin a listán.</p>
         ) : (
           grants.map((grant) => (
             <div

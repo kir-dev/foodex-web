@@ -24,16 +24,23 @@ interface NavItem {
 function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const { user, status, canManageRequests, isAdminUser, logout } = useAuth();
+  const { user, status, canManageRequests, isAdminUser, isSuperuserUser, logout } = useAuth();
   const isLoggedIn = status === 'authenticated';
+
+  const adminChildren: NavLink[] = isAdminUser
+    ? [
+        { href: '/config', title: 'Konfiguráció', label: 'Konfig' },
+        { href: '/clubs', title: 'Körök kezelése', label: 'Körök' },
+        { href: '/probasok', title: 'Próbások', label: 'Próbások' },
+        ...(isSuperuserUser ? [{ href: '/adminok', title: 'Adminok', label: 'Adminok' }] : []),
+      ]
+    : [];
 
   const navItemsLeft: NavItem[] = [
     { href: '/home', title: 'Kezdőlap', label: 'Kezdőlap' },
     ...(canManageRequests ? [{ href: '/requesting', title: 'FoodEx kérés', label: 'FoodEx kérés' }] : []),
-    ...(isAdminUser ? [{ href: '/config', title: 'Konfiguráció', label: 'Konfig' }] : []),
-    ...(isAdminUser ? [{ href: '/clubs', title: 'Körök kezelése', label: 'Körök' }] : []),
-    ...(isAdminUser ? [{ href: '/users', title: 'Felhasználók', label: 'Tagok' }] : []),
-    ...(isAdminUser ? [{ href: '/probasok', title: 'Próbások', label: 'Próbások' }] : []),
+    ...(isLoggedIn ? [{ href: '/users', title: 'Tagok', label: 'Tagok' }] : []),
+    ...(isAdminUser ? [{ title: 'Admin oldal', label: 'Admin oldal', children: adminChildren }] : []),
   ];
 
   const semesterChildren: NavLink[] = [

@@ -8,17 +8,19 @@ import {
   isOnShift,
   memberCount,
   newbieCount,
+  shiftWorkers,
+  trialCount,
 } from '@/types/api';
 
 export function shiftOccupancyLabel(shift: DetailedShiftDto): string {
-  return (
-    `${memberCount(shift)}/${shift.maxMembers} tag` +
-    (newbieCount(shift) > 0 ? `, ${newbieCount(shift)} újonc` : '')
-  );
+  const members = memberCount(shift);
+  const newbies = newbieCount(shift);
+  const trials = trialCount(shift);
+  return `${members + newbies}/${shift.maxMembers} tag(${members}) újonc(${newbies}) próbás(${trials})`;
 }
 
 export function shiftToRow(shift: DetailedShiftDto, user?: DetailedUserDto): Shift {
-  const workers = [...shift.members, ...shift.newbies].map((person) => ({
+  const workers = shiftWorkers(shift).map((person) => ({
     id: person.id,
     nickname: user && person.id === user.id ? `${person.nickname} (te)` : person.nickname,
   }));

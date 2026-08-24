@@ -74,18 +74,57 @@ class ShiftServiceCapacityTest {
     }
 
     @Test
-    fun `canJoin newbie requires a member and free newbie slot`() {
+    fun `canJoin newbie shares maxMembers with members`() {
         val empty = shift(maxMembers = 5, workers = mutableListOf())
-        assertFalse(service.canJoin(user(9, Role.NEWBIE), empty))
+        assertTrue(service.canJoin(user(9, Role.NEWBIE), empty))
 
         val withMember = shift(maxMembers = 5, workers = mutableListOf(user(1, Role.MEMBER)))
         assertTrue(service.canJoin(user(9, Role.NEWBIE), withMember))
 
-        val newbieFull = shift(
-            maxMembers = 5,
+        val memberAndNewbieFull = shift(
+            maxMembers = 2,
             workers = mutableListOf(user(1, Role.MEMBER), user(8, Role.NEWBIE)),
         )
-        assertFalse(service.canJoin(user(9, Role.NEWBIE), newbieFull))
+        assertFalse(service.canJoin(user(9, Role.NEWBIE), memberAndNewbieFull))
+        assertFalse(service.canJoin(user(10, Role.MEMBER), memberAndNewbieFull))
+    }
+
+    @Test
+    fun `canJoin trial requires fewer trials than members excluding newbies`() {
+        val empty = shift(maxMembers = 5, workers = mutableListOf())
+        assertFalse(service.canJoin(user(9, Role.TRIAL), empty))
+
+        val withNewbieOnly = shift(maxMembers = 5, workers = mutableListOf(user(8, Role.NEWBIE)))
+        assertFalse(service.canJoin(user(9, Role.TRIAL), withNewbieOnly))
+
+        val withMember = shift(maxMembers = 5, workers = mutableListOf(user(1, Role.MEMBER)))
+        assertTrue(service.canJoin(user(9, Role.TRIAL), withMember))
+
+        val trialFull = shift(
+            maxMembers = 5,
+            workers = mutableListOf(user(1, Role.MEMBER), user(8, Role.TRIAL)),
+        )
+        assertFalse(service.canJoin(user(9, Role.TRIAL), trialFull))
+    }
+
+    @Test
+    fun `canJoin trial allowed when member plus newbie slots are full`() {
+        val shift = shift(
+            maxMembers = 1,
+            workers = mutableListOf(user(1, Role.MEMBER), user(2, Role.NEWBIE)),
+        )
+        assertTrue(service.canJoin(user(9, Role.TRIAL), shift))
+        assertFalse(service.canJoin(user(10, Role.MEMBER), shift))
+        assertFalse(service.canJoin(user(11, Role.NEWBIE), shift))
+    }
+
+    @Test
+    fun `canJoin superuser shares member slots`() {
+        val shift = shift(maxMembers = 1, workers = mutableListOf(user(1, Role.MEMBER)))
+        assertFalse(service.canJoin(user(2, Role.SUPERUSER), shift))
+
+        val open = shift(maxMembers = 2, workers = mutableListOf(user(1, Role.ADMIN)))
+        assertTrue(service.canJoin(user(2, Role.SUPERUSER), open))
     }
 
     @Test
@@ -98,13 +137,21 @@ class ShiftServiceCapacityTest {
     fun `hasOpenSlot partitions active vs full`() {
         val active = shift(maxMembers = 2, workers = mutableListOf(user(1, Role.MEMBER)))
         assertTrue(service.hasOpenSlot(active))
+        assertTrue(service.hasMemberSlot(active))
 
-        val full = shift(
+        val memberNewbieFull = shift(
             maxMembers = 1,
             workers = mutableListOf(user(1, Role.MEMBER), user(2, Role.NEWBIE)),
         )
-        // member full and newbie slot full (1 newbie for 1 member)
-        assertFalse(service.hasOpenSlot(full))
+        assertFalse(service.hasMemberSlot(memberNewbieFull))
+        assertTrue(service.hasOpenSlot(memberNewbieFull))
+
+        val trialFull = shift(
+            maxMembers = 1,
+            workers = mutableListOf(user(1, Role.MEMBER), user(2, Role.TRIAL)),
+        )
+        assertFalse(service.hasMemberSlot(trialFull))
+        assertFalse(service.hasOpenSlot(trialFull))
     }
 
     @Test
@@ -119,6 +166,36 @@ class ShiftServiceCapacityTest {
             service.addWorkerToShift(2, 1, actor)
         }
         assertTrue(ex.statusCode == HttpStatus.FORBIDDEN)
+    }
+
+    @Test
+    fun `addWorkerToShift admin self-join still respects capacity`() {
+        val admin = user(1, Role.ADMIN)
+        val shift = shift(maxMembers = 1, workers = mutableListOf(user(2, Role.MEMBER)))
+        every { userRepository.findById(1) } returns Optional.of(admin)
+        every { shiftRepository.findById(1) } returns Optional.of(shift)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.addWorkerToShift(1, 1, admin)
+        }
+        assertEquals(HttpStatus.CONFLICT, ex.statusCode)
+    }
+
+    @Test
+    fun `addWorkerToShift superuser can add member when capacity is full`() {
+        val superuser = user(1, Role.SUPERUSER)
+        val newMember = user(3, Role.MEMBER)
+        val shift = happeningShift(
+            maxMembers = 1,
+            workers = mutableListOf(user(2, Role.MEMBER)),
+        )
+        every { userRepository.findById(3) } returns Optional.of(newMember)
+        every { shiftRepository.findById(1) } returns Optional.of(shift)
+        every { shiftRepository.save(shift) } returns shift
+
+        val result = service.addWorkerToShift(3, 1, superuser)
+
+        assertTrue(result.members.any { it.id == 3 })
     }
 
     @Test

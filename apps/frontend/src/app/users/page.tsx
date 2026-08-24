@@ -5,18 +5,20 @@ import { RequireAuth } from '@/components/require-auth';
 import { StyledInput } from '@/components/styledInput';
 import { UserNameLink } from '@/components/userNameLink';
 import { apiFetch, isApiError } from '@/lib/api';
-import { DetailedUserDto, isAdmin } from '@/types/api';
+import { useAuth } from '@/components/auth-provider';
+import { DetailedUserDto, ROLE_LABEL } from '@/types/api';
 import { useEffect, useMemo, useState } from 'react';
 
 export default function UsersPage() {
   return (
-    <RequireAuth allow={isAdmin} loadingLabel='Felhasználók betöltése...'>
+    <RequireAuth loadingLabel='Felhasználók betöltése...'>
       <UsersContent />
     </RequireAuth>
   );
 }
 
 function UsersContent() {
+  const { isAdminUser } = useAuth();
   const [users, setUsers] = useState<DetailedUserDto[]>([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -42,14 +44,17 @@ function UsersContent() {
     if (!q) {
       return users;
     }
-    return users.filter(
-      (user) =>
+    return users.filter((user) => {
+      const roleLabel = ROLE_LABEL[user.role] ?? user.role;
+      return (
         user.name.toLowerCase().includes(q) ||
         (user.nickname ?? '').toLowerCase().includes(q) ||
-        user.email.toLowerCase().includes(q) ||
-        user.role.toLowerCase().includes(q)
-    );
-  }, [query, users]);
+        (isAdminUser && user.email.toLowerCase().includes(q)) ||
+        user.role.toLowerCase().includes(q) ||
+        roleLabel.toLowerCase().includes(q)
+      );
+    });
+  }, [query, users, isAdminUser]);
 
   if (loading) {
     return <PageState>Felhasználók betöltése...</PageState>;
@@ -65,7 +70,11 @@ function UsersContent() {
         <h1 className='text-3xl font-bold text-brand-fg'>Aktív felhasználók</h1>
         <StyledInput
           type='search'
-          placeholder='Keresés név, becenév, email vagy szerep szerint...'
+          placeholder={
+            isAdminUser
+              ? 'Keresés név, becenév, email vagy szerep szerint...'
+              : 'Keresés név, becenév vagy szerep szerint...'
+          }
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className='border-2 border-brand-fg'
@@ -84,9 +93,9 @@ function UsersContent() {
                       (<UserNameLink userId={user.id}>{user.nickname}</UserNameLink>)
                     </span>
                   </p>
-                  <span className='text-sm font-bold text-accent'>{user.role}</span>
+                  <span className='text-sm font-bold text-accent'>{ROLE_LABEL[user.role] ?? user.role}</span>
                 </div>
-                <p className='text-muted'>{user.email}</p>
+                {isAdminUser && <p className='text-muted'>{user.email}</p>}
                 {user.leaderAt.length > 0 && (
                   <p className='text-sm text-muted'>Vezető: {user.leaderAt.map((club) => club.name).join(', ')}</p>
                 )}

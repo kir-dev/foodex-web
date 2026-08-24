@@ -54,11 +54,11 @@ Optional: enable the H2 console only for local debugging:
 spring.h2.console.enabled=true
 ```
 
-### 2. Developer admin elevators (optional)
+### 2. Superusers (optional)
 
-To grant **ADMIN** on login without being a FoodEx executive in AuthSCH, edit:
+To grant **SUPERUSER** on login (admin pages plus granting/revoking ADMIN), edit:
 
-`apps/backend/src/main/resources/config/developer-admins.properties`
+`apps/backend/src/main/resources/config/superusers.properties`
 
 ```properties
 # key = AuthSCH internalId (OIDC subject)
@@ -66,7 +66,7 @@ To grant **ADMIN** on login without being a FoodEx executive in AuthSCH, edit:
 your-uuid-here=Your Name (backend)
 ```
 
-Re-login after changing this file.
+Re-login after changing this file. AuthSCH FoodEx executives still become **ADMIN** without being listed here.
 
 ### 3. Run the backend
 

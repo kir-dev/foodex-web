@@ -119,6 +119,34 @@ class OpeningRequestServiceTest {
     }
 
     @Test
+    fun `createOpeningRequest allowed for superuser without being leader`() {
+        val superuser = user(4, Role.SUPERUSER)
+        every { repository.save(any()) } answers {
+            OpeningRequestEntity(
+                id = 12,
+                user = superuser,
+                cookingClub = club,
+                opening = opening,
+                closing = closing,
+                place = "x",
+                description = "y",
+            )
+        }
+
+        val dto = service.createOpeningRequest(
+            CreateOpeningRequestDto(
+                cookingClubId = 403,
+                opening = opening,
+                closing = closing,
+                place = "x",
+                description = "y",
+            ),
+            actor = superuser,
+        )
+        assertEquals(12, dto.id)
+    }
+
+    @Test
     fun `createOpeningRequest rejects inverted times`() {
         val admin = user(3, Role.ADMIN)
         val ex = assertThrows<ResponseStatusException> {

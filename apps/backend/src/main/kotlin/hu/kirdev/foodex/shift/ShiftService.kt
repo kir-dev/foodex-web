@@ -138,7 +138,7 @@ class ShiftService(
 
         requireSelfLeaderOrAdmin(actor, userId, shift.cookingClub.id)
 
-        if (actor.role != Role.ADMIN && !shift.opening.isAfter(LocalDateTime.now())) {
+        if (!actor.role.isAdminOrAbove() && !shift.opening.isAfter(LocalDateTime.now())) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Shift has already started")
         }
 
@@ -149,7 +149,7 @@ class ShiftService(
         when {
             user.role == Role.GUEST ->
                 throw ResponseStatusException(HttpStatus.FORBIDDEN, "Guests cannot join shifts")
-            actor.role != Role.ADMIN && !canJoin(user, shift) ->
+            !canJoin(user, shift) && !(actor.role.isAdminOrAbove() && actor.id != user.id) ->
                 throw ResponseStatusException(HttpStatus.CONFLICT, "Shift capacity full for this role")
         }
 
@@ -279,39 +279,38 @@ class ShiftService(
     // --- capacity helpers (pure / READ on entity state) ---
 
     fun memberCount(shift: ShiftEntity): Int =
-        shift.workers.count { it.role == Role.MEMBER || it.role == Role.ADMIN }
+        shift.workers.count { it.role.countsAsMemberForCapacity() }
 
     fun newbieCount(shift: ShiftEntity): Int =
         shift.workers.count { it.role == Role.NEWBIE }
 
+    fun trialCount(shift: ShiftEntity): Int =
+        shift.workers.count { it.role == Role.TRIAL }
+
     fun canJoin(user: UserEntity, shift: ShiftEntity): Boolean = when (user.role) {
         Role.GUEST -> false
-        Role.MEMBER, Role.ADMIN -> memberCount(shift) < shift.maxMembers
-        Role.NEWBIE -> {
-            val members = memberCount(shift)
-            members > 0 && newbieCount(shift) < members
-        }
+        Role.NEWBIE, Role.MEMBER, Role.ADMIN, Role.SUPERUSER ->
+            memberCount(shift) + newbieCount(shift) < shift.maxMembers
+        Role.TRIAL -> trialCount(shift) < memberCount(shift)
     }
 
     fun hasMemberSlot(shift: ShiftEntity): Boolean =
-        memberCount(shift) < shift.maxMembers
+        memberCount(shift) + newbieCount(shift) < shift.maxMembers
 
     fun hasOpenSlot(shift: ShiftEntity): Boolean {
-        val members = memberCount(shift)
-        val newbies = newbieCount(shift)
-        val newbieSlot = members > 0 && newbies < members
-        return hasMemberSlot(shift) || newbieSlot
+        val trialSlot = memberCount(shift) > 0 && trialCount(shift) < memberCount(shift)
+        return hasMemberSlot(shift) || trialSlot
     }
 
     private fun requireLeaderOrAdmin(actor: UserEntity, cookingClubId: Int) {
-        if (actor.role == Role.ADMIN) return
+        if (actor.role.isAdminOrAbove()) return
         if (!cookingClubService.isLeaderOfCookingClub(actor.id, cookingClubId)) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not leader of cooking club")
         }
     }
 
     private fun requireSelfLeaderOrAdmin(actor: UserEntity, targetUserId: Int, cookingClubId: Int) {
-        if (actor.role == Role.ADMIN) return
+        if (actor.role.isAdminOrAbove()) return
         if (actor.id == targetUserId) return
         if (!cookingClubService.isLeaderOfCookingClub(actor.id, cookingClubId)) {
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to modify this worker")

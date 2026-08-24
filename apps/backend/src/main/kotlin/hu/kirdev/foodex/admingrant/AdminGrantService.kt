@@ -1,4 +1,4 @@
-package hu.kirdev.foodex.newbiegrant
+package hu.kirdev.foodex.admingrant
 
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserRepository
@@ -8,74 +8,74 @@ import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
 
 @Service
-class NewbieGrantService(
-    private val newbieGrantRepository: NewbieGrantRepository,
+class AdminGrantService(
+    private val adminGrantRepository: AdminGrantRepository,
     private val userRepository: UserRepository,
 ) {
 
     @Transactional(readOnly = true)
-    fun getAllGrants(): List<NewbieGrantDto> {
-        return newbieGrantRepository.findAll()
+    fun getAllGrants(): List<AdminGrantDto> {
+        return adminGrantRepository.findAll()
             .sortedBy { it.name.lowercase() }
-            .map { NewbieGrantDto(it) }
+            .map { AdminGrantDto(it) }
     }
 
     @Transactional(readOnly = true)
     fun existsByInternalId(internalId: String): Boolean {
-        return newbieGrantRepository.existsByInternalId(internalId)
+        return adminGrantRepository.existsByInternalId(internalId)
     }
 
     @Transactional(readOnly = false)
-    fun createGrant(request: CreateNewbieGrantDto): NewbieGrantDto {
+    fun createGrant(request: CreateAdminGrantDto): AdminGrantDto {
         val name = request.name.trim()
         val internalId = request.internalId.trim()
         validateFields(name, internalId)
-        if (newbieGrantRepository.existsByInternalId(internalId)) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "A newbie grant already exists for this internalId")
+        if (adminGrantRepository.existsByInternalId(internalId)) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "An admin grant already exists for this internalId")
         }
 
-        val saved = newbieGrantRepository.save(
-            NewbieGrantEntity(
+        val saved = adminGrantRepository.save(
+            AdminGrantEntity(
                 name = name,
                 internalId = internalId,
             )
         )
         applyGrant(internalId)
-        return NewbieGrantDto(saved)
+        return AdminGrantDto(saved)
     }
 
     @Transactional(readOnly = false)
-    fun updateGrant(id: Int, request: UpdateNewbieGrantDto): NewbieGrantDto {
-        val grant = newbieGrantRepository.findById(id)
-            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Newbie grant not found") }
+    fun updateGrant(id: Int, request: UpdateAdminGrantDto): AdminGrantDto {
+        val grant = adminGrantRepository.findById(id)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Admin grant not found") }
 
         val name = request.name.trim()
         val internalId = request.internalId.trim()
         validateFields(name, internalId)
 
         val previousInternalId = grant.internalId
-        if (internalId != previousInternalId && newbieGrantRepository.existsByInternalId(internalId)) {
-            throw ResponseStatusException(HttpStatus.CONFLICT, "A newbie grant already exists for this internalId")
+        if (internalId != previousInternalId && adminGrantRepository.existsByInternalId(internalId)) {
+            throw ResponseStatusException(HttpStatus.CONFLICT, "An admin grant already exists for this internalId")
         }
 
         grant.name = name
         grant.internalId = internalId
-        val saved = newbieGrantRepository.save(grant)
+        val saved = adminGrantRepository.save(grant)
 
         if (internalId != previousInternalId) {
             revokeGrant(previousInternalId)
             applyGrant(internalId)
         }
 
-        return NewbieGrantDto(saved)
+        return AdminGrantDto(saved)
     }
 
     @Transactional(readOnly = false)
     fun deleteGrant(id: Int) {
-        val grant = newbieGrantRepository.findById(id)
-            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Newbie grant not found") }
+        val grant = adminGrantRepository.findById(id)
+            .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Admin grant not found") }
         val internalId = grant.internalId
-        newbieGrantRepository.delete(grant)
+        adminGrantRepository.delete(grant)
         revokeGrant(internalId)
     }
 
@@ -87,16 +87,18 @@ class NewbieGrantService(
 
     private fun applyGrant(internalId: String) {
         val user = userRepository.findUserEntityByInternalId(internalId) ?: return
-        if (user.role == Role.GUEST) {
-            user.role = Role.NEWBIE
+        if (user.role != Role.SUPERUSER) {
+            user.role = Role.ADMIN
+            user.isActive = true
             userRepository.save(user)
         }
     }
 
     private fun revokeGrant(internalId: String) {
         val user = userRepository.findUserEntityByInternalId(internalId) ?: return
-        if (user.role == Role.NEWBIE) {
+        if (user.role == Role.ADMIN) {
             user.role = Role.GUEST
+            user.isActive = false
             userRepository.save(user)
         }
     }
