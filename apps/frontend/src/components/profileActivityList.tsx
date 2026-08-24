@@ -40,7 +40,7 @@ export function ProfileActivityList({ items, emptyLabel }: ProfileActivityListPr
             {item.status && (
               <span
                 className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                  item.status === 'accepted' ? 'bg-green-200 text-green-900' : 'bg-white text-brand-fg'
+                  item.status === 'accepted' ? 'bg-green-200 text-green-900' : 'bg-white text-brand-fg dark:bg-brand-deep'
                 }`}
               >
                 {STATUS_LABEL[item.status]}
@@ -49,7 +49,7 @@ export function ProfileActivityList({ items, emptyLabel }: ProfileActivityListPr
             {item.onShowShifts && (
               <button
                 type='button'
-                className='bg-white text-brand-fg font-bold px-3 py-1 rounded-xl text-sm'
+                className='bg-white text-brand-fg dark:bg-brand-deep font-bold px-3 py-1 rounded-xl text-sm'
                 onClick={item.onShowShifts}
               >
                 Műszakok

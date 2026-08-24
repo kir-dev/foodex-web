@@ -88,7 +88,7 @@ export function OpeningRequestTable({
                   <button
                     key={btn.label}
                     type='button'
-                    className='bg-white text-brand-fg font-bold px-3 py-1 rounded-xl w-fit'
+                    className='bg-white text-brand-fg dark:bg-brand-deep font-bold px-3 py-1 rounded-xl w-fit'
                     onClick={() => btn.onClick(request)}
                   >
                     {btn.label}
