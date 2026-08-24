@@ -15,26 +15,27 @@
     "@next-nest-template/frontend": "file:",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
-    "lucide-react": "^1.31.0",
-    "next": "16.3.1",
+    "lucide-react": "^1.33.0",
+    "next": "16.3.2",
     "react": "19.2.8",
     "react-dom": "19.2.8",
     "tailwind-merge": "^3.6.0",
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
-    "@eslint/js": "^9.39.5",
+    "@eslint/compat": "^2.1.0",
+    "@eslint/js": "^10.0.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^26.2.0",
     "@types/react": "19.2.18",
     "@types/react-dom": "19.2.4",
     "@typescript-eslint/eslint-plugin": "^8.67.0",
     "@typescript-eslint/parser": "^8.67.0",
-    "eslint": "^9.39.5",
-    "eslint-config-next": "16.3.1",
+    "eslint": "^10.9.0",
+    "eslint-config-next": "16.3.2",
     "eslint-plugin-react": "^7.37.5",
     "postcss": "^8.5.26",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3"
+    "typescript": "^6.0.3"
   }
 }

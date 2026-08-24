@@ -1,4 +1,4 @@
-import typescriptEslintPlugin from '@typescript-eslint/eslint-plugin';
+import { fixupConfigRules } from '@eslint/compat';
 import tsParser from '@typescript-eslint/parser';
 import nextVitals from 'eslint-config-next/core-web-vitals';
 import path from 'node:path';
@@ -18,12 +18,8 @@ export default [
       '.prettierrc.js',
     ],
   },
-  ...nextVitals,
+  ...fixupConfigRules(nextVitals),
   {
-    plugins: {
-      '@typescript-eslint': typescriptEslintPlugin,
-    },
-
     languageOptions: {
       parser: tsParser,
       ecmaVersion: 'latest',

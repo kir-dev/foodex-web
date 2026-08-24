@@ -1,5 +1,7 @@
 packages:
   - apps/*
+allowBuilds:
+  unrs-resolver: true
 onlyBuiltDependencies:
   - '@nestjs/core'
   - '@prisma/client'
@@ -8,3 +10,4 @@ onlyBuiltDependencies:
   - esbuild
   - prisma
   - sharp
+  - unrs-resolver

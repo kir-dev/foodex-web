@@ -20,6 +20,8 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
   return (
     <html lang='hu' suppressHydrationWarning>
       <body className='min-h-screen flex flex-col'>
+        {/* Theme class must be applied before paint to avoid a flash of the wrong theme. */}
+        {/* eslint-disable-next-line react/no-danger */}
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
         <ThemeProvider>
           <AuthProvider>
