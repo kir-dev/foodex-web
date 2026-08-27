@@ -66,8 +66,12 @@ class ConfigurationService(
     fun getHomepage(): HomepageDto {
         val config = get()
 
-        val activeMembers = userRepository.findUserEntitiesByIsActiveTrue()
-            .filter { it.role != Role.GUEST }
+        val activeMembers = userRepository
+            .findUserEntitiesByIsActiveTrueAndRoleIn(HOMEPAGE_ACTIVE_MEMBER_ROLES)
+            .sortedWith(
+                compareBy<UserEntity> { HOMEPAGE_ROLE_ORDER[it.role] ?: Int.MAX_VALUE }
+                    .thenBy(String.CASE_INSENSITIVE_ORDER) { it.name }
+            )
             .map { UserDto(it) }
 
         return HomepageDto(
@@ -82,5 +86,9 @@ class ConfigurationService(
     companion object {
         const val DEFAULT_HOMEPAGE_DESCRIPTION =
             "A FoodEx kör 2003-ban alakult meg, azóta aktívan tevékenykedik a Schönherz koliban..."
+
+        val HOMEPAGE_ACTIVE_MEMBER_ROLES = listOf(Role.ADMIN, Role.MEMBER, Role.NEWBIE)
+        private val HOMEPAGE_ROLE_ORDER =
+            HOMEPAGE_ACTIVE_MEMBER_ROLES.withIndex().associate { it.value to it.index }
     }
 }

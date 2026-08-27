@@ -10,4 +10,5 @@ interface UserRepository : JpaRepository<UserEntity, Int> {
     fun findUserEntitiesByNameOrNicknameIgnoreCase(name: String, nickname: String): List<UserEntity>
     fun findUserEntitiesByIsActiveTrue(): List<UserEntity>
     fun findUserEntitiesByIsActiveFalse(): List<UserEntity>
+    fun findUserEntitiesByIsActiveTrueAndRoleIn(roles: Collection<Role>): List<UserEntity>
 }
