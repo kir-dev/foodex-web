@@ -2,7 +2,6 @@ package hu.kirdev.foodex.openingrequest
 
 import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.shift.ShiftRepository
-import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -94,7 +93,7 @@ class OpeningRequestService(
         val request = openingRequestRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Opening request not found") }
 
-        requireOwnerLeaderOrAdmin(actor, request)
+        requireAdmin(actor)
 
         request.isAccepted = true
         return DetailedOpeningRequestDto(openingRequestRepository.save(request))
@@ -105,7 +104,7 @@ class OpeningRequestService(
         val request = openingRequestRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Opening request not found") }
 
-        requireOwnerLeaderOrAdmin(actor, request)
+        requireAdmin(actor)
         val childShifts = shiftRepository.findAllByOpeningRequestId(id)
         if (childShifts.isNotEmpty()) {
             shiftRepository.deleteAll(childShifts)
@@ -118,7 +117,7 @@ class OpeningRequestService(
         val request = openingRequestRepository.findById(id)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Opening request not found") }
 
-        requireOwnerLeaderOrAdmin(actor, request)
+        requireAdmin(actor)
 
         toUpdate.opening?.let { request.opening = it }
         toUpdate.closing?.let { request.closing = it }
@@ -137,10 +136,9 @@ class OpeningRequestService(
         return DetailedOpeningRequestDto(openingRequestRepository.save(request))
     }
 
-    private fun requireOwnerLeaderOrAdmin(actor: UserEntity, request: OpeningRequestEntity) {
-        if (actor.role.isAdminOrAbove()) return
-        if (actor.id == request.user.id) return
-        if (cookingClubService.isLeaderOfCookingClub(actor.id, request.cookingClub.id)) return
-        throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to modify this opening request")
+    private fun requireAdmin(actor: UserEntity) {
+        if (!actor.role.isAdminOrAbove()) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Admin required")
+        }
     }
 }

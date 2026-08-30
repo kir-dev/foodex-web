@@ -254,7 +254,9 @@ class ShiftService(
         val request = openingRequestRepository.findById(openingRequestId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Opening request not found") }
 
-        requireLeaderOrAdmin(actor, request.cookingClub.id)
+        if (!actor.role.isAdminOrAbove()) {
+            throw ResponseStatusException(HttpStatus.FORBIDDEN, "Admin required")
+        }
 
         if (request.isAccepted) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Opening request already accepted")

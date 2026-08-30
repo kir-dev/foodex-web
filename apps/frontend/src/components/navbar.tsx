@@ -51,7 +51,7 @@ function Navbar() {
   const navItemsRight: NavItem[] = isLoggedIn
     ? [
         { title: 'Félév', label: 'Félév', children: semesterChildren },
-        ...(canManageRequests ? [{ href: '/requests', title: 'Kérések', label: 'Kérések' }] : []),
+        ...(isAdminUser ? [{ href: '/requests', title: 'Kérések', label: 'Kérések' }] : []),
         { href: '/shifts', title: 'Műszakok', label: 'Műszakok' },
         { href: '/profile', title: 'Profil', isProfile: true },
       ]

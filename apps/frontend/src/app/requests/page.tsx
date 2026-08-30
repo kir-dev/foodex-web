@@ -24,14 +24,14 @@ import {
   CreateShiftFromOpeningRequestDto,
   DetailedOpeningRequestDto,
   DetailedShiftDto,
-  isClubLeaderOrAdmin,
+  isAdmin,
   UpdateOpeningRequestDto,
 } from '@/types/api';
 import { useCallback, useState } from 'react';
 
 export default function RequestsPage() {
   return (
-    <RequireAuth allow={isClubLeaderOrAdmin} loadingLabel='Kérések betöltése...'>
+    <RequireAuth allow={isAdmin} loadingLabel='Kérések betöltése...'>
       <RequestsContent />
     </RequireAuth>
   );

@@ -16,7 +16,7 @@ import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDateTime
-import java.util.Optional
+import java.util.*
 
 class OpeningRequestServiceTest {
 
@@ -162,6 +162,106 @@ class OpeningRequestServiceTest {
             )
         }
         assertEquals(HttpStatus.BAD_REQUEST, ex.statusCode)
+    }
+
+    @Test
+    fun `createOpeningRequest succeeds for newbie club leader`() {
+        val leader = user(1, Role.NEWBIE)
+        every { cookingClubService.isLeaderOfCookingClub(1, 403) } returns true
+        every { repository.save(any()) } answers {
+            OpeningRequestEntity(
+                id = 13,
+                user = leader,
+                cookingClub = club,
+                opening = opening,
+                closing = closing,
+                place = "10. konyha",
+                description = "desc",
+            )
+        }
+
+        val dto = service.createOpeningRequest(
+            CreateOpeningRequestDto(
+                cookingClubId = 403,
+                opening = opening,
+                closing = closing,
+                place = "10. konyha",
+                description = "desc",
+            ),
+            actor = leader,
+        )
+
+        assertEquals(13, dto.id)
+        verify(exactly = 1) { repository.save(any()) }
+    }
+
+    @Test
+    fun `acceptOpeningRequest forbidden for newbie club leader`() {
+        val leader = user(1, Role.NEWBIE)
+        val request = OpeningRequestEntity(
+            id = 22,
+            user = leader,
+            cookingClub = club,
+            opening = opening,
+            closing = closing,
+            place = "kitchen",
+            description = "desc",
+        )
+        every { repository.findById(22) } returns Optional.of(request)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.acceptOpeningRequest(22, leader)
+        }
+        assertEquals(HttpStatus.FORBIDDEN, ex.statusCode)
+    }
+
+    @Test
+    fun `updateOpeningRequest forbidden for newbie club leader`() {
+        val leader = user(1, Role.NEWBIE)
+        val request = OpeningRequestEntity(
+            id = 23,
+            user = leader,
+            cookingClub = club,
+            opening = opening,
+            closing = closing,
+            place = "kitchen",
+            description = "desc",
+        )
+        every { repository.findById(23) } returns Optional.of(request)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.updateOpeningRequest(
+                23,
+                UpdateOpeningRequestDto(
+                    opening = null,
+                    closing = null,
+                    place = "new kitchen",
+                    description = null,
+                ),
+                leader,
+            )
+        }
+        assertEquals(HttpStatus.FORBIDDEN, ex.statusCode)
+    }
+
+    @Test
+    fun `deleteOpeningRequest forbidden for newbie club leader`() {
+        val leader = user(1, Role.NEWBIE)
+        val request = OpeningRequestEntity(
+            id = 24,
+            user = leader,
+            cookingClub = club,
+            opening = opening,
+            closing = closing,
+            place = "kitchen",
+            description = "desc",
+        )
+        every { repository.findById(24) } returns Optional.of(request)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.deleteOpeningRequest(24, leader)
+        }
+        assertEquals(HttpStatus.FORBIDDEN, ex.statusCode)
     }
 
     @Test

@@ -13,16 +13,14 @@ import hu.kirdev.foodex.user.UserRepository
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.slot
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertFalse
-import org.junit.jupiter.api.Assertions.assertTrue
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
 import java.time.LocalDateTime
-import java.util.Optional
+import java.util.*
 
 class ShiftServiceCapacityTest {
 
@@ -241,6 +239,26 @@ class ShiftServiceCapacityTest {
             service.addWorkerToShift(3, 1, actor)
         }
         assertEquals(HttpStatus.CONFLICT, ex.statusCode)
+    }
+
+    @Test
+    fun `createShiftsFromOpeningRequest forbidden for newbie club leader`() {
+        val leader = user(8, Role.NEWBIE)
+        val request = openingRequest(leader)
+        every { openingRequestRepository.findById(10) } returns Optional.of(request)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.createShiftsFromOpeningRequest(
+                10,
+                CreateShiftFromOpeningRequestDto(
+                    maxMembers = 4,
+                    numberOfShifts = 2,
+                    applicationOpening = now.plusHours(1),
+                ),
+                leader,
+            )
+        }
+        assertEquals(HttpStatus.FORBIDDEN, ex.statusCode)
     }
 
     @Test
