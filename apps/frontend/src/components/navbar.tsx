@@ -33,6 +33,7 @@ function Navbar() {
         { href: '/clubs', title: 'Körök kezelése', label: 'Körök' },
         { href: '/probasok', title: 'Próbások', label: 'Próbások' },
         ...(isSuperuserUser ? [{ href: '/adminok', title: 'Adminok', label: 'Adminok' }] : []),
+        ...(isSuperuserUser ? [{ href: '/nuke', title: 'Nuke💣', label: 'Nuke💣' }] : []),
       ]
     : [];
 

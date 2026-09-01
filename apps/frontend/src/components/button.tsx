@@ -3,7 +3,7 @@
 import clsx from 'clsx';
 import React, { ComponentPropsWithoutRef } from 'react';
 
-export type ButtonVariant = 'primary' | 'secondary';
+export type ButtonVariant = 'primary' | 'secondary' | 'danger';
 
 interface ButtonProps extends ComponentPropsWithoutRef<'button'> {
   label: string;
@@ -16,6 +16,7 @@ const Button: React.FC<ButtonProps> = ({ label, type = 'button', className = '',
   const variantClasses = {
     primary: 'bg-brand-deep text-accent border-accent hover:bg-brand-deep-hover',
     secondary: 'bg-surface text-brand-fg border-brand-fg hover:bg-brand hover:text-accent',
+    danger: 'bg-red-600 text-white border-red-700 hover:bg-red-700',
   };
 
   return (

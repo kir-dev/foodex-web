@@ -6,6 +6,7 @@ import org.springframework.boot.test.context.SpringBootTest
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc
 import org.springframework.http.MediaType
 import org.springframework.test.web.servlet.MockMvc
+import org.springframework.test.web.servlet.delete
 import org.springframework.test.web.servlet.get
 import org.springframework.test.web.servlet.post
 
@@ -74,6 +75,14 @@ class SecuritySmokeTest {
         mockMvc.get("/api/admin-grants")
             .andExpect {
                 status { isUnauthorized() }
+            }
+    }
+
+    @Test
+    fun `unauthenticated DELETE nuke is rejected`() {
+        mockMvc.delete("/api/nuke")
+            .andExpect {
+                status { is4xxClientError() }
             }
     }
 }
