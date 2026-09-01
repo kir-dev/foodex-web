@@ -1,6 +1,7 @@
 package hu.kirdev.foodex.shift
 
 import hu.kirdev.foodex.config.ConfigurationService
+import hu.kirdev.foodex.config.TimeConfig
 import hu.kirdev.foodex.cookingclub.CookingClubEntity
 import hu.kirdev.foodex.cookingclub.CookingClubRepository
 import hu.kirdev.foodex.cookingclub.CookingClubService
@@ -19,7 +20,10 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
+import java.time.Clock
+import java.time.Instant
 import java.time.LocalDateTime
+import java.time.ZoneOffset
 import java.util.*
 
 class ShiftServiceCapacityTest {
@@ -53,6 +57,7 @@ class ShiftServiceCapacityTest {
             openingRequestRepository,
             openingRequestService,
             configurationService,
+            Clock.systemDefaultZone(),
         )
     }
 
@@ -489,6 +494,36 @@ class ShiftServiceCapacityTest {
     }
 
     @Test
+    fun `getUpcomingActiveAndFullShifts classifies applicationOpening on Europe Budapest wall clock`() {
+        val instant = Instant.parse("2026-09-01T17:22:00Z")
+        val opening = LocalDateTime.of(2026, 9, 1, 21, 0)
+        val closing = LocalDateTime.of(2026, 9, 1, 23, 0)
+        val applicationOpening = LocalDateTime.of(2026, 9, 1, 19, 21)
+        val lockedShift = ShiftEntity(
+            id = 1,
+            cookingClub = club,
+            maxMembers = 4,
+            opening = opening,
+            closing = closing,
+            place = "kitchen",
+            applicationOpening = applicationOpening,
+        )
+        every { shiftRepository.findUpcomingWithClub(any()) } returns listOf(lockedShift)
+
+        val budapestResult = serviceWithClock(Clock.fixed(instant, TimeConfig.APP_ZONE))
+            .getUpcomingActiveAndFullShifts()
+        assertEquals(listOf(1), budapestResult.activeShifts.map { it.id })
+        assertTrue(budapestResult.notYetOpenShifts.isEmpty())
+        assertTrue(budapestResult.fullShifts.isEmpty())
+
+        val utcResult = serviceWithClock(Clock.fixed(instant, ZoneOffset.UTC))
+            .getUpcomingActiveAndFullShifts()
+        assertEquals(listOf(1), utcResult.notYetOpenShifts.map { it.id })
+        assertTrue(utcResult.activeShifts.isEmpty())
+        assertTrue(utcResult.fullShifts.isEmpty())
+    }
+
+    @Test
     fun `updateShift persists applicationOpening`() {
         val admin = user(1, Role.ADMIN)
         val shift = shift(maxMembers = 4, workers = mutableListOf())
@@ -513,6 +548,17 @@ class ShiftServiceCapacityTest {
         assertEquals(applicationOpening, shift.applicationOpening)
         assertEquals(applicationOpening, result.applicationOpening)
     }
+
+    private fun serviceWithClock(clock: Clock) = ShiftService(
+        shiftRepository,
+        userRepository,
+        cookingClubRepository,
+        cookingClubService,
+        openingRequestRepository,
+        openingRequestService,
+        configurationService,
+        clock,
+    )
 
     private fun shift(
         id: Int = 1,

@@ -13,6 +13,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
+import java.time.Clock
 import java.time.Duration
 import java.time.LocalDateTime
 
@@ -25,6 +26,7 @@ class ShiftService(
     private val openingRequestRepository: OpeningRequestRepository,
     private val openingRequestService: OpeningRequestService,
     private val configurationService: ConfigurationService,
+    private val clock: Clock,
 ) {
 
     @Transactional(readOnly = true)
@@ -42,9 +44,8 @@ class ShiftService(
 
     @Transactional(readOnly = true)
     fun getUpcomingShiftEntities(): List<ShiftEntity> {
-        return shiftRepository.findUpcomingWithClub(LocalDateTime.now())
+        return shiftRepository.findUpcomingWithClub(now())
     }
-
 
     @Transactional(readOnly = true)
     fun getUpcomingShifts(): List<DetailedShiftDto> {
@@ -66,7 +67,7 @@ class ShiftService(
 
     @Transactional(readOnly = true)
     fun getUpcomingActiveAndFullShifts(): ActiveAndFullShifts {
-        val now = LocalDateTime.now()
+        val now = now()
         val upcoming = getUpcomingShiftEntities()
         val active = mutableListOf<ShiftEntity>()
         val fullOrHappening = mutableListOf<ShiftEntity>()
@@ -143,7 +144,7 @@ class ShiftService(
 
         requireSelfLeaderOrAdmin(actor, userId, shift.cookingClub.id)
 
-        val now = LocalDateTime.now()
+        val now = now()
         val selfJoin = actor.id == user.id
         if (selfJoin && !isApplicationOpen(shift, now)) {
             throw ResponseStatusException(HttpStatus.CONFLICT, "Applications are not yet open")
@@ -320,7 +321,7 @@ class ShiftService(
         return hasMemberSlot(shift) || trialSlot
     }
 
-    fun isApplicationOpen(shift: ShiftEntity, now: LocalDateTime = LocalDateTime.now()): Boolean {
+    fun isApplicationOpen(shift: ShiftEntity, now: LocalDateTime = LocalDateTime.now(clock)): Boolean {
         val opensAt = shift.applicationOpening ?: return true
         return !opensAt.isAfter(now)
     }
@@ -351,6 +352,8 @@ class ShiftService(
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not allowed to modify this worker")
         }
     }
+
+    private fun now(): LocalDateTime = LocalDateTime.now(clock)
 
     companion object {
         const val MAX_SHIFTS_PER_OPENING_REQUEST = 4

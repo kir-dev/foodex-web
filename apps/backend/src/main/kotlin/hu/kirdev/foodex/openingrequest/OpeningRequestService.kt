@@ -7,6 +7,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
 import org.springframework.web.server.ResponseStatusException
+import java.time.Clock
 import java.time.LocalDateTime
 
 @Service
@@ -14,6 +15,7 @@ class OpeningRequestService(
     private val openingRequestRepository: OpeningRequestRepository,
     private val cookingClubService: CookingClubService,
     private val shiftRepository: ShiftRepository,
+    private val clock: Clock,
 ) {
 
     @Transactional(readOnly = true)
@@ -37,21 +39,21 @@ class OpeningRequestService(
     @Transactional(readOnly = true)
     fun getUpcomingOpeningRequestsByIsAcceptedTrue(): List<DetailedOpeningRequestDto> {
         return openingRequestRepository
-            .findUpcomingByAccepted(accepted = true, now = LocalDateTime.now())
+            .findUpcomingByAccepted(accepted = true, now = now())
             .map { DetailedOpeningRequestDto(it) }
     }
 
     @Transactional(readOnly = true)
     fun getUpcomingOpeningRequestsByIsAcceptedFalse(): List<DetailedOpeningRequestDto> {
         return openingRequestRepository
-            .findUpcomingByAccepted(accepted = false, now = LocalDateTime.now())
+            .findUpcomingByAccepted(accepted = false, now = now())
             .map { DetailedOpeningRequestDto(it) }
     }
 
     @Transactional(readOnly = true)
     fun getCurrentOrUpcomingAcceptedOpeningRequests(): List<DetailedOpeningRequestDto> {
         return openingRequestRepository
-            .findCurrentOrUpcomingByAccepted(accepted = true, now = LocalDateTime.now())
+            .findCurrentOrUpcomingByAccepted(accepted = true, now = now())
             .map { DetailedOpeningRequestDto(it) }
     }
 
@@ -141,4 +143,6 @@ class OpeningRequestService(
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Admin required")
         }
     }
+
+    private fun now(): LocalDateTime = LocalDateTime.now(clock)
 }

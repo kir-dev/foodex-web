@@ -5,6 +5,8 @@ RUN gradle clean assemble bootJar
 
 FROM eclipse-temurin:25-jre-alpine
 MAINTAINER kir-dev@sch.bme.hu
+RUN apk add --no-cache tzdata
+ENV TZ=Europe/Budapest
 COPY --from=build /home/gradle/src/build/libs/foodex.jar /opt/foodex/
 WORKDIR /opt/foodex
 

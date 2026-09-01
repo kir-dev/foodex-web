@@ -15,6 +15,7 @@ import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.springframework.http.HttpStatus
 import org.springframework.web.server.ResponseStatusException
+import java.time.Clock
 import java.time.LocalDateTime
 import java.util.*
 
@@ -34,7 +35,7 @@ class OpeningRequestServiceTest {
         repository = mockk()
         cookingClubService = mockk()
         shiftRepository = mockk()
-        service = OpeningRequestService(repository, cookingClubService, shiftRepository)
+        service = OpeningRequestService(repository, cookingClubService, shiftRepository, Clock.systemDefaultZone())
         every { cookingClubService.getCookingClubEntity(403) } returns club
     }
 
