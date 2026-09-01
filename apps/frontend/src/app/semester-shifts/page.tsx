@@ -588,7 +588,7 @@ function SemesterShiftsContent() {
 
               <div className='flex flex-col sm:flex-row gap-2 pt-1'>
                 <select
-                  className='border-2 border-input-border rounded-lg p-2 text-foreground flex-1'
+                  className='border-2 border-input-border rounded-lg p-2 bg-surface text-foreground flex-1 [&_option]:bg-white [&_option]:text-neutral-900'
                   value={selectedWorkerId}
                   onChange={(e) => setSelectedWorkerId(e.target.value ? Number(e.target.value) : '')}
                 >
