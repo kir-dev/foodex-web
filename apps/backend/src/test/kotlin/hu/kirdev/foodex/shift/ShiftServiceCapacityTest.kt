@@ -137,6 +137,12 @@ class ShiftServiceCapacityTest {
     }
 
     @Test
+    fun `canJoin alumni always false`() {
+        val shift = shift(maxMembers = 5, workers = mutableListOf())
+        assertFalse(service.canJoin(user(1, Role.ALUMNI), shift))
+    }
+
+    @Test
     fun `hasOpenSlot partitions active vs full`() {
         val active = shift(maxMembers = 2, workers = mutableListOf(user(1, Role.MEMBER)))
         assertTrue(service.hasOpenSlot(active))
@@ -163,6 +169,20 @@ class ShiftServiceCapacityTest {
         val guest = user(2, Role.GUEST)
         val shift = shift(maxMembers = 5, workers = mutableListOf())
         every { userRepository.findById(2) } returns Optional.of(guest)
+        every { shiftRepository.findById(1) } returns Optional.of(shift)
+
+        val ex = assertThrows<ResponseStatusException> {
+            service.addWorkerToShift(2, 1, actor)
+        }
+        assertTrue(ex.statusCode == HttpStatus.FORBIDDEN)
+    }
+
+    @Test
+    fun `addWorkerToShift rejects alumni with 403`() {
+        val actor = user(1, Role.ADMIN)
+        val alumni = user(2, Role.ALUMNI)
+        val shift = shift(maxMembers = 5, workers = mutableListOf())
+        every { userRepository.findById(2) } returns Optional.of(alumni)
         every { shiftRepository.findById(1) } returns Optional.of(shift)
 
         val ex = assertThrows<ResponseStatusException> {

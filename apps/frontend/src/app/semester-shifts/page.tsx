@@ -24,6 +24,7 @@ import {
   DetailedOpeningRequestDto,
   DetailedShiftDto,
   DetailedUserDto,
+  canJoinShifts,
   isAdmin,
   ROLE_LABEL,
   UpdateShiftDto,
@@ -322,7 +323,7 @@ function SemesterShiftsContent() {
 
   const addableUsers = useMemo(() => {
     const draftIds = new Set(draftWorkers.map((worker) => worker.id));
-    return users.filter((user) => user.role !== 'GUEST' && !draftIds.has(user.id));
+    return users.filter((user) => canJoinShifts(user) && !draftIds.has(user.id));
   }, [draftWorkers, users]);
 
   const orderedShifts = useMemo(

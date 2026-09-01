@@ -159,7 +159,7 @@ class ShiftService(
         }
 
         when {
-            user.role == Role.GUEST ->
+            !user.role.hasMemberPrivileges() ->
                 throw ResponseStatusException(HttpStatus.FORBIDDEN, "Guests cannot join shifts")
             !canJoin(user, shift) && !(actor.role.isAdminOrAbove() && actor.id != user.id) ->
                 throw ResponseStatusException(HttpStatus.CONFLICT, "Shift capacity full for this role")
@@ -307,7 +307,7 @@ class ShiftService(
         shift.workers.count { it.role == Role.TRIAL }
 
     fun canJoin(user: UserEntity, shift: ShiftEntity): Boolean = when (user.role) {
-        Role.GUEST -> false
+        Role.GUEST, Role.ALUMNI -> false
         Role.NEWBIE, Role.MEMBER, Role.ADMIN, Role.SUPERUSER ->
             memberCount(shift) + newbieCount(shift) < shift.maxMembers
         Role.TRIAL -> trialCount(shift) < memberCount(shift)

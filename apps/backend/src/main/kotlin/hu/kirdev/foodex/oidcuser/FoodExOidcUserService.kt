@@ -41,7 +41,7 @@ open class FoodExOidcUserService(
         val user = if (existing != null) {
             existing.role = role
             existing.email = foodexUser.requiredEmail
-            existing.isActive = role != Role.GUEST
+            existing.isActive = role.hasMemberPrivileges()
             existing
         } else {
             UserEntity(
@@ -51,7 +51,7 @@ open class FoodExOidcUserService(
                 nickname = foodexUser.nickName,
                 email = foodexUser.requiredEmail,
                 favouriteQuote = null,
-                isActive = role != Role.GUEST,
+                isActive = role.hasMemberPrivileges(),
                 profilePicture = foodexUser.profile,
             )
         }
@@ -83,6 +83,9 @@ open class FoodExOidcUserService(
             if (membership.id == foodExID) {
                 if (membership.title.any { it.contains("újonc", ignoreCase = true) }) {
                     return Role.NEWBIE
+                }
+                else if (membership.title.any { it.contains("alumni", ignoreCase = true) }) {
+                    return Role.ALUMNI
                 }
                 return Role.MEMBER
             }

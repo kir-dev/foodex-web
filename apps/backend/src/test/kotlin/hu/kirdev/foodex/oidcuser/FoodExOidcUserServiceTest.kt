@@ -76,6 +76,17 @@ class FoodExOidcUserServiceTest {
     }
 
     @Test
+    fun `getHighestRole alumni when title contains alumni`() {
+        val user = foodExUser(
+            subject = "alumni-1",
+            memberships = listOf(
+                mapOf("id" to 182L, "name" to "FoodEx", "title" to listOf("Alumni")),
+            ),
+        )
+        assertEquals(Role.ALUMNI, service.getHighestRole(user))
+    }
+
+    @Test
     fun `getHighestRole admin when executive at FoodEx`() {
         val user = foodExUser(
             subject = "exec-1",
@@ -102,6 +113,7 @@ class FoodExOidcUserServiceTest {
         assertEquals(Role.MEMBER, service.applyTrialGrant("member-1", Role.MEMBER))
         assertEquals(Role.ADMIN, service.applyTrialGrant("admin-1", Role.ADMIN))
         assertEquals(Role.NEWBIE, service.applyTrialGrant("newbie-1", Role.NEWBIE))
+        assertEquals(Role.ALUMNI, service.applyTrialGrant("alumni-1", Role.ALUMNI))
         assertEquals(Role.SUPERUSER, service.applyTrialGrant("su-1", Role.SUPERUSER))
     }
 
@@ -112,6 +124,7 @@ class FoodExOidcUserServiceTest {
         assertEquals(Role.ADMIN, service.applyAdminGrant("member-1", Role.GUEST))
         assertEquals(Role.ADMIN, service.applyAdminGrant("member-1", Role.TRIAL))
         assertEquals(Role.ADMIN, service.applyAdminGrant("member-1", Role.NEWBIE))
+        assertEquals(Role.ADMIN, service.applyAdminGrant("member-1", Role.ALUMNI))
     }
 
     @Test

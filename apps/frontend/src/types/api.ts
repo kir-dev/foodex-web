@@ -1,7 +1,8 @@
-export type Role = 'GUEST' | 'TRIAL' | 'NEWBIE' | 'MEMBER' | 'ADMIN' | 'SUPERUSER';
+export type Role = 'GUEST' | 'ALUMNI' | 'TRIAL' | 'NEWBIE' | 'MEMBER' | 'ADMIN' | 'SUPERUSER';
 
 export const ROLE_LABEL: Record<Role, string> = {
   GUEST: 'vendég',
+  ALUMNI: 'alumni',
   TRIAL: 'próbás',
   NEWBIE: 'újonc',
   MEMBER: 'tag',
@@ -231,7 +232,7 @@ export function isClubLeaderOrAdmin(user: DetailedUserDto): boolean {
 }
 
 export function canJoinShifts(user: DetailedUserDto): boolean {
-  return user.role !== 'GUEST';
+  return user.role !== 'GUEST' && user.role !== 'ALUMNI';
 }
 
 export function shiftWorkers(shift: DetailedShiftDto): UserDto[] {
@@ -256,7 +257,7 @@ export function trialCount(shift: DetailedShiftDto): number {
 
 /** Mirrors ShiftService.canJoin, plus "already signed up" / already started. */
 export function canJoinShift(user: DetailedUserDto, shift: DetailedShiftDto): boolean {
-  if (user.role === 'GUEST') {
+  if (!canJoinShifts(user)) {
     return false;
   }
   if (isOnShift(shift, user.id)) {
