@@ -325,6 +325,11 @@ function SemesterShiftsContent() {
     return users.filter((user) => user.role !== 'GUEST' && !draftIds.has(user.id));
   }, [draftWorkers, users]);
 
+  const orderedShifts = useMemo(
+    () => [...shifts].sort(compareByOpeningDesc),
+    [shifts]
+  );
+
   const linkableRequests = useMemo(() => {
     return openingRequests
       .filter((request) => {
@@ -476,7 +481,7 @@ function SemesterShiftsContent() {
           )}
         </div>
         <ShiftTable
-          shifts={shifts.map((shift) => shiftToRow(shift))}
+          shifts={orderedShifts.map((shift) => shiftToRow(shift))}
           showNamesColumn
           emptyLabel='Nincs műszak ebben a félévben.'
           buttons={[
