@@ -12,8 +12,15 @@ echo "==> Logging in to ${REGISTRY}"
 docker login "${REGISTRY}"
 
 echo "==> Building ${IMAGE}"
-# --no-cache: the legacy builder can reuse COPY --from=build layers and ship a stale JAR.
-docker build --no-cache -t "${IMAGE}" .
+# Bust only the runtime COPY --from layer. The classic builder can reuse a
+# stale JAR if this instruction text is unchanged after the Gradle stage.
+JAR_CACHE_ID="$(
+  {
+    find gradle src -type f
+    printf '%s\n' gradlew settings.gradle.kts build.gradle.kts
+  } | sort | xargs sha256sum | sha256sum | awk '{print $1}'
+)"
+docker build --build-arg JAR_CACHE_ID="${JAR_CACHE_ID}" -t "${IMAGE}" .
 
 echo "==> Pushing ${IMAGE}"
 docker push "${IMAGE}"

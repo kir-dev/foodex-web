@@ -1,0 +1,11 @@
+build/
+bin/
+out/
+.gradle/
+.kotlin/
+.idea/
+*.iml
+temp/
+.vscode/
+*.md
+HELP.md
