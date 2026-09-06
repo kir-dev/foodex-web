@@ -2,6 +2,7 @@ package hu.kirdev.foodex.trialgrant
 
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,6 +13,7 @@ class TrialGrantService(
     private val trialGrantRepository: TrialGrantRepository,
     private val userRepository: UserRepository,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @Transactional(readOnly = true)
     fun getAllGrants(): List<TrialGrantDto> {
@@ -31,6 +33,7 @@ class TrialGrantService(
         val internalId = request.internalId.trim()
         validateFields(name, internalId)
         if (trialGrantRepository.existsByInternalId(internalId)) {
+            log.warn("Rejected duplicate trial grant internalId={}", internalId)
             throw ResponseStatusException(HttpStatus.CONFLICT, "A trial grant already exists for this internalId")
         }
 
@@ -41,6 +44,7 @@ class TrialGrantService(
             )
         )
         applyGrant(internalId)
+        log.info("Created trial grant id={} internalId={}", saved.id, saved.internalId)
         return TrialGrantDto(saved)
     }
 
@@ -67,6 +71,7 @@ class TrialGrantService(
             applyGrant(internalId)
         }
 
+        log.info("Updated trial grant id={} internalId={}", saved.id, saved.internalId)
         return TrialGrantDto(saved)
     }
 
@@ -77,6 +82,7 @@ class TrialGrantService(
         val internalId = grant.internalId
         trialGrantRepository.delete(grant)
         revokeGrant(internalId)
+        log.info("Deleted trial grant id={} internalId={}", id, internalId)
     }
 
     private fun validateFields(name: String, internalId: String) {

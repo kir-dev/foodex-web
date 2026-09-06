@@ -6,6 +6,7 @@ import hu.kirdev.foodex.trialgrant.TrialGrantService
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.user.UserService
+import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
@@ -24,6 +25,7 @@ open class FoodExOidcUserService(
     private val adminGrantService: AdminGrantService,
 ) : OidcUserService() {
 
+    private val log = LoggerFactory.getLogger(javaClass)
     private final val foodExID = 182L
 
     // Upsert user and reload club leadership on login
@@ -60,6 +62,13 @@ open class FoodExOidcUserService(
         val saved = userService.updateUser(user)
         reloadPermissionsOfUserToCookingClubs(saved, leaderAt)
         foodexUser.extraAuthorities = authoritiesFor(saved.role)
+        log.info(
+            "OIDC login: userId={} created={} role={} leaderClubCount={}",
+            saved.id,
+            existing == null,
+            saved.role,
+            leaderAt.size,
+        )
 
         return foodexUser
     }

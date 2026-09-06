@@ -3,6 +3,7 @@ package hu.kirdev.foodex.openingrequest
 import hu.kirdev.foodex.cookingclub.CookingClubService
 import hu.kirdev.foodex.shift.ShiftRepository
 import hu.kirdev.foodex.user.UserEntity
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,6 +18,7 @@ class OpeningRequestService(
     private val shiftRepository: ShiftRepository,
     private val clock: Clock,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @Transactional(readOnly = true)
     fun getAllOpeningRequests(): List<DetailedOpeningRequestDto> {
@@ -71,6 +73,7 @@ class OpeningRequestService(
         val allowed = actor.role.isAdminOrAbove() ||
             cookingClubService.isLeaderOfCookingClub(actor.id, request.cookingClubId)
         if (!allowed) {
+            log.warn("Rejected opening request create: actorId={} clubId={}", actor.id, request.cookingClubId)
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Not leader of cooking club")
         }
 
@@ -78,7 +81,7 @@ class OpeningRequestService(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Closing must be after opening")
         }
 
-        return openingRequestRepository.save(
+        val saved = openingRequestRepository.save(
             OpeningRequestEntity(
                 user = actor,
                 cookingClub = club,
@@ -87,7 +90,9 @@ class OpeningRequestService(
                 place = request.place,
                 description = request.description,
             )
-        ).let { DetailedOpeningRequestDto(it) }
+        )
+        log.info("Created opening request id={} clubId={} actorId={}", saved.id, club.id, actor.id)
+        return DetailedOpeningRequestDto(saved)
     }
 
     @Transactional(readOnly = false)
@@ -98,7 +103,9 @@ class OpeningRequestService(
         requireAdmin(actor)
 
         request.isAccepted = true
-        return DetailedOpeningRequestDto(openingRequestRepository.save(request))
+        val saved = openingRequestRepository.save(request)
+        log.info("Accepted opening request id={} actorId={}", saved.id, actor.id)
+        return DetailedOpeningRequestDto(saved)
     }
 
     @Transactional(readOnly = false)
@@ -112,6 +119,12 @@ class OpeningRequestService(
             shiftRepository.deleteAll(childShifts)
         }
         openingRequestRepository.delete(request)
+        log.info(
+            "Deleted opening request id={} childShiftCount={} actorId={}",
+            id,
+            childShifts.size,
+            actor.id,
+        )
     }
 
     @Transactional(readOnly = false)
@@ -135,7 +148,9 @@ class OpeningRequestService(
             throw ResponseStatusException(HttpStatus.BAD_REQUEST, "Closing must be after opening")
         }
 
-        return DetailedOpeningRequestDto(openingRequestRepository.save(request))
+        val saved = openingRequestRepository.save(request)
+        log.info("Updated opening request id={} actorId={}", saved.id, actor.id)
+        return DetailedOpeningRequestDto(saved)
     }
 
     private fun requireAdmin(actor: UserEntity) {

@@ -1,6 +1,7 @@
 package hu.kirdev.foodex.cookingclub
 
 import hu.kirdev.foodex.user.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -11,6 +12,7 @@ class CookingClubService(
     private val cookingClubRepository: CookingClubRepository,
     private val userRepository: UserRepository
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @Transactional(readOnly = true)
     fun getAllCookingClubs(): List<DetailedCookingClubDto> {
@@ -32,12 +34,14 @@ class CookingClubService(
 
     @Transactional(readOnly = false)
     fun createCookingClub(club: CreateCookingClubDto): DetailedCookingClubDto {
-        return cookingClubRepository.save(
+        val saved = cookingClubRepository.save(
             CookingClubEntity(
                 id = club.id,
                 name = club.name,
             )
-        ).let { DetailedCookingClubDto(it) }
+        )
+        log.info("Created cooking club id={} name={}", saved.id, saved.name)
+        return DetailedCookingClubDto(saved)
     }
 
     @Transactional(readOnly = false)
@@ -46,7 +50,9 @@ class CookingClubService(
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
 
         club.name = updateTo.name
-        return DetailedCookingClubDto(cookingClubRepository.save(club))
+        val saved = cookingClubRepository.save(club)
+        log.info("Updated cooking club id={} name={}", saved.id, saved.name)
+        return DetailedCookingClubDto(saved)
     }
 
     @Transactional(readOnly = false)
@@ -60,6 +66,7 @@ class CookingClubService(
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Cooking club not found") }
 
         cookingClubRepository.deleteById(id)
+        log.info("Deleted cooking club id={}", id)
     }
 
     @Transactional(readOnly = false)
@@ -71,6 +78,7 @@ class CookingClubService(
 
         if (!club.leaders.any { it.id == user.id }) {
             club.leaders.add(user)
+            log.info("Added leader userId={} to cooking club id={}", user.id, club.id)
         }
 
         return DetailedCookingClubDto(cookingClubRepository.save(club))
@@ -84,6 +92,7 @@ class CookingClubService(
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "Club not found") }
 
         club.leaders.remove(user)
+        log.info("Removed leader userId={} from cooking club id={}", user.id, club.id)
 
         return DetailedCookingClubDto(cookingClubRepository.save(club))
     }

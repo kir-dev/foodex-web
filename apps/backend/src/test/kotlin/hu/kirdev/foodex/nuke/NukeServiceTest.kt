@@ -23,6 +23,8 @@ class NukeServiceTest {
 
     @Test
     fun `deleteAllOpeningRequestsAndShifts deletes shifts then opening requests`() {
+        every { shiftRepository.count() } returns 3
+        every { openingRequestRepository.count() } returns 2
         every { shiftRepository.deleteAll() } returns Unit
         every { openingRequestRepository.deleteAll() } returns Unit
 

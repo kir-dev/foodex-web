@@ -8,6 +8,7 @@ import hu.kirdev.foodex.openingrequest.OpeningRequestService
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.user.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.data.repository.findByIdOrNull
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
@@ -28,6 +29,7 @@ class ShiftService(
     private val configurationService: ConfigurationService,
     private val clock: Clock,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @Transactional(readOnly = true)
     fun getAllShifts(): List<DetailedShiftDto> {
@@ -121,7 +123,7 @@ class ShiftService(
         }
         requireApplicationOpeningBeforeShiftStart(shift.applicationOpening, shift.opening)
 
-        return shiftRepository.save(
+        val saved = shiftRepository.save(
             ShiftEntity(
                 cookingClub = club,
                 maxMembers = shift.maxMembers,
@@ -132,7 +134,15 @@ class ShiftService(
                 applicationOpening = shift.applicationOpening,
                 openingRequest = request,
             )
-        ).let { DetailedShiftDto(it) }
+        )
+        log.info(
+            "Created shift id={} clubId={} maxMembers={} actorId={}",
+            saved.id,
+            club.id,
+            saved.maxMembers,
+            actor.id,
+        )
+        return DetailedShiftDto(saved)
     }
 
     @Transactional(readOnly = false)
@@ -154,19 +164,57 @@ class ShiftService(
             throw ResponseStatusException(HttpStatus.CONFLICT, "Shift has already started")
         }
 
-        if (shift.workers.any { it.id == user.id }) {
+        val existingWorkerIds = shift.workers.map { it.id }
+        val alreadyOnShift = existingWorkerIds.contains(user.id)
+        log.info(
+            "Join requested: shiftId={} userId={} userRole={} actorId={} actorRole={} existingWorkerIds={} memberCount={} newbieCount={} trialCount={} maxMembers={} alreadyOnShift={}",
+            shift.id,
+            user.id,
+            user.role,
+            actor.id,
+            actor.role,
+            existingWorkerIds,
+            memberCount(shift),
+            newbieCount(shift),
+            trialCount(shift),
+            shift.maxMembers,
+            alreadyOnShift,
+        )
+
+        if (alreadyOnShift) {
+            log.warn("Join rejected (already on shift): shiftId={} userId={}", shift.id, user.id)
             throw ResponseStatusException(HttpStatus.CONFLICT, "User already added")
         }
 
         when {
-            !user.role.hasMemberPrivileges() ->
+            !user.role.hasMemberPrivileges() -> {
+                log.warn("Join rejected (role): shiftId={} userId={} userRole={}", shift.id, user.id, user.role)
                 throw ResponseStatusException(HttpStatus.FORBIDDEN, "Guests cannot join shifts")
-            !canJoin(user, shift) && !(actor.role.isAdminOrAbove() && actor.id != user.id) ->
+            }
+            !canJoin(user, shift) && !(actor.role.isAdminOrAbove() && actor.id != user.id) -> {
+                log.warn(
+                    "Join rejected (capacity): shiftId={} userId={} userRole={} memberCount={} newbieCount={} trialCount={} maxMembers={}",
+                    shift.id,
+                    user.id,
+                    user.role,
+                    memberCount(shift),
+                    newbieCount(shift),
+                    trialCount(shift),
+                    shift.maxMembers,
+                )
                 throw ResponseStatusException(HttpStatus.CONFLICT, "Shift capacity full for this role")
+            }
         }
 
         shift.workers.add(user)
-        return DetailedShiftDto(shiftRepository.save(shift))
+        val saved = shiftRepository.save(shift)
+        log.info(
+            "Join accepted: shiftId={} userId={} workerIdsAfter={}",
+            saved.id,
+            user.id,
+            saved.workers.map { it.id },
+        )
+        return DetailedShiftDto(saved)
     }
 
     @Transactional(readOnly = false)
@@ -179,11 +227,20 @@ class ShiftService(
         requireSelfLeaderOrAdmin(actor, userId, shift.cookingClub.id)
 
         if (!shift.workers.any { it.id == user.id }) {
+            log.warn("Leave rejected (not on shift): shiftId={} userId={}", shift.id, user.id)
             throw ResponseStatusException(HttpStatus.CONFLICT, "Worker is not part of shift")
         }
 
         shift.workers.removeIf { it.id == user.id }
-        return DetailedShiftDto(shiftRepository.save(shift))
+        val saved = shiftRepository.save(shift)
+        log.info(
+            "Leave accepted: shiftId={} userId={} actorId={} workerIdsAfter={}",
+            saved.id,
+            user.id,
+            actor.id,
+            saved.workers.map { it.id },
+        )
+        return DetailedShiftDto(saved)
     }
 
     @Transactional(readOnly = false)
@@ -193,6 +250,7 @@ class ShiftService(
 
         requireLeaderOrAdmin(actor, shift.cookingClub.id)
         shiftRepository.delete(shift)
+        log.info("Deleted shift id={} actorId={}", shiftId, actor.id)
     }
 
     @Transactional(readOnly = false)
@@ -227,7 +285,14 @@ class ShiftService(
         }
         requireApplicationOpeningBeforeShiftStart(shift.applicationOpening, shift.opening)
 
-        return DetailedShiftDto(shiftRepository.save(shift))
+        val saved = shiftRepository.save(shift)
+        log.info(
+            "Updated shift id={} maxMembers={} actorId={}",
+            saved.id,
+            saved.maxMembers,
+            actor.id,
+        )
+        return DetailedShiftDto(saved)
     }
 
     @Transactional(readOnly = false)
@@ -292,6 +357,13 @@ class ShiftService(
 
         openingRequestService.acceptOpeningRequest(openingRequestId, actor)
 
+        log.info(
+            "Created {} shifts from openingRequestId={} maxMembers={} actorId={}",
+            shifts.size,
+            openingRequestId,
+            createRequest.maxMembers,
+            actor.id,
+        )
         return shifts.map { DetailedShiftDto(it) }
     }
 

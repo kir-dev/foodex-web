@@ -1,5 +1,6 @@
 package hu.kirdev.foodex.user
 
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -7,6 +8,7 @@ import org.springframework.web.server.ResponseStatusException
 
 @Service
 class UserService(private val userRepository: UserRepository) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @Transactional(readOnly = true)
     fun getAllUsers(): List<DetailedUserDto> {
@@ -51,6 +53,7 @@ class UserService(private val userRepository: UserRepository) {
     @Transactional(readOnly = false)
     fun updateUser(id: Int, updateTo: UpdateUserDto, actor: UserEntity): DetailedUserDto {
         if (!actor.role.isAdminOrAbove() && actor.id != id) {
+            log.warn("Rejected profile update: actorId={} targetUserId={}", actor.id, id)
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Can only update own profile")
         }
 
@@ -68,7 +71,9 @@ class UserService(private val userRepository: UserRepository) {
         updateTo.favouriteQuote?.let { user.favouriteQuote = it }
         updateTo.profilePicture?.let { user.profilePicture = it }
 
-        return DetailedUserDto(userRepository.save(user))
+        val saved = userRepository.save(user)
+        log.info("Updated user id={} actorId={}", saved.id, actor.id)
+        return DetailedUserDto(saved)
     }
 
     // Internal (OIDC / system)
@@ -81,14 +86,18 @@ class UserService(private val userRepository: UserRepository) {
     fun deleteUser(id: Int) {
         userRepository.findById(id).orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         userRepository.deleteById(id)
+        log.info("Deleted user id={}", id)
     }
 
     @Transactional(readOnly = false)
     fun updateRole(userId: Int, role: Role): DetailedUserDto {
         val user = userRepository.findById(userId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
+        val previous = user.role
         user.role = role
-        return DetailedUserDto(userRepository.save(user))
+        val saved = userRepository.save(user)
+        log.info("Updated user id={} role {} -> {}", saved.id, previous, saved.role)
+        return DetailedUserDto(saved)
     }
 
     @Transactional(readOnly = false)
@@ -96,7 +105,9 @@ class UserService(private val userRepository: UserRepository) {
         val user = userRepository.findById(userId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         user.isActive = true
-        return DetailedUserDto(userRepository.save(user))
+        val saved = userRepository.save(user)
+        log.info("Activated user id={}", saved.id)
+        return DetailedUserDto(saved)
     }
 
     @Transactional(readOnly = false)
@@ -104,6 +115,8 @@ class UserService(private val userRepository: UserRepository) {
         val user = userRepository.findById(userId)
             .orElseThrow { ResponseStatusException(HttpStatus.NOT_FOUND, "User not found") }
         user.isActive = false
-        return DetailedUserDto(userRepository.save(user))
+        val saved = userRepository.save(user)
+        log.info("Deactivated user id={}", saved.id)
+        return DetailedUserDto(saved)
     }
 }

@@ -5,6 +5,7 @@ import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserDto
 import hu.kirdev.foodex.user.UserEntity
 import hu.kirdev.foodex.user.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -17,6 +18,7 @@ class ConfigurationService(
     private val userRepository: UserRepository,
     private val openingRequestService: OpeningRequestService,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     /**
      * READ with write-on-miss: returns config, seeding a default row if none exists
@@ -35,7 +37,9 @@ class ConfigurationService(
                 startOfSemester = LocalDateTime.of(2026, 8, 1, 0, 0),
                 endOfSemester = LocalDateTime.of(2027, 2, 1, 0, 0),
             )
-            return ConfigurationDto(configurationRepository.save(configuration))
+            val saved = configurationRepository.save(configuration)
+            log.info("Seeded default configuration id={}", saved.id)
+            return ConfigurationDto(saved)
         }
         return ConfigurationDto(config)
     }
@@ -44,6 +48,7 @@ class ConfigurationService(
     @Transactional(readOnly = false)
     fun updateConfiguration(updateTo: UpdateConfigurationDto, actor: UserEntity): ConfigurationDto {
         if (!actor.role.isAdminOrAbove()) {
+            log.warn("Rejected configuration update: actorId={} role={}", actor.id, actor.role)
             throw ResponseStatusException(HttpStatus.FORBIDDEN, "Admin only")
         }
 
@@ -55,7 +60,9 @@ class ConfigurationService(
         updateTo.startOfSemester?.let { config.startOfSemester = it }
         updateTo.endOfSemester?.let { config.endOfSemester = it }
 
-        return ConfigurationDto(configurationRepository.save(config))
+        val saved = configurationRepository.save(config)
+        log.info("Updated configuration id={} actorId={}", saved.id, actor.id)
+        return ConfigurationDto(saved)
     }
 
     /**

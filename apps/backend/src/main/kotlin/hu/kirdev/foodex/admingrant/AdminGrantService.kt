@@ -2,6 +2,7 @@ package hu.kirdev.foodex.admingrant
 
 import hu.kirdev.foodex.user.Role
 import hu.kirdev.foodex.user.UserRepository
+import org.slf4j.LoggerFactory
 import org.springframework.http.HttpStatus
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
@@ -12,6 +13,7 @@ class AdminGrantService(
     private val adminGrantRepository: AdminGrantRepository,
     private val userRepository: UserRepository,
 ) {
+    private val log = LoggerFactory.getLogger(javaClass)
 
     @Transactional(readOnly = true)
     fun getAllGrants(): List<AdminGrantDto> {
@@ -31,6 +33,7 @@ class AdminGrantService(
         val internalId = request.internalId.trim()
         validateFields(name, internalId)
         if (adminGrantRepository.existsByInternalId(internalId)) {
+            log.warn("Rejected duplicate admin grant internalId={}", internalId)
             throw ResponseStatusException(HttpStatus.CONFLICT, "An admin grant already exists for this internalId")
         }
 
@@ -41,6 +44,7 @@ class AdminGrantService(
             )
         )
         applyGrant(internalId)
+        log.info("Created admin grant id={} internalId={}", saved.id, saved.internalId)
         return AdminGrantDto(saved)
     }
 
@@ -67,6 +71,7 @@ class AdminGrantService(
             applyGrant(internalId)
         }
 
+        log.info("Updated admin grant id={} internalId={}", saved.id, saved.internalId)
         return AdminGrantDto(saved)
     }
 
@@ -77,6 +82,7 @@ class AdminGrantService(
         val internalId = grant.internalId
         adminGrantRepository.delete(grant)
         revokeGrant(internalId)
+        log.info("Deleted admin grant id={} internalId={}", id, internalId)
     }
 
     private fun validateFields(name: String, internalId: String) {
