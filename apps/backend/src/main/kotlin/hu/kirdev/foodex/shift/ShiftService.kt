@@ -164,22 +164,22 @@ class ShiftService(
             throw ResponseStatusException(HttpStatus.CONFLICT, "Shift has already started")
         }
 
-        val existingWorkerIds = shift.workers.map { it.id }
-        val alreadyOnShift = existingWorkerIds.contains(user.id)
-        log.info(
-            "Join requested: shiftId={} userId={} userRole={} actorId={} actorRole={} existingWorkerIds={} memberCount={} newbieCount={} trialCount={} maxMembers={} alreadyOnShift={}",
-            shift.id,
-            user.id,
-            user.role,
-            actor.id,
-            actor.role,
-            existingWorkerIds,
-            memberCount(shift),
-            newbieCount(shift),
-            trialCount(shift),
-            shift.maxMembers,
-            alreadyOnShift,
-        )
+        val alreadyOnShift = shift.workers.any { it.id == user.id }
+        if (log.isDebugEnabled) {
+            log.debug(
+                "Join requested: shiftId={} userId={} userRole={} actorId={} existingWorkerIds={} memberCount={} newbieCount={} trialCount={} maxMembers={} alreadyOnShift={}",
+                shift.id,
+                user.id,
+                user.role,
+                actor.id,
+                shift.workers.map { it.id },
+                memberCount(shift),
+                newbieCount(shift),
+                trialCount(shift),
+                shift.maxMembers,
+                alreadyOnShift,
+            )
+        }
 
         if (alreadyOnShift) {
             log.warn("Join rejected (already on shift): shiftId={} userId={}", shift.id, user.id)
@@ -208,12 +208,7 @@ class ShiftService(
 
         shift.workers.add(user)
         val saved = shiftRepository.save(shift)
-        log.info(
-            "Join accepted: shiftId={} userId={} workerIdsAfter={}",
-            saved.id,
-            user.id,
-            saved.workers.map { it.id },
-        )
+        log.info("Join accepted: shiftId={} userId={}", saved.id, user.id)
         return DetailedShiftDto(saved)
     }
 

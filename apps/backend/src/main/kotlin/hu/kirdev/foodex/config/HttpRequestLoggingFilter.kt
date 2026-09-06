@@ -36,24 +36,26 @@ class HttpRequestLoggingFilter : OncePerRequestFilter() {
         try {
             filterChain.doFilter(request, response)
         } finally {
-            logRequest(request, response, started)
+            val status = response.status
+            if (status >= 400 || log.isDebugEnabled) {
+                logRequest(request, status, started)
+            }
         }
     }
 
-    private fun logRequest(request: HttpServletRequest, response: HttpServletResponse, started: Long) {
-        val status = response.status
+    private fun logRequest(
+        request: HttpServletRequest,
+        status: Int,
+        started: Long,
+    ) {
         val durationMs = (System.nanoTime() - started) / 1_000_000
         val user = SecurityContextHolder.getContext().authentication?.name ?: "anonymous"
         val query = request.queryString?.let { "?$it" } ?: ""
         val message = "HTTP {} {}{} status={} durationMs={} user={}"
-        val args = arrayOf(request.method, request.requestURI, query, status, durationMs, user)
-
         when {
-            status >= 500 -> log.error(message, *args)
-            status >= 400 -> log.warn(message, *args)
-            request.method.equals("GET", ignoreCase = true) ||
-                request.method.equals("HEAD", ignoreCase = true) -> log.debug(message, *args)
-            else -> log.info(message, *args)
+            status >= 500 -> log.error(message, request.method, request.requestURI, query, status, durationMs, user)
+            status >= 400 -> log.warn(message, request.method, request.requestURI, query, status, durationMs, user)
+            else -> log.debug(message, request.method, request.requestURI, query, status, durationMs, user)
         }
     }
 }
