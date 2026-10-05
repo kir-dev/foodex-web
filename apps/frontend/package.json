@@ -5,6 +5,7 @@
   "author": "Kir-Dev",
   "license": "MIT",
   "private": true,
+  "packageManager": "pnpm@10.34.6+sha256.44d7db90fcbb2315b581f85989a913466765421fc656c28e80fac1b7ab5be456",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -12,7 +13,6 @@
     "lint": "eslint ."
   },
   "dependencies": {
-    "@next-nest-template/frontend": "file:",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^1.52.0",
