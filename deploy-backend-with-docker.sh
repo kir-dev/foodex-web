@@ -9,7 +9,15 @@ NAMESPACE="foodex"
 cd "${ROOT}/apps/backend"
 
 echo "==> Logging in to ${REGISTRY}"
-docker login "${REGISTRY}"
+if [[ -n "${HARBOR_USERNAME:-}" || -n "${HARBOR_PASSWORD:-}" ]]; then
+  if [[ -z "${HARBOR_USERNAME:-}" || -z "${HARBOR_PASSWORD:-}" ]]; then
+    echo "Set both HARBOR_USERNAME and HARBOR_PASSWORD, or leave both unset." >&2
+    exit 1
+  fi
+  printf '%s' "${HARBOR_PASSWORD}" | docker login "${REGISTRY}" --username "${HARBOR_USERNAME}" --password-stdin
+else
+  docker login "${REGISTRY}"
+fi
 
 echo "==> Building ${IMAGE}"
 # Bust only the runtime COPY --from layer. The classic builder can reuse a

@@ -265,6 +265,25 @@ pnpm start:frontend
 
 ## Deploy
 
+### Automatic production deploy
+
+Merging a pull request into `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+
+- A change under `apps/backend/` builds and deploys only the backend.
+- A change under `apps/frontend/` builds and deploys only the frontend.
+- Changes under both directories deploy both.
+- Any other change does not deploy.
+
+The workflow runs `deploy-backend-with-docker.sh` and `deploy-frontend-with-docker.sh` for commits that GitHub associates with a pull request merged into `main`. From the Actions tab, **Run workflow** on `main` deploys the components you select.
+
+The `production` environment on this repository, limited to `main`, needs these secrets:
+
+| Secret | Purpose |
+| --- | --- |
+| `HARBOR_USERNAME` | Harbor robot account that can push the two FoodEx images |
+| `HARBOR_PASSWORD` | That robot account's secret |
+| `KUBE_CONFIG` | Kubeconfig for a `foodex` ServiceAccount that can roll out the backend StatefulSet and the frontend Deployment |
+
 ### Build with Docker
 
 #### Backend latest
