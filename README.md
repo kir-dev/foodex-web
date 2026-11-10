@@ -319,7 +319,7 @@ Production uses Postgres. Fill in these Secrets in the `foodex` namespace of the
 
 | Secret | Keys |
 | --- | --- |
-| `foodex-backend-secrets` | `FOODEX_AUTHSCH_ID`, `FOODEX_AUTHSCH_KEY` |
+| `foodex-secrets` | `FOODEX_AUTHSCH_ID`, `FOODEX_AUTHSCH_KEY` |
 | `foodex-db-backup-secrets` | `ACCESS_KEY_ID`, `ACCESS_SECRET_KEY` |
 
 ### Migrating the old H2 database
