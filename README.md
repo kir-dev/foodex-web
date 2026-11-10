@@ -314,7 +314,8 @@ The manifests live in [`kir-dev/k8s`](https://github.com/kir-dev/k8s):
   Services, and Ingresses for `foodex.sch.bme.hu` and `api.foodex.sch.bme.hu`
 - `foodex/versions.ts` — the image versions Renovate keeps up to date
 
-Production uses Postgres. Fill in these Secrets in the `foodex` namespace:
+Production uses Postgres. Fill in these Secrets in the `foodex` namespace of the
+`vc2` vcluster (secrets are not shared with `vc-kirdev`):
 
 | Secret | Keys |
 | --- | --- |
