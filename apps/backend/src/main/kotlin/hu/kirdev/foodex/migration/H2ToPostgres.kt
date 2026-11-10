@@ -9,7 +9,11 @@ import java.sql.DriverManager
  *
  * The target schema must already exist (start the backend once against the
  * empty Postgres database, then stop it before running this). The copy refuses
- * to touch a target that already has rows in any of the tables below.
+ * to touch a target that already has rows, except the default `configuration`
+ * row seeded by the backend's first `/api/homepage` request, which is replaced.
+ *
+ * H2_URL is required and is opened with IFEXISTS=TRUE, so a typo cannot create
+ * an empty database and look like a successful zero-row migration.
  *
  * Run with:
  *   H2_URL=jdbc:h2:file:/path/to/db \
@@ -42,8 +46,20 @@ private val IDENTITY_TABLES = listOf(
     "trial_grants",
 )
 
+// The backend seeds a default `configuration` row on its first `/api/homepage`
+// request (including the readiness/startup probes), so this table is expected
+// to have exactly that row. Clear it and replace it with the H2 row.
+private val REPLACE_TABLES = setOf("configuration")
+
 fun main() {
-    val h2Url = env("H2_URL") ?: "jdbc:h2:file:./db"
+    // Never let H2 create a missing database: that would silently copy zero
+    // rows and look like a successful migration.
+    val h2Url = requiredEnv("H2_URL").let { url ->
+        require(!url.contains("IFEXISTS=FALSE", ignoreCase = true)) {
+            "H2_URL must not set IFEXISTS=FALSE; the migration needs an existing database"
+        }
+        if (url.contains("IFEXISTS=", ignoreCase = true)) url else "$url;IFEXISTS=TRUE"
+    }
     val h2User = env("H2_USER") ?: "sa"
     val h2Password = env("H2_PASSWORD") ?: "password"
     val postgresUrl = requiredEnv("POSTGRES_URL")
@@ -60,13 +76,17 @@ fun main() {
             h2.autoCommit = false
             pg.autoCommit = false
             try {
-                val nonEmpty = TABLES.filter { count(pg, it) > 0 }
+                val nonEmpty = TABLES.filter { it !in REPLACE_TABLES && count(pg, it) > 0 }
                 check(nonEmpty.isEmpty()) {
                     "Postgres already has rows in: ${nonEmpty.joinToString()}. " +
                         "Clear those tables first so this copy cannot duplicate data."
                 }
 
                 for (table in TABLES) {
+                    if (table in REPLACE_TABLES) {
+                        pg.createStatement().use { it.execute("DELETE FROM $table") }
+                        println("$table: cleared the row(s) seeded by the backend")
+                    }
                     val copied = copyTable(h2, pg, table)
                     println("$table: copied $copied row(s)")
                     check(count(pg, table) == copied.toLong()) { "$table: Postgres row count does not match the copy" }
@@ -87,19 +107,29 @@ fun main() {
 }
 
 private fun copyTable(source: Connection, target: Connection, table: String): Int {
+    val targetColumns = targetColumnNames(target, table)
+
     source.createStatement().use { statement ->
         statement.executeQuery("SELECT * FROM $table").use { rows ->
             val meta = rows.metaData
-            val columns = (1..meta.columnCount).map { meta.getColumnName(it) }
-            val insert = "INSERT INTO $table (${columns.joinToString(", ")}) VALUES (${columns.joinToString(", ") { "?" }})"
+            val sourceColumns = (1..meta.columnCount).map { it to meta.getColumnName(it) }
+            val selected = sourceColumns.filter { (_, name) -> name.lowercase() in targetColumns }
+            val skipped = sourceColumns.map { it.second }.filterNot { it.lowercase() in targetColumns }
+            if (skipped.isNotEmpty()) {
+                println("$table: skipping H2-only column(s): ${skipped.joinToString()}")
+            }
+            check(selected.isNotEmpty()) { "$table: H2 and Postgres have no columns in common" }
+
+            val names = selected.map { it.second }
+            val insert = "INSERT INTO $table (${names.joinToString(", ")}) VALUES (${names.joinToString(", ") { "?" }})"
 
             target.prepareStatement(insert).use { prepared ->
                 var copied = 0
                 while (rows.next()) {
-                    for (index in columns.indices) {
+                    selected.forEachIndexed { index, (sourceIndex, _) ->
                         val parameter = index + 1
-                        when (val value = rows.getObject(parameter)) {
-                            null -> prepared.setNull(parameter, meta.getColumnType(parameter))
+                        when (val value = rows.getObject(sourceIndex)) {
+                            null -> prepared.setNull(parameter, meta.getColumnType(sourceIndex))
                             is Clob -> prepared.setString(parameter, value.characterStream.readText())
                             else -> prepared.setObject(parameter, value)
                         }
@@ -114,6 +144,13 @@ private fun copyTable(source: Connection, target: Connection, table: String): In
         }
     }
 }
+
+private fun targetColumnNames(connection: Connection, table: String): Set<String> =
+    connection.metaData.getColumns(null, connection.schema, table, null).use { columns ->
+        buildSet {
+            while (columns.next()) add(columns.getString("COLUMN_NAME").lowercase())
+        }
+    }
 
 private fun resetSequence(connection: Connection, table: String) {
     connection.createStatement().use { statement ->

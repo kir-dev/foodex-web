@@ -302,9 +302,17 @@ docker build apps/frontend -t ghcr.io/kir-dev/foodex-frontend:local
 
 ### Run with Docker
 
+The backend image always enables the `env` Spring profile, so it needs the
+same environment variables as production:
+
 ```bash
 # Backend
-docker run -p 8080:8080 ghcr.io/kir-dev/foodex-backend:local
+docker run -p 8080:8080 \
+  -e FOODEX_DATA_SOURCE='jdbc:h2:mem:foodex' \
+  -e FOODEX_AUTHSCH_ID=local \
+  -e FOODEX_AUTHSCH_KEY=local \
+  -e FOODEX_FRONTEND_URL=http://localhost:3000 \
+  ghcr.io/kir-dev/foodex-backend:local
 
 # Frontend
 docker run -p 3000:3000 ghcr.io/kir-dev/foodex-frontend:local
@@ -340,10 +348,12 @@ POSTGRES_USER=foodex POSTGRES_PASSWORD=... \
 ./gradlew migrateH2ToPostgres
 ```
 
-The task copies every table in foreign-key order, resets the identity
-sequences, and refuses to run if the target tables already contain rows.
-`POSTGRES_USER`/`POSTGRES_PASSWORD` can be omitted when the JDBC URL already
-contains the credentials.
+The task requires `H2_URL` and opens it with `IFEXISTS=TRUE`, so a typo cannot
+create an empty database. It copies every table in foreign-key order, replaces
+the default `configuration` row seeded by the backend's first homepage request,
+resets the identity sequences, and refuses to run if any other target table
+already contains rows. `POSTGRES_USER`/`POSTGRES_PASSWORD` can be omitted when
+the JDBC URL already contains the credentials.
 
 ---
 

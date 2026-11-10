@@ -34,6 +34,9 @@ jobs:
     permissions:
       contents: write
       packages: write
+    # Environment secrets are only available to the job that sets the
+    # environment. The callers pass KIR_DEV_BOT_PAT explicitly.
+    environment: production
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -101,6 +104,19 @@ jobs:
           path: k8s
           fetch-depth: 1
 
+      # The first FoodEx deploy can land before kir-dev/k8s merges the foodex
+      # app. Skip Renovate in that case instead of failing the image publish.
+      - name: Check whether kir-dev/k8s has the foodex app
+        id: k8s-app
+        working-directory: k8s
+        run: |
+          if [ -f foodex/renovate.ts ]; then
+            echo "exists=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "exists=false" >> "${GITHUB_OUTPUT}"
+            echo "::warning::kir-dev/k8s does not have foodex/ yet; skipping Renovate. Merge the k8s PR, then rerun."
+          fi
+
       - uses: oven-sh/setup-bun@v2
 
       # bunx runs Renovate with Node; renovate@44 requires Node ^24.11.0
@@ -110,9 +126,11 @@ jobs:
 
       - run: bun install --frozen-lockfile
         working-directory: k8s
+        if: steps.k8s-app.outputs.exists == 'true'
 
       # Renders foodex/renovate.ts and opens/updates a PR on kir-dev/k8s.
       - run: bun run renovate foodex
         working-directory: k8s
+        if: steps.k8s-app.outputs.exists == 'true'
         env:
           RENOVATE_TOKEN: ${{ secrets.KIR_DEV_BOT_PAT }}

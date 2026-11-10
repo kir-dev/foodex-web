@@ -22,6 +22,12 @@ tasks {
     }
 }
 
+// The migration utility also has a `main`, so name the application's entry
+// point explicitly; otherwise bootJar/bootRun see two candidate main classes.
+springBoot {
+    mainClass.set("hu.kirdev.foodex.FoodExApplicationKt")
+}
+
 repositories {
 	mavenCentral()
 }
