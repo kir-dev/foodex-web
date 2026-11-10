@@ -1,9 +1,11 @@
 # Builds and publishes the FoodEx backend and frontend images to GHCR on every
-# push to main, then lets Renovate open/update the image-version PR in
-# kir-dev/k8s.
+# push to main. Only the component whose files changed is rebuilt and pushed;
+# the first run still publishes both images so kir-dev/k8s has a complete set
+# of v0.0.1 tags to reference.
 #
 # Deployment itself is GitOps: Argo CD applies kir-dev/k8s. A merge here never
-# touches the cluster directly.
+# touches the cluster directly. Renovate then opens/updates the image-version
+# PR in kir-dev/k8s for the images that were published.
 
 name: Deploy
 
@@ -20,44 +22,106 @@ permissions:
   contents: read
 
 jobs:
+  changes:
+    name: Plan deploy
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    outputs:
+      backend: ${{ steps.plan.outputs.backend }}
+      frontend: ${{ steps.plan.outputs.frontend }}
+      version: ${{ steps.plan.outputs.version }}
+      any: ${{ steps.plan.outputs.any }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Decide what to build
+        id: plan
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE: ${{ github.event.before }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$(git tag -l 'v0.0.*')" ]; then
+            version=v0.0.1
+            first_run=true
+          else
+            version=v0.0.${GITHUB_RUN_NUMBER}
+            first_run=false
+          fi
+
+          backend=false
+          frontend=false
+
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
+            backend=true
+            frontend=true
+            reason="manual run"
+          elif [ "${first_run}" = "true" ]; then
+            backend=true
+            frontend=true
+            reason="first run publishes v0.0.1 for both images"
+          else
+            if [[ ! "${BEFORE}" =~ ^[0-9a-fA-F]{40}$ ]]; then
+              echo "Unexpected previous commit id." >&2
+              exit 1
+            fi
+            if [ "${BEFORE}" = "0000000000000000000000000000000000000000" ]; then
+              echo "Push has no previous commit; refusing to guess what changed." >&2
+              exit 1
+            fi
+
+            changed="$(git diff --name-only --no-renames "${BEFORE}" "${SHA}")"
+            while IFS= read -r file; do
+              [ -z "${file}" ] && continue
+              case "${file}" in
+                apps/backend/*) backend=true ;;
+                apps/frontend/*) frontend=true ;;
+              esac
+            done <<< "${changed}"
+            reason="changed files under apps/"
+          fi
+
+          if [ "${backend}" = "true" ] || [ "${frontend}" = "true" ]; then
+            any=true
+          else
+            any=false
+          fi
+
+          echo "backend=${backend}" >> "${GITHUB_OUTPUT}"
+          echo "frontend=${frontend}" >> "${GITHUB_OUTPUT}"
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "any=${any}" >> "${GITHUB_OUTPUT}"
+          {
+            echo "## Deploy plan"
+            echo ""
+            echo "- Backend: ${backend}"
+            echo "- Frontend: ${frontend}"
+            echo "- Version: ${version}"
+            echo "- Reason: ${reason}"
+          } >> "${GITHUB_STEP_SUMMARY}"
+
   build-and-push:
     name: Build and push images
+    needs: changes
+    if: needs.changes.outputs.any == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 45
     permissions:
-      contents: write
+      contents: read
       packages: write
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-
-      # The first run publishes v0.0.1 so kir-dev/k8s can reference a real
-      # image before its own Renovate PRs start bumping the tag. Later runs use
-      # the workflow run number, which Renovate can order as a semver.
-      - name: Determine version
-        id: version
-        run: |
-          set -euo pipefail
-          if [ -z "$(git tag -l 'v0.0.*')" ]; then
-            echo "value=v0.0.1" >> "${GITHUB_OUTPUT}"
-          else
-            echo "value=v0.0.${GITHUB_RUN_NUMBER}" >> "${GITHUB_OUTPUT}"
-          fi
-          cat "${GITHUB_OUTPUT}"
-
-      - name: Docker metadata
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: |
-            ghcr.io/${{ github.repository_owner }}/foodex-backend
-            ghcr.io/${{ github.repository_owner }}/foodex-frontend
-          tags: |
-            type=raw,value=${{ steps.version.outputs.value }}
-            type=raw,value=latest
-            type=sha,format=long
 
       - name: Log in to GHCR
         uses: docker/login-action@v3
@@ -69,32 +133,70 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      - name: Backend metadata
+        if: needs.changes.outputs.backend == 'true'
+        id: backend-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/foodex-backend
+          tags: |
+            type=raw,value=${{ needs.changes.outputs.version }}
+            type=raw,value=latest
+            type=sha,format=long
+
       - name: Build and push backend
+        if: needs.changes.outputs.backend == 'true'
         uses: docker/build-push-action@v6
         with:
           context: apps/backend
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
+          tags: ${{ steps.backend-meta.outputs.tags }}
+          labels: ${{ steps.backend-meta.outputs.labels }}
+          annotations: ${{ steps.backend-meta.outputs.annotations }}
           cache-from: type=gha,scope=backend
           cache-to: type=gha,mode=max,scope=backend
 
+      - name: Frontend metadata
+        if: needs.changes.outputs.frontend == 'true'
+        id: frontend-meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/foodex-frontend
+          tags: |
+            type=raw,value=${{ needs.changes.outputs.version }}
+            type=raw,value=latest
+            type=sha,format=long
+
       - name: Build and push frontend
+        if: needs.changes.outputs.frontend == 'true'
         uses: docker/build-push-action@v6
         with:
           context: apps/frontend
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-          annotations: ${{ steps.meta.outputs.annotations }}
+          tags: ${{ steps.frontend-meta.outputs.tags }}
+          labels: ${{ steps.frontend-meta.outputs.labels }}
+          annotations: ${{ steps.frontend-meta.outputs.annotations }}
           cache-from: type=gha,scope=frontend
           cache-to: type=gha,mode=max,scope=frontend
+
+  tag:
+    name: Tag release
+    needs: [changes, build-and-push]
+    if: needs.changes.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
 
       # Renovate needs a Git tag to show a GitHub diff link.
       - name: Create Git tag
         env:
-          VERSION: ${{ steps.version.outputs.value }}
+          VERSION: ${{ needs.changes.outputs.version }}
         run: |
           set -euo pipefail
           if git rev-parse "${VERSION}" >/dev/null 2>&1; then
@@ -108,7 +210,7 @@ jobs:
 
   update-k8s:
     name: Open k8s image update PR
-    needs: build-and-push
+    needs: tag
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
