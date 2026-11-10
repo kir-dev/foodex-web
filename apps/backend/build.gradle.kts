@@ -22,6 +22,12 @@ tasks {
     }
 }
 
+// The migration utility also has a `main`, so name the application's entry
+// point explicitly; otherwise bootJar/bootRun see two candidate main classes.
+springBoot {
+    mainClass.set("hu.kirdev.foodex.FoodExApplicationKt")
+}
+
 repositories {
 	mavenCentral()
 }
@@ -36,6 +42,7 @@ dependencies {
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:3.1.1")
 	implementation("org.springframework.boot:spring-boot-starter-oauth2-client")
 	runtimeOnly("com.h2database:h2")
+	runtimeOnly("org.postgresql:postgresql")
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	testImplementation("org.springframework.boot:spring-boot-starter-webmvc-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
@@ -68,4 +75,13 @@ allOpen {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+// One-off companion for moving an existing H2 production database to Postgres.
+// The backend image contains this class, but it never runs during normal startup.
+tasks.register<JavaExec>("migrateH2ToPostgres") {
+	group = "migration"
+	description = "Copies every FoodEx table from H2 (H2_URL) to Postgres (POSTGRES_URL)."
+	classpath = sourceSets.main.get().runtimeClasspath
+	mainClass.set("hu.kirdev.foodex.migration.H2ToPostgresKt")
 }

@@ -1,0 +1,28 @@
+name: Deploy backend
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "apps/backend/**"
+      - ".github/workflows/deploy-backend.yml"
+      - ".github/workflows/deploy-image.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: production-foodex
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  deploy:
+    uses: ./.github/workflows/deploy-image.yml
+    with:
+      component: backend
+      context: apps/backend
+      image: foodex-backend
+    secrets:
+      KIR_DEV_BOT_PAT: ${{ secrets.KIR_DEV_BOT_PAT }}

@@ -265,68 +265,95 @@ pnpm start:frontend
 
 ## Deploy
 
+### Automatic production deploy
+
+Merging a pull request into `main` runs one of two path-filtered workflows:
+
+- [`deploy-backend.yml`](.github/workflows/deploy-backend.yml) for
+  `apps/backend/**` → `ghcr.io/kir-dev/foodex-backend`
+- [`deploy-frontend.yml`](.github/workflows/deploy-frontend.yml) for
+  `apps/frontend/**` → `ghcr.io/kir-dev/foodex-frontend`
+
+Both call the shared [`deploy-image.yml`](.github/workflows/deploy-image.yml).
+The first run of each workflow publishes `v0.0.1` for its image. A manual
+**Run workflow** rebuilds that component. Images are tagged
+`v0.0.<workflow run number>`, `latest`, and with the commit SHA.
+Each workflow then runs Renovate for the `foodex` app, which opens or updates a
+pull request in [`kir-dev/k8s`](https://github.com/kir-dev/k8s) with the new
+image tags. Argo CD deploys that repository, so this workflow never touches the
+cluster directly.
+
+The `production` environment on this repository, limited to `main`, needs one
+secret:
+
+| Secret | Purpose |
+| --- | --- |
+| `KIR_DEV_BOT_PAT` | Token for the Kir-Dev bot used to open the image update PR in `kir-dev/k8s` |
+
 ### Build with Docker
 
-#### Backend latest
-
 ```bash
-cd apps/backend
-docker build . -t harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
-```
+# Backend
+docker build apps/backend -t ghcr.io/kir-dev/foodex-backend:local
 
-#### Frontend latest
-
-```bash
-cd apps/frontend
-docker build . -t harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
-```
-
-### Login with Docker
-
-```bash
-docker login harbor.sch.bme.hu
-```
-
-### Push with Docker
-
-#### Push backend
-
-```bash
-docker push harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
-```
-
-#### Push frontend
-
-```bash
-docker push harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
+# Frontend
+docker build apps/frontend -t ghcr.io/kir-dev/foodex-frontend:local
 ```
 
 ### Run with Docker
 
-#### Run backend with port forwarding
+The backend image always enables the `env` Spring profile, so it needs the
+same environment variables as production:
 
 ```bash
-docker run -p 8080:8080 harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
-```
+# Backend
+docker run -p 8080:8080 \
+  -e FOODEX_DATA_SOURCE='jdbc:h2:mem:foodex' \
+  -e FOODEX_AUTHSCH_ID=local \
+  -e FOODEX_AUTHSCH_KEY=local \
+  -e FOODEX_FRONTEND_URL=http://localhost:3000 \
+  ghcr.io/kir-dev/foodex-backend:local
 
-#### Run frontend with port forwarding
-
-```bash
-docker run -p 3000:3000 harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
+# Frontend
+docker run -p 3000:3000 ghcr.io/kir-dev/foodex-frontend:local
 ```
 
 ### Kubernetes
 
+The manifests live in [`kir-dev/k8s`](https://github.com/kir-dev/k8s):
+
+- `foodex/app.ts` — CloudNativePG Postgres, backend and frontend Deployments,
+  Services, and Ingresses for `foodex.sch.bme.hu` and `api.foodex.sch.bme.hu`
+- `foodex/versions.ts` — the image versions Renovate keeps up to date
+
+Production uses Postgres. Fill in these Secrets in the `foodex` namespace of the
+`vc2` vcluster (secrets are not shared with `vc-kirdev`):
+
+| Secret | Keys |
+| --- | --- |
+| `foodex-secrets` | `FOODEX_AUTHSCH_ID`, `FOODEX_AUTHSCH_KEY` |
+| `foodex-db-backup-secrets` | `ACCESS_KEY_ID`, `ACCESS_SECRET_KEY` |
+
+### Migrating the old H2 database
+
+The previous production deployment stored data in an H2 file. After the
+Postgres-backed backend has created the schema once, stop it and run:
+
 ```bash
-kubectl config current-context
-kubectl get pods -A
+cd apps/backend
+H2_URL=jdbc:h2:file:/path/to/db \
+H2_USER=sa H2_PASSWORD=password \
+POSTGRES_URL=jdbc:postgresql://localhost:5432/foodex \
+POSTGRES_USER=foodex POSTGRES_PASSWORD=... \
+./gradlew migrateH2ToPostgres
 ```
 
-### K9s
-
-```bash
-k9s
-```
+The task requires `H2_URL` and opens it with `IFEXISTS=TRUE`, so a typo cannot
+create an empty database. It copies every table in foreign-key order, replaces
+the default `configuration` row seeded by the backend's first homepage request,
+resets the identity sequences, and refuses to run if any other target table
+already contains rows. `POSTGRES_USER`/`POSTGRES_PASSWORD` can be omitted when
+the JDBC URL already contains the credentials.
 
 ---
 
