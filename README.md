@@ -310,12 +310,35 @@ docker run -p 3000:3000 ghcr.io/kir-dev/foodex-frontend:local
 
 The manifests live in [`kir-dev/k8s`](https://github.com/kir-dev/k8s):
 
-- `foodex/app.ts` — backend StatefulSet, frontend Deployment, Services, and
-  Ingresses for `foodex.sch.bme.hu` and `api.foodex.sch.bme.hu`
+- `foodex/app.ts` — CloudNativePG Postgres, backend and frontend Deployments,
+  Services, and Ingresses for `foodex.sch.bme.hu` and `api.foodex.sch.bme.hu`
 - `foodex/versions.ts` — the image versions Renovate keeps up to date
 
-Manual AuthSCH credentials are read from the `foodex-secrets` Secret in the
-`foodex` namespace (`FOODEX_AUTHSCH_ID`, `FOODEX_AUTHSCH_KEY`).
+Production uses Postgres. Fill in these Secrets in the `foodex` namespace:
+
+| Secret | Keys |
+| --- | --- |
+| `foodex-backend-secrets` | `FOODEX_AUTHSCH_ID`, `FOODEX_AUTHSCH_KEY` |
+| `foodex-db-backup-secrets` | `ACCESS_KEY_ID`, `ACCESS_SECRET_KEY` |
+
+### Migrating the old H2 database
+
+The previous production deployment stored data in an H2 file. After the
+Postgres-backed backend has created the schema once, stop it and run:
+
+```bash
+cd apps/backend
+H2_URL=jdbc:h2:file:/path/to/db \
+H2_USER=sa H2_PASSWORD=password \
+POSTGRES_URL=jdbc:postgresql://localhost:5432/foodex \
+POSTGRES_USER=foodex POSTGRES_PASSWORD=... \
+./gradlew migrateH2ToPostgres
+```
+
+The task copies every table in foreign-key order, resets the identity
+sequences, and refuses to run if the target tables already contain rows.
+`POSTGRES_USER`/`POSTGRES_PASSWORD` can be omitted when the JDBC URL already
+contains the credentials.
 
 ---
 
