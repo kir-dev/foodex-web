@@ -1,0 +1,118 @@
+# Shared image release workflow, called by deploy-backend.yml and
+# deploy-frontend.yml. Those callers use GitHub Actions' native `paths` filters,
+# so this only runs for the component whose files changed.
+
+name: Deploy image
+
+on:
+  workflow_call:
+    inputs:
+      component:
+        description: Component name, used for the cache scope
+        required: true
+        type: string
+      context:
+        description: Docker build context
+        required: true
+        type: string
+      image:
+        description: GHCR image name, without the registry or owner
+        required: true
+        type: string
+    secrets:
+      KIR_DEV_BOT_PAT:
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Build and publish ${{ inputs.component }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: write
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      # Each caller workflow has its own run counter, so the first run of both
+      # produces v0.0.1. Later runs increment independently.
+      - name: Determine version
+        id: version
+        run: echo "value=v0.0.${GITHUB_RUN_NUMBER}" >> "${GITHUB_OUTPUT}"
+
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ghcr.io/${{ github.repository_owner }}/${{ inputs.image }}
+          tags: |
+            type=raw,value=${{ steps.version.outputs.value }}
+            type=raw,value=latest
+            type=sha,format=long
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ inputs.context }}
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          cache-from: type=gha,scope=${{ inputs.component }}
+          cache-to: type=gha,mode=max,scope=${{ inputs.component }}
+
+      # Renovate needs a Git tag to show a GitHub diff link. Backend and
+      # frontend can produce the same tag; the first run creates it and the
+      # other reuses it.
+      - name: Create Git tag
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          if git rev-parse "${VERSION}" >/dev/null 2>&1; then
+            echo "${VERSION} already exists."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag "${VERSION}"
+            git push origin "${VERSION}"
+          fi
+
+      - name: Checkout k8s
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: kir-dev/k8s
+          path: k8s
+          fetch-depth: 1
+
+      - uses: oven-sh/setup-bun@v2
+
+      # bunx runs Renovate with Node; renovate@44 requires Node ^24.11.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+
+      - run: bun install --frozen-lockfile
+        working-directory: k8s
+
+      # Renders foodex/renovate.ts and opens/updates a PR on kir-dev/k8s.
+      - run: bun run renovate foodex
+        working-directory: k8s
+        env:
+          RENOVATE_TOKEN: ${{ secrets.KIR_DEV_BOT_PAT }}

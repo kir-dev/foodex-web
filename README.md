@@ -267,15 +267,18 @@ pnpm start:frontend
 
 ### Automatic production deploy
 
-Merging a pull request into `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
-Only the images whose files changed under `apps/` are rebuilt and pushed to GHCR:
+Merging a pull request into `main` runs one of two path-filtered workflows:
 
-- `apps/backend/**` → `ghcr.io/kir-dev/foodex-backend`
-- `apps/frontend/**` → `ghcr.io/kir-dev/foodex-frontend`
+- [`deploy-backend.yml`](.github/workflows/deploy-backend.yml) for
+  `apps/backend/**` → `ghcr.io/kir-dev/foodex-backend`
+- [`deploy-frontend.yml`](.github/workflows/deploy-frontend.yml) for
+  `apps/frontend/**` → `ghcr.io/kir-dev/foodex-frontend`
 
-The first run, and a manual **Run workflow**, build both images. Images are
-tagged `v0.0.<workflow run number>`, `latest`, and with the commit SHA.
-The workflow then runs Renovate for the `foodex` app, which opens or updates a
+Both call the shared [`deploy-image.yml`](.github/workflows/deploy-image.yml).
+The first run of each workflow publishes `v0.0.1` for its image. A manual
+**Run workflow** rebuilds that component. Images are tagged
+`v0.0.<workflow run number>`, `latest`, and with the commit SHA.
+Each workflow then runs Renovate for the `foodex` app, which opens or updates a
 pull request in [`kir-dev/k8s`](https://github.com/kir-dev/k8s) with the new
 image tags. Argo CD deploys that repository, so this workflow never touches the
 cluster directly.
