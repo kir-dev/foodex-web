@@ -1,6 +1,9 @@
-# Deploys FoodEx when a pull request is merged into main.
-# A push deploys only the apps whose files changed. Direct pushes are ignored.
-# Run workflow on main deploys the components selected in the form.
+# Builds and publishes the FoodEx backend and frontend images to GHCR on every
+# push to main, then lets Renovate open/update the image-version PR in
+# kir-dev/k8s.
+#
+# Deployment itself is GitOps: Argo CD applies kir-dev/k8s. A merge here never
+# touches the cluster directly.
 
 name: Deploy
 
@@ -8,15 +11,6 @@ on:
   push:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      backend:
-        description: Deploy the backend
-        type: boolean
-        default: false
-      frontend:
-        description: Deploy the frontend
-        type: boolean
-        default: false
 
 concurrency:
   group: production-foodex
@@ -26,264 +20,117 @@ permissions:
   contents: read
 
 jobs:
-  changes:
+  build-and-push:
+    name: Build and push images
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 45
     permissions:
-      contents: read
-      pull-requests: read
-    outputs:
-      backend: ${{ steps.set.outputs.backend }}
-      frontend: ${{ steps.set.outputs.frontend }}
+      contents: write
+      packages: write
     steps:
-      - name: Require main for a manual deploy
-        if: github.event_name == 'workflow_dispatch' && github.ref != 'refs/heads/main'
-        run: |
-          echo "Manual deploy is only allowed from main." >&2
-          exit 1
-
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-          persist-credentials: false
 
-      - name: Decide what to deploy
-        id: set
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          BEFORE: ${{ github.event.before }}
-          SHA: ${{ github.sha }}
-          INPUT_BACKEND: ${{ inputs.backend }}
-          INPUT_FRONTEND: ${{ inputs.frontend }}
-          GH_TOKEN: ${{ github.token }}
+      # The first run publishes v0.0.1 so kir-dev/k8s can reference a real
+      # image before its own Renovate PRs start bumping the tag. Later runs use
+      # the workflow run number, which Renovate can order as a semver.
+      - name: Determine version
+        id: version
         run: |
           set -euo pipefail
+          if [ -z "$(git tag -l 'v0.0.*')" ]; then
+            echo "value=v0.0.1" >> "${GITHUB_OUTPUT}"
+          else
+            echo "value=v0.0.${GITHUB_RUN_NUMBER}" >> "${GITHUB_OUTPUT}"
+          fi
+          cat "${GITHUB_OUTPUT}"
 
-          write_outputs() {
-            echo "backend=${1}" >> "${GITHUB_OUTPUT}"
-            echo "frontend=${2}" >> "${GITHUB_OUTPUT}"
-            {
-              echo "## Deploy plan"
-              echo ""
-              echo "- Backend: ${1}"
-              echo "- Frontend: ${2}"
-              echo "- Reason: ${3}"
-            } >> "${GITHUB_STEP_SUMMARY}"
-          }
+      - name: Docker metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: |
+            ghcr.io/${{ github.repository_owner }}/foodex-backend
+            ghcr.io/${{ github.repository_owner }}/foodex-frontend
+          tags: |
+            type=raw,value=${{ steps.version.outputs.value }}
+            type=raw,value=latest
+            type=sha,format=long
 
-          if [ "${EVENT_NAME}" = "workflow_dispatch" ]; then
-            if [ "${GITHUB_REF}" != "refs/heads/main" ]; then
-              echo "Manual deploy is only allowed from main." >&2
-              exit 1
-            fi
-            case "${INPUT_BACKEND}" in
-              true|false) ;;
-              *)
-                echo "Invalid backend input." >&2
-                exit 1
-                ;;
-            esac
-            case "${INPUT_FRONTEND}" in
-              true|false) ;;
-              *)
-                echo "Invalid frontend input." >&2
-                exit 1
-                ;;
-            esac
-            write_outputs "${INPUT_BACKEND}" "${INPUT_FRONTEND}" "manual run"
-            exit 0
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push backend
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/backend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+
+      - name: Build and push frontend
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/frontend
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          annotations: ${{ steps.meta.outputs.annotations }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+
+      # Renovate needs a Git tag to show a GitHub diff link.
+      - name: Create Git tag
+        env:
+          VERSION: ${{ steps.version.outputs.value }}
+        run: |
+          set -euo pipefail
+          if git rev-parse "${VERSION}" >/dev/null 2>&1; then
+            echo "${VERSION} already exists."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag "${VERSION}"
+            git push origin "${VERSION}"
           fi
 
-          if [[ ! "${BEFORE}" =~ ^[0-9a-fA-F]{40}$ || ! "${SHA}" =~ ^[0-9a-fA-F]{40}$ ]]; then
-            echo "Unexpected commit id." >&2
-            exit 1
-          fi
-
-          if [ "${BEFORE}" = "0000000000000000000000000000000000000000" ]; then
-            echo "Push has no previous commit; refusing to guess what changed." >&2
-            exit 1
-          fi
-
-          if ! git cat-file -e "${BEFORE}^{commit}" 2>/dev/null; then
-            echo "Previous commit ${BEFORE} is not in history; refusing to guess what changed." >&2
-            exit 1
-          fi
-
-          if ! pr_count="$(
-            gh api \
-              --header "Accept: application/vnd.github+json" \
-              "repos/${GITHUB_REPOSITORY}/commits/${SHA}/pulls" \
-              --jq '[.[] | select(.merged_at != null and .base.ref == "main")] | length'
-          )"; then
-            echo "Could not look up pull requests for ${SHA}." >&2
-            exit 1
-          fi
-
-          if [[ ! "${pr_count}" =~ ^[0-9]+$ ]]; then
-            echo "Unexpected pull request lookup result." >&2
-            exit 1
-          fi
-
-          if [ "${pr_count}" = "0" ]; then
-            echo "Push is not a pull request merged into main; skipping deploy."
-            write_outputs false false "push is not a merged pull request"
-            exit 0
-          fi
-
-          backend=false
-          frontend=false
-          if ! changed="$(git diff --name-only --no-renames "${BEFORE}" "${SHA}")"; then
-            echo "Could not list files changed between ${BEFORE} and ${SHA}." >&2
-            exit 1
-          fi
-          while IFS= read -r file; do
-            [ -z "${file}" ] && continue
-            case "${file}" in
-              apps/backend/*)
-                backend=true
-                ;;
-              apps/frontend/*)
-                frontend=true
-                ;;
-            esac
-          done <<< "${changed}"
-
-          echo "Deploy backend=${backend} frontend=${frontend}"
-          write_outputs "${backend}" "${frontend}" "files changed in the merged pull request"
-
-  deploy-backend:
-    needs: changes
-    if: github.ref == 'refs/heads/main' && needs.changes.outputs.backend == 'true'
+  update-k8s:
+    name: Open k8s image update PR
+    needs: build-and-push
     runs-on: ubuntu-latest
-    environment: production
-    timeout-minutes: 45
-    concurrency:
-      group: production-foodex-backend
-      cancel-in-progress: false
+    timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
-      - name: Checkout
+      # The TypeScript Renovate config lives in kir-dev/k8s (.dev/renovate.ts).
+      - name: Checkout k8s
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
+          repository: kir-dev/k8s
+          fetch-depth: 1
 
-      - name: Set up JDK 25
-        uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+      - uses: oven-sh/setup-bun@v2
+
+      # bunx runs Renovate with Node; renovate@44 requires Node ^24.11.0
+      - uses: actions/setup-node@v4
         with:
-          distribution: temurin
-          java-version: '25'
-          cache: gradle
-          cache-dependency-path: |
-            apps/backend/**/*.gradle.kts
-            apps/backend/**/gradle-wrapper.properties
+          node-version: "24"
 
-      - name: Run tests
-        working-directory: apps/backend
-        run: |
-          chmod +x gradlew
-          ./gradlew test --no-daemon
+      - run: bun install --frozen-lockfile
 
-      - name: Install kubectl
-        run: |
-          set -euo pipefail
-          version=v1.37.0
-          tmpdir="$(mktemp -d)"
-          trap 'rm -rf "${tmpdir}"' EXIT
-          curl -fsSL -o "${tmpdir}/kubectl" "https://dl.k8s.io/release/${version}/bin/linux/amd64/kubectl"
-          curl -fsSL -o "${tmpdir}/kubectl.sha256" "https://dl.k8s.io/release/${version}/bin/linux/amd64/kubectl.sha256"
-          checksum="$(tr -d '[:space:]' < "${tmpdir}/kubectl.sha256")"
-          if [[ ! "${checksum}" =~ ^[0-9a-f]{64}$ ]]; then
-            echo "Unexpected kubectl checksum." >&2
-            exit 1
-          fi
-          printf '%s  %s\n' "${checksum}" "${tmpdir}/kubectl" | sha256sum --check
-          mkdir -p "${HOME}/.local/bin"
-          install -m 755 "${tmpdir}/kubectl" "${HOME}/.local/bin/kubectl"
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
-          "${HOME}/.local/bin/kubectl" version --client=true
-
-      - name: Configure cluster access
+      # Renders foodex/renovate.ts and opens/updates a PR on kir-dev/k8s.
+      - run: bun run renovate foodex
         env:
-          KUBECONFIG_CONTENT: ${{ secrets.KUBE_CONFIG }}
-        run: |
-          set -euo pipefail
-          if [ -z "${KUBECONFIG_CONTENT}" ]; then
-            echo "KUBE_CONFIG secret is empty." >&2
-            exit 1
-          fi
-          install -m 700 -d "${HOME}/.kube"
-          printf '%s\n' "${KUBECONFIG_CONTENT}" > "${HOME}/.kube/config"
-          chmod 600 "${HOME}/.kube/config"
-
-      - name: Build and deploy backend
-        env:
-          HARBOR_USERNAME: ${{ secrets.HARBOR_USERNAME }}
-          HARBOR_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
-        run: |
-          set -euo pipefail
-          if [ -z "${HARBOR_USERNAME}" ] || [ -z "${HARBOR_PASSWORD}" ]; then
-            echo "Harbor credentials are missing from the production environment." >&2
-            exit 1
-          fi
-          ./deploy-backend-with-docker.sh
-
-  deploy-frontend:
-    needs: changes
-    if: github.ref == 'refs/heads/main' && needs.changes.outputs.frontend == 'true'
-    runs-on: ubuntu-latest
-    environment: production
-    timeout-minutes: 30
-    concurrency:
-      group: production-foodex-frontend
-      cancel-in-progress: false
-    steps:
-      - name: Checkout
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          ref: ${{ github.sha }}
-          persist-credentials: false
-
-      - name: Install kubectl
-        run: |
-          set -euo pipefail
-          version=v1.37.0
-          tmpdir="$(mktemp -d)"
-          trap 'rm -rf "${tmpdir}"' EXIT
-          curl -fsSL -o "${tmpdir}/kubectl" "https://dl.k8s.io/release/${version}/bin/linux/amd64/kubectl"
-          curl -fsSL -o "${tmpdir}/kubectl.sha256" "https://dl.k8s.io/release/${version}/bin/linux/amd64/kubectl.sha256"
-          checksum="$(tr -d '[:space:]' < "${tmpdir}/kubectl.sha256")"
-          if [[ ! "${checksum}" =~ ^[0-9a-f]{64}$ ]]; then
-            echo "Unexpected kubectl checksum." >&2
-            exit 1
-          fi
-          printf '%s  %s\n' "${checksum}" "${tmpdir}/kubectl" | sha256sum --check
-          mkdir -p "${HOME}/.local/bin"
-          install -m 755 "${tmpdir}/kubectl" "${HOME}/.local/bin/kubectl"
-          echo "${HOME}/.local/bin" >> "${GITHUB_PATH}"
-          "${HOME}/.local/bin/kubectl" version --client=true
-
-      - name: Configure cluster access
-        env:
-          KUBECONFIG_CONTENT: ${{ secrets.KUBE_CONFIG }}
-        run: |
-          set -euo pipefail
-          if [ -z "${KUBECONFIG_CONTENT}" ]; then
-            echo "KUBE_CONFIG secret is empty." >&2
-            exit 1
-          fi
-          install -m 700 -d "${HOME}/.kube"
-          printf '%s\n' "${KUBECONFIG_CONTENT}" > "${HOME}/.kube/config"
-          chmod 600 "${HOME}/.kube/config"
-
-      - name: Build and deploy frontend
-        env:
-          HARBOR_USERNAME: ${{ secrets.HARBOR_USERNAME }}
-          HARBOR_PASSWORD: ${{ secrets.HARBOR_PASSWORD }}
-        run: |
-          set -euo pipefail
-          if [ -z "${HARBOR_USERNAME}" ] || [ -z "${HARBOR_PASSWORD}" ]; then
-            echo "Harbor credentials are missing from the production environment." >&2
-            exit 1
-          fi
-          ./deploy-frontend-with-docker.sh
+          RENOVATE_TOKEN: ${{ secrets.KIR_DEV_BOT_PAT }}

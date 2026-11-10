@@ -268,84 +268,54 @@ pnpm start:frontend
 ### Automatic production deploy
 
 Merging a pull request into `main` runs [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml).
+The workflow builds both images and pushes them to GHCR:
 
-- A change under `apps/backend/` builds and deploys only the backend.
-- A change under `apps/frontend/` builds and deploys only the frontend.
-- Changes under both directories deploy both.
-- Any other change does not deploy.
+- `ghcr.io/kir-dev/foodex-backend`
+- `ghcr.io/kir-dev/foodex-frontend`
 
-The workflow runs `deploy-backend-with-docker.sh` and `deploy-frontend-with-docker.sh` for commits that GitHub associates with a pull request merged into `main`. From the Actions tab, **Run workflow** on `main` deploys the components you select.
+Images are tagged `v0.0.<workflow run number>`, `latest`, and with the commit SHA.
+The workflow then runs Renovate for the `foodex` app, which opens or updates a
+pull request in [`kir-dev/k8s`](https://github.com/kir-dev/k8s) with the new
+image tags. Argo CD deploys that repository, so this workflow never touches the
+cluster directly.
 
-The `production` environment on this repository, limited to `main`, needs these secrets:
+The `production` environment on this repository, limited to `main`, needs one
+secret:
 
 | Secret | Purpose |
 | --- | --- |
-| `HARBOR_USERNAME` | Harbor robot account that can push the two FoodEx images |
-| `HARBOR_PASSWORD` | That robot account's secret |
-| `KUBE_CONFIG` | Kubeconfig for a `foodex` ServiceAccount that can roll out the backend StatefulSet and the frontend Deployment |
+| `KIR_DEV_BOT_PAT` | Token for the Kir-Dev bot used to open the image update PR in `kir-dev/k8s` |
 
 ### Build with Docker
 
-#### Backend latest
-
 ```bash
-cd apps/backend
-docker build . -t harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
-```
+# Backend
+docker build apps/backend -t ghcr.io/kir-dev/foodex-backend:local
 
-#### Frontend latest
-
-```bash
-cd apps/frontend
-docker build . -t harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
-```
-
-### Login with Docker
-
-```bash
-docker login harbor.sch.bme.hu
-```
-
-### Push with Docker
-
-#### Push backend
-
-```bash
-docker push harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
-```
-
-#### Push frontend
-
-```bash
-docker push harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
+# Frontend
+docker build apps/frontend -t ghcr.io/kir-dev/foodex-frontend:local
 ```
 
 ### Run with Docker
 
-#### Run backend with port forwarding
-
 ```bash
-docker run -p 8080:8080 harbor.sch.bme.hu/org-kir-dev/foodex-backend:latest
-```
+# Backend
+docker run -p 8080:8080 ghcr.io/kir-dev/foodex-backend:local
 
-#### Run frontend with port forwarding
-
-```bash
-docker run -p 3000:3000 harbor.sch.bme.hu/org-kir-dev/foodex-frontend:latest
+# Frontend
+docker run -p 3000:3000 ghcr.io/kir-dev/foodex-frontend:local
 ```
 
 ### Kubernetes
 
-```bash
-kubectl config current-context
-kubectl get pods -A
-```
+The manifests live in [`kir-dev/k8s`](https://github.com/kir-dev/k8s):
 
-### K9s
+- `foodex/app.ts` — backend StatefulSet, frontend Deployment, Services, and
+  Ingresses for `foodex.sch.bme.hu` and `api.foodex.sch.bme.hu`
+- `foodex/versions.ts` — the image versions Renovate keeps up to date
 
-```bash
-k9s
-```
+Manual AuthSCH credentials are read from the `foodex-secrets` Secret in the
+`foodex` namespace (`FOODEX_AUTHSCH_ID`, `FOODEX_AUTHSCH_KEY`).
 
 ---
 
